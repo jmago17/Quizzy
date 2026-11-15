@@ -168,7 +168,7 @@ struct PuzzlesScreen: View {
             guard let rawValue = note.object as? String,
                   let kind = PuzzleKind(rawValue: rawValue),
                   offered.contains(kind) else { return }
-            route = nil
+            // Sin pasar por el menú: la ruta pasa directamente a la partida nueva cuando está lista.
             newPuzzle(kind, openWhenReady: true)
         }
         .onReceive(NotificationCenter.default.publisher(for: .pzOpenNextGame)) { note in
@@ -400,12 +400,23 @@ struct PuzzlesScreen: View {
                 case .quartiles(let p): puzzle = .q(p)
                 case .wordSearch(let p): puzzle = .w(p)
                 case .crossword(let p): puzzle = kind == .minicross ? .x(p) : .c(p)
+                case .anygram(let p): puzzle = .a(p)
                 }
                 generated[kind] = puzzle
                 progress.rememberTodaysPuzzleID(puzzle.id, kind: kind)
             }
         }
+        // Anygram (español) tarda ~10 s en generarse: si no hay uno guardado para hoy se usa el
+        // incluido en la app (la primera vez, o el día en que no hubo tiempo de precalcular) y
+        // no se genera nada en el arranque. El de mañana y un aleatorio se preparan en segundo plano.
+        if generated[.anygram] == nil, language == .spanish, available.contains(.anygram),
+           let fallbackPuzzle = AnygramDefault.puzzle,
+           progress.todaysPuzzleID(.anygram) == fallbackPuzzle.id || !progress.isDone(fallbackPuzzle.id) {
+            generated[.anygram] = .a(fallbackPuzzle)
+            progress.rememberTodaysPuzzleID(fallbackPuzzle.id, kind: .anygram)
+        }
         cachedGames[language] = generated
+        AnygramPrefetch.ensureReady(language: language, defaults: progress.defaults)
         let pending = available.filter { generated[$0] == nil }
         guard !pending.isEmpty else { return }
 
@@ -422,7 +433,11 @@ struct PuzzlesScreen: View {
             for kind in pending {
                 let seed = PuzzleSeed.daily(kind: kind)
                 group.addTask(priority: .userInitiated) {
-                    (kind, Self.make(kind, seed: seed, dayIndex: today, language: language))
+                    #if DEBUG
+                    let t0 = CFAbsoluteTimeGetCurrent()
+                    defer { NSLog("PZGEN %@ %d ms", kind.rawValue, Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)) }
+                    #endif
+                    return (kind, Self.make(kind, seed: seed, dayIndex: today, language: language))
                 }
             }
             for await (kind, game) in group {
@@ -466,6 +481,7 @@ struct PuzzlesScreen: View {
             let seed = PuzzleSeed.random()
             let recentWords: Set<String> = kind == .wordle
                 ? Set(progress.recentWordleAnswers(language: language)) : Set<String>()
+            let defaults = progress.defaults
             let recentQuestions: Set<Int> = kind == .trivia
                 ? Set(progress.recentTriviaQuestions()) : Set<Int>()
             let game: AnyPuzzle? = await Task.detached(priority: .userInitiated) {
@@ -474,6 +490,10 @@ struct PuzzlesScreen: View {
                     return .d(WordlePuzzle.generate(seed: seed, excluding: recentWords, language: language))
                 case .trivia:
                     return .t(TriviaPuzzle.generate(seed: seed, excluding: recentQuestions))
+                case .anygram:
+                    // Si hay uno ya preparado, instantáneo; si no, se genera (≈10 s en español).
+                    if let ready = AnygramPrefetch.take(language: language, defaults: defaults) { return .a(ready) }
+                    return Self.make(kind, seed: seed, language: language)
                 default:
                     return Self.make(kind, seed: seed, language: language)
                 }
@@ -484,15 +504,10 @@ struct PuzzlesScreen: View {
                     generated[kind] = game
                     cachedGames[language] = generated
                     remember(game)
-                    if openWhenReady {
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(150))
-                            guard token == generationToken, language == AppLanguage.current else { return }
-                            route = game
-                        }
-                    }
+                    if openWhenReady { route = game }
                 } else { error = AppLanguage.text("Prueba de nuevo: esta semilla no produjo una rejilla válida.", "Try again: this seed did not produce a valid grid.") }
                 generating.remove(kind)
+                if kind == .anygram { AnygramPrefetch.ensureReady(language: language, defaults: progress.defaults) }
             }
         }
     }
@@ -503,6 +518,7 @@ struct PuzzlesScreen: View {
         case .q(let p): grid = .quartiles(p)
         case .w(let p): grid = .wordSearch(p)
         case .c(let p), .x(let p): grid = .crossword(p)
+        case .a(let p): grid = .anygram(p)
         default: return
         }
         PuzzleSnapshotStore.save(grid, kind: kind, language: language, day: day, defaults: progress.defaults)
@@ -563,6 +579,7 @@ struct PuzzlesScreen: View {
             case .r(let g): DecoderGameView(game: g)
             }
         }
+        .id(item.id) // cada partida es una vista nueva: no hereda el estado de la anterior del mismo juego
         .toolbar(.visible, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }

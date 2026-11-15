@@ -1596,14 +1596,97 @@ struct HashtagGame: View {
 
 // MARK: - Anygram crossed-word game
 
+/// Rueda de letras. Vive aparte para que la posición del dedo (`dragLocation`, que cambia
+/// en cada evento táctil) solo reconstruya la rueda y no todo el juego: antes cada
+/// movimiento rehacía el tablero, la lista de palabras y el fondo, y el trazo iba con retraso.
+#if DEBUG
+private enum AnygramAutoWin { static var used = false }
+#endif
+
+private struct AnygramWheel: View {
+    let letters: [Character]
+    let side: CGFloat
+    @Binding var selected: [Int]
+    let onSubmit: () -> Void
+    @State private var dragLocation: CGPoint?
+
+    var body: some View {
+        GeometryReader { geo in
+            let side = min(geo.size.width, side)
+            let center = CGPoint(x: side / 2, y: side / 2)
+            let radius = side * 0.34
+            let positions = letters.indices.map { index in
+                let angle = (Double(index) / Double(letters.count)) * Double.pi * 2 - Double.pi / 2
+                return CGPoint(x: center.x + cos(angle) * radius, y: center.y + sin(angle) * radius)
+            }
+
+            ZStack {
+                Circle()
+                    .fill(PZColor.surface)
+                    .overlay { Circle().stroke(PZ.anygram.opacity(0.2), lineWidth: 2) }
+
+                Path { path in
+                    guard let first = selected.first else { return }
+                    path.move(to: positions[first])
+                    for index in selected.dropFirst() { path.addLine(to: positions[index]) }
+                    if let dragLocation { path.addLine(to: dragLocation) }
+                }
+                .stroke(PZ.anygram, style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
+                .opacity(selected.isEmpty ? 0 : 0.65)
+
+                ForEach(letters.indices, id: \.self) { index in
+                    let isSelected = selected.contains(index)
+                    Text(String(letters[index]))
+                        .font(.system(size: 23, weight: .heavy, design: .rounded))
+                        .foregroundStyle(isSelected ? .white : PZ.anygram)
+                        .frame(width: 42, height: 42)
+                        .background(isSelected ? PZ.anygram : PZ.anygram.opacity(0.14), in: Circle())
+                        .overlay { Circle().stroke(PZ.anygram.opacity(0.35), lineWidth: 1.5) }
+                        .position(positions[index])
+                        .accessibilityLabel(AppLanguage.text("Letra \(String(letters[index]))", "Letter \(String(letters[index]))"))
+                        .accessibilityValue(isSelected ? AppLanguage.text("seleccionada", "selected") : "")
+                }
+            }
+            .frame(width: side, height: side)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        dragLocation = value.location
+                        guard let index = positions.indices.min(by: {
+                            hypot(positions[$0].x - value.location.x, positions[$0].y - value.location.y)
+                                < hypot(positions[$1].x - value.location.x, positions[$1].y - value.location.y)
+                        }), hypot(positions[index].x - value.location.x, positions[index].y - value.location.y) < 30,
+                              !selected.contains(index) else { return }
+                        selected.append(index)
+                        PZHaptics.tick()
+                    }
+                    .onEnded { _ in
+                        onSubmit()
+                        dragLocation = nil
+                    }
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(AppLanguage.text("Rueda de letras", "Letter wheel"))
+        }
+        .frame(height: side)
+    }
+}
+
 struct AnygramGame: View {
     let puzzle: AnygramPuzzle
+    /// Calculado una vez: `puzzle.boardCells` reconstruye el diccionario entero en cada acceso.
+    private let boardCells: [GridCell: Character]
+    init(puzzle: AnygramPuzzle) {
+        self.puzzle = puzzle
+        self.boardCells = puzzle.boardCells
+    }
     @ObservedObject private var progress = PuzzleProgress.shared
     @State private var selected: [Int] = []
     @State private var found = Set<String>()
     @State private var extraWords = Set<String>()
     @State private var hintedCells = Set<GridCell>()
-    @State private var dragLocation: CGPoint?
     @State private var elapsed = 0
     @State private var finished = false
     @State private var toast: PZToast?
@@ -1670,6 +1753,13 @@ struct AnygramGame: View {
                 return GridCell(row: parts[0], col: parts[1])
             })
             claimHardwareKeyboardFocus()
+            #if DEBUG
+            // Ayuda de verificación: NR_AUTOWIN=1 termina la partida al abrirla para llegar a la hoja de resultado.
+            if ProcessInfo.processInfo.environment["NR_AUTOWIN"] == "1", !AnygramAutoWin.used {
+                AnygramAutoWin.used = true
+                Task { @MainActor in try? await Task.sleep(for: .seconds(1)); finish() }
+            }
+            #endif
         }
         .onReceive(tick) { _ in
             guard !finished else { return }
@@ -1705,7 +1795,8 @@ struct AnygramGame: View {
                 + spacing * CGFloat(puzzle.boardCols - 1)
             let height = tile * CGFloat(puzzle.boardRows)
                 + spacing * CGFloat(puzzle.boardRows - 1)
-            let cells = puzzle.boardCells
+            let cells = boardCells
+            let revealed = revealedCells
 
             VStack(spacing: spacing) {
                 ForEach(0..<puzzle.boardRows, id: \.self) { row in
@@ -1713,7 +1804,7 @@ struct AnygramGame: View {
                         ForEach(0..<puzzle.boardCols, id: \.self) { col in
                             let cell = GridCell(row: row, col: col)
                             if let letter = cells[cell] {
-                                Text(isRevealed(cell) || isHint(cell) ? String(letter) : "")
+                                Text(revealed.contains(cell) || isHint(cell) ? String(letter) : "")
                                     .font(.system(size: min(22, tile * 0.5),
                                                   weight: .bold,
                                                   design: .rounded))
@@ -1741,8 +1832,10 @@ struct AnygramGame: View {
         .accessibilityValue(AppLanguage.text("\(found.count) de \(puzzle.answers.count) palabras reveladas", "\(found.count) of \(puzzle.answers.count) words revealed"))
     }
 
-    private func isRevealed(_ cell: GridCell) -> Bool {
-        puzzle.entries.contains { found.contains($0.word) && $0.cells.contains(cell) }
+    private var revealedCells: Set<GridCell> {
+        var set = Set<GridCell>()
+        for entry in puzzle.entries where found.contains(entry.word) { set.formUnion(entry.cells) }
+        return set
     }
 
     /// The board starts completely blank: only found words and paid hints show
@@ -1752,10 +1845,11 @@ struct AnygramGame: View {
     }
 
     private var nextHiddenCell: GridCell? {
-        puzzle.entries
+        let revealed = revealedCells
+        return puzzle.entries
             .filter { !found.contains($0.word) }
             .flatMap(\.cells)
-            .first { !isHint($0) && !isRevealed($0) }
+            .first { !isHint($0) && !revealed.contains($0) }
     }
 
     private var nextHiddenEntry: AnygramPuzzle.Entry? {
@@ -1786,66 +1880,7 @@ struct AnygramGame: View {
     }
 
     private func wheel(side: CGFloat) -> some View {
-        GeometryReader { geo in
-            let side = min(geo.size.width, side)
-            let center = CGPoint(x: side / 2, y: side / 2)
-            let radius = side * 0.34
-            let positions = puzzle.letters.indices.map { index in
-                let angle = (Double(index) / Double(puzzle.letters.count)) * Double.pi * 2
-                    - Double.pi / 2
-                return CGPoint(x: center.x + cos(angle) * radius,
-                               y: center.y + sin(angle) * radius)
-            }
-
-            ZStack {
-                Circle()
-                    .fill(PZColor.surface)
-                    .overlay { Circle().stroke(PZ.anygram.opacity(0.2), lineWidth: 2) }
-
-                Path { path in
-                    guard let first = selected.first else { return }
-                    path.move(to: positions[first])
-                    for index in selected.dropFirst() { path.addLine(to: positions[index]) }
-                    if let dragLocation { path.addLine(to: dragLocation) }
-                }
-                .stroke(PZ.anygram,
-                        style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
-                .opacity(selected.isEmpty ? 0 : 0.65)
-
-                ForEach(puzzle.letters.indices, id: \.self) { index in
-                    let isSelected = selected.contains(index)
-                    Text(String(puzzle.letters[index]))
-                        .font(.system(size: 23, weight: .heavy, design: .rounded))
-                        .foregroundStyle(isSelected ? .white : PZ.anygram)
-                        .frame(width: 42, height: 42)
-                        .background(isSelected ? PZ.anygram : PZ.anygram.opacity(0.14), in: Circle())
-                        .overlay { Circle().stroke(PZ.anygram.opacity(0.35), lineWidth: 1.5) }
-                        .position(positions[index])
-                        .accessibilityLabel(AppLanguage.text("Letra \(String(puzzle.letters[index]))", "Letter \(String(puzzle.letters[index]))"))
-                        .accessibilityValue(isSelected ? AppLanguage.text("seleccionada", "selected") : "")
-                }
-            }
-            .frame(width: side, height: side)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        dragLocation = value.location
-                        guard let index = positions.indices.min(by: {
-                            distance(positions[$0], value.location)
-                                < distance(positions[$1], value.location)
-                        }), distance(positions[index], value.location) < 30,
-                              !selected.contains(index) else { return }
-                        selected.append(index)
-                        PZHaptics.tick()
-                    }
-                    .onEnded { _ in submit() }
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel(AppLanguage.text("Rueda de letras", "Letter wheel"))
-        }
-        .frame(height: side)
+        AnygramWheel(letters: puzzle.letters, side: side, selected: $selected, onSubmit: submit)
     }
 
     private var foundWords: some View {
@@ -1959,7 +1994,7 @@ struct AnygramGame: View {
         elapsed += 30
         progress.setElapsed(puzzle.id, elapsed)
         progress.setFill(puzzle.id, Dictionary(uniqueKeysWithValues: hintedCells.map {
-            ("\($0.row),\($0.col)", String(puzzle.boardCells[$0] ?? " "))
+            ("\($0.row),\($0.col)", String(boardCells[$0] ?? " "))
         }))
         toast = PZToast(text: AppLanguage.text("Letra revelada · +30 s", "Letter revealed · +30 s"), kind: .info)
         PZHaptics.warning()
@@ -1980,7 +2015,6 @@ struct AnygramGame: View {
         defer {
             withAnimation(PZAnim.reveal) {
                 selected.removeAll()
-                dragLocation = nil
             }
         }
         guard selected.count >= 3 else {

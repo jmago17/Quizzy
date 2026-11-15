@@ -445,8 +445,8 @@ struct AnyCodableBox: Hashable {}
 /// A word wheel with a compact crossed-word board. Answers may use any
 /// subset of the wheel, while respecting each letter's multiplicity.
 struct AnygramPuzzle: Identifiable, Sendable, Hashable {
-    struct Entry: Identifiable, Sendable, Hashable {
-        enum Direction: Sendable, Hashable { case horizontal, vertical }
+    struct Entry: Identifiable, Sendable, Hashable, Codable {
+        enum Direction: Sendable, Hashable, Codable { case horizontal, vertical }
 
         let word: String
         let row: Int
