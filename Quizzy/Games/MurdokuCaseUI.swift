@@ -266,11 +266,8 @@ struct MurdokuClosedSheet: View {
     private var actions: some View {
         VStack(spacing: 6) {
             Button {
+                PZPendingNav.request(.pzNewSameGame, PuzzleKind.murdoku.rawValue)
                 dismiss()
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(250))
-                    NotificationCenter.default.post(name: .pzNewSameGame, object: PuzzleKind.murdoku.rawValue)
-                }
             } label: {
                 VStack(spacing: 2) {
                     Text(t("Siguiente caso", "Next case")).font(.title3.weight(.medium))
@@ -289,11 +286,8 @@ struct MurdokuClosedSheet: View {
                 }
                 if let next {
                     Button {
+                        PZPendingNav.request(.pzOpenNextGame, next.rawValue)
                         dismiss()
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(250))
-                            NotificationCenter.default.post(name: .pzOpenNextGame, object: next.rawValue)
-                        }
                     } label: {
                         Label(t("Siguiente: \(next.title)", "Next: \(next.title)"), systemImage: "arrow.right")
                             .frame(maxWidth: .infinity, minHeight: MurdokuTheme.minTarget)
@@ -306,6 +300,7 @@ struct MurdokuClosedSheet: View {
             .foregroundStyle(MurdokuTheme.accent)
             .buttonStyle(.plain)
         }
+        .onDisappear { PZPendingNav.flush() }
     }
 }
 #endif

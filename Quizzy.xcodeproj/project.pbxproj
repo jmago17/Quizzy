@@ -24,12 +24,14 @@
 		77502C4EF188CFDF6DE2CED3 /* MazeGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893271D3B3418F6A4853E0DD /* MazeGame.swift */; };
 		81017D8FD382C3BBFD37F001 /* PuzzleDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9087334214533F8FB49EF42 /* PuzzleDesignSystem.swift */; };
 		94044F0A4E8B4E3E953BBA9B /* PZResultSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B013A502A43F40714E2916C /* PZResultSheet.swift */; };
+		94482512A2B0051B0B732427 /* AnygramDefaultData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F195A13656D1370F855535D5 /* AnygramDefaultData.swift */; };
 		964DE6883D646963FA123F62 /* DecoderGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */; };
 		A4474DF9F0F2445B18B0AE4D /* EnglishPuzzleLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */; };
 		B9C0B8092C74F7D56F207B12 /* playable_words.json in Resources */ = {isa = PBXBuildFile; fileRef = DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */; };
 		BD7B861F5E4ABA29AD032AD5 /* PZRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F6DBBFBD1C8E201B7652AC /* PZRules.swift */; };
 		BF7DC090510D9F69C60E0D60 /* common_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 89E237A3EC0534F1CDDC4BCD /* common_words.json */; };
 		C3CBEC174A84C9BFB96EF3A1 /* puzzle_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 2DA093B0DA86354AA54180F2 /* puzzle_words.json */; };
+		C7B6E7C9C4691B3E7759E9A8 /* AnygramPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */; };
 		C948C3CD25FD4E9CCAA98365 /* PZToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24073164DBA8A86E8ED68902 /* PZToast.swift */; };
 		D2A96727B33022D1E8EDEFC0 /* WordleGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A59F2E092EB61696DFBDC1F /* WordleGame.swift */; };
 		DCBB460522681D9AE3D58B7C /* PuzzleStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C691B1260601D1CC96717CC /* PuzzleStats.swift */; };
@@ -61,6 +63,7 @@
 		56C2A8E64C77272714245B9B /* trivia_questions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = trivia_questions.json; sourceTree = "<group>"; };
 		575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuartilesGame.swift; sourceTree = "<group>"; };
 		59266AE81579624E2701C025 /* PuzzleSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleSnapshotStore.swift; sourceTree = "<group>"; };
+		595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnygramPrefetch.swift; sourceTree = "<group>"; };
 		64F6DBBFBD1C8E201B7652AC /* PZRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PZRules.swift; sourceTree = "<group>"; };
 		65CAADAE5288AD289B5CB2ED /* MiniCrossword.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniCrossword.swift; sourceTree = "<group>"; };
 		77F424B57393C61142DFAA39 /* CrosswordGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrosswordGame.swift; sourceTree = "<group>"; };
@@ -78,6 +81,7 @@
 		D9087334214533F8FB49EF42 /* PuzzleDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleDesignSystem.swift; sourceTree = "<group>"; };
 		DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecoderGameView.swift; sourceTree = "<group>"; };
 		DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = playable_words.json; sourceTree = "<group>"; };
+		F195A13656D1370F855535D5 /* AnygramDefaultData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnygramDefaultData.swift; sourceTree = "<group>"; };
 		FF5D7D49A17E60BE64E4A06F /* QuizzySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizzySettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -95,6 +99,8 @@
 			isa = PBXGroup;
 			children = (
 				FC7FE8133C048C55BAAB3364 /* Data */,
+				F195A13656D1370F855535D5 /* AnygramDefaultData.swift */,
+				595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */,
 				2E7CACAF629504F91DDB88D7 /* CasualPuzzleGames.swift */,
 				77F424B57393C61142DFAA39 /* CrosswordGame.swift */,
 				B37399FC8DB8DA46D8FC1A6C /* DecoderCore.swift */,
@@ -249,6 +255,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94482512A2B0051B0B732427 /* AnygramDefaultData.swift in Sources */,
+				C7B6E7C9C4691B3E7759E9A8 /* AnygramPrefetch.swift in Sources */,
 				EB152D9CAB609C3214EF387A /* AppLanguage.swift in Sources */,
 				1449DF4EA9965E16311375BD /* CasualPuzzleGames.swift in Sources */,
 				1DD1F4EECE4F07CAB14AD49C /* CrosswordGame.swift in Sources */,

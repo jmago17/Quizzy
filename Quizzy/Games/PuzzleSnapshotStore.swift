@@ -9,6 +9,7 @@ enum PuzzleSnapshotStore {
         case quartiles(QuartilePuzzle)
         case wordSearch(WordSearchPuzzle)
         case crossword(CrosswordPuzzle)
+        case anygram(AnygramPuzzle)
     }
 
     static func slot(kind: PuzzleKind, language: PuzzleLanguage, day: Int) -> String {

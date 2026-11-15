@@ -12,6 +12,27 @@ extension Notification.Name {
     static let pzNewSameGame = Notification.Name("newsraider.puzzles.newSameGame")
 }
 
+/// Acción de navegación pedida desde una hoja de resultado. Se lanza cuando la hoja
+/// YA se ha cerrado (onDisappear), no tras un retraso fijo: cambiar la ruta del hub
+/// mientras la hoja aún se está descartando hace que la navegación se pierda o
+/// deje una pantalla vacía, y el tiempo de cierre varía según el dispositivo.
+@MainActor enum PZPendingNav {
+    private static var pending: (name: Notification.Name, raw: String)?
+    static func request(_ name: Notification.Name, _ raw: String) {
+        pending = (name, raw)
+        // Red de seguridad: si onDisappear no llegara, la acción se ejecuta igualmente.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            flush()
+        }
+    }
+    static func flush() {
+        guard let p = pending else { return }
+        pending = nil
+        NotificationCenter.default.post(name: p.name, object: p.raw)
+    }
+}
+
 struct PZResult: Identifiable {
     let id = UUID()
     let kind: PuzzleKind
@@ -59,6 +80,7 @@ struct PZResultSheet: View {
             .padding(.top, PZSpace.lg)
             .padding(.bottom, PZSpace.xxl)
         }
+        .onDisappear { PZPendingNav.flush() }
         .presentationDetents([.medium, .large])
         .presentationCornerRadius(PZRadius.sheet)
         .presentationDragIndicator(.visible)
@@ -126,14 +148,8 @@ struct PZResultSheet: View {
             .buttonStyle(.plain)
 
             Button {
+                PZPendingNav.request(.pzNewSameGame, result.kind.rawValue)
                 dismiss()
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(250))
-                    NotificationCenter.default.post(
-                        name: .pzNewSameGame,
-                        object: result.kind.rawValue
-                    )
-                }
             } label: {
                 Label(AppLanguage.text("Jugar otro \(result.kind.title)", "Play another \(result.kind.title)"), systemImage: "arrow.clockwise")
                     .pzPill(PZ.color(result.kind), wide: true)
@@ -142,20 +158,15 @@ struct PZResultSheet: View {
 
             if let next {
                 Button {
-                    dismiss()
                     if let onNext {
+                        dismiss()
                         onNext(next)
                     } else {
                         // Result sheets live inside each game, while the hub owns
-                        // the navigation destination. Ask the hub to replace the
-                        // current game after this sheet starts dismissing.
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(250))
-                            NotificationCenter.default.post(
-                                name: .pzOpenNextGame,
-                                object: next.rawValue
-                            )
-                        }
+                        // the navigation destination. The hub is asked to replace the
+                        // current game once this sheet has finished dismissing.
+                        PZPendingNav.request(.pzOpenNextGame, next.rawValue)
+                        dismiss()
                     }
                 } label: {
                     Label(AppLanguage.text("Siguiente: \(next.title)", "Next: \(next.title)"), systemImage: "arrow.right")
