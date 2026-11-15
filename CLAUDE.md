@@ -43,4 +43,7 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   se mueve al tocar otra casilla. Build 21 archivado pero no subido (llavero bloqueado).
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,
-  portada y ajustes. Escrito SIN compilar ni ejecutar (sin Mac): compilar y mirar antes de fusionar.
+  portada y ajustes. Compilado en el Mac (Xcode 27.3, simulador): BUILD SUCCEEDED; tests Decoder y
+  GamesLanguage PASS. Capturas de portada (iPhone/iPad) y de seis juegos revisadas. Arreglo tras verlas:
+  el resalte de cursor/palabra del Autodefinido va sobre el papel claro (antes dejaba la casilla oscura).
+  Sin probar tocando; sin mirar ajustes, hojas de resultado, Decoder, Anygram, Hashtag ni Murdle.
