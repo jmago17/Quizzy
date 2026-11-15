@@ -123,7 +123,7 @@ struct MazeGame: View {
                 .frame(width:cell*CGFloat(puzzle.cols),height:cell*CGFloat(puzzle.rows))
                 .frame(maxWidth:.infinity,maxHeight:.infinity)
         }
-        .padding(12).background(Color(.secondarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:16)).padding(.horizontal,16)
+        .padding(12).background(PZColor.surface,in:RoundedRectangle(cornerRadius:16)).padding(.horizontal,16)
     }
     private func stat(_ a:String,_ b:String)->some View{VStack(alignment:.leading){Text(a).font(.caption.bold()).foregroundStyle(.secondary);Text(b).font(.title2.bold()).monospacedDigit()}}
 

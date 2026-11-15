@@ -206,7 +206,7 @@ struct QuartilesGame: View {
         // border lights up, then fades. A toast alone was too easy to miss
         // while looking at the tiles.
         .background(submitFlash.map { PZColor.wash($0.tint) }
-                        ?? Color(.secondarySystemGroupedBackground),
+                        ?? PZColor.surface,
                     in: RoundedRectangle(cornerRadius: 12))
         .overlay {
             RoundedRectangle(cornerRadius: 12)
@@ -329,7 +329,7 @@ struct QuartilesGame: View {
                 .strikethrough(exhausted && !sel, color: PZ.quartiles)
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
-                .background(sel ? PZ.quartiles : Color(.secondarySystemGroupedBackground),
+                .background(sel ? PZ.quartiles : PZColor.surface,
                             in: RoundedRectangle(cornerRadius: 11))
                 .foregroundStyle(sel ? .white : .primary)
         }
@@ -419,7 +419,7 @@ struct QuartilesGame: View {
                             Text(w.lowercased())
                                 .font(.system(size: 14, weight: .semibold))
                                 .padding(.horizontal, 11).padding(.vertical, 8)
-                                .background(q ? PZ.quartiles : Color(.secondarySystemGroupedBackground),
+                                .background(q ? PZ.quartiles : PZColor.surface,
                                             in: RoundedRectangle(cornerRadius: 9))
                                 .onTapGesture { if definable { definitionWord = .init(word: w) } }
                                 .foregroundStyle(q ? .white : .primary)
@@ -461,7 +461,7 @@ struct QuartilesGame: View {
                                 .opacity(0.65)
                         }
                         .padding(.horizontal, 11).padding(.vertical, 8)
-                        .background(q ? PZ.quartiles : Color(.secondarySystemGroupedBackground),
+                        .background(q ? PZ.quartiles : PZColor.surface,
                                     in: RoundedRectangle(cornerRadius: 9))
                         .foregroundStyle(q ? .white : .primary)
                     }
@@ -658,7 +658,7 @@ struct PZButton: ButtonStyle {
             .font(.system(size: 16, weight: .semibold))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(filled ? tint : Color(.secondarySystemGroupedBackground),
+            .background(filled ? tint : PZColor.surface,
                         in: RoundedRectangle(cornerRadius: 11))
             .foregroundStyle(filled ? .white : .primary)
             .opacity(configuration.isPressed ? 0.7 : 1)

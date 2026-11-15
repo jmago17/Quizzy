@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Ajustes locales de los juegos. Mismas claves de UserDefaults que usaba Kaffa
+/// Ajustes locales de los juegos, en el diseño «Noche» (docs/DISENO.md). Mismas claves de UserDefaults que usaba Kaffa
 /// (`appLanguage`, `decoder.haptics.enabled`, `decoder.hdr.enabled`).
 struct QuizzySettingsView: View {
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
@@ -19,17 +19,23 @@ struct QuizzySettingsView: View {
                         Text("English").tag("en")
                     }
                 }
+                .listRowBackground(PZColor.surface)
                 Section("Decoder") {
                     Toggle(AppLanguage.text("Hápticos", "Haptics"), isOn: $decoderHaptics)
                     Toggle(AppLanguage.text("Luces HDR", "HDR lights"), isOn: $decoderHDR)
                 }
+                .listRowBackground(PZColor.surface)
                 Section {
                     Button(AppLanguage.text("Borrar progreso y estadísticas", "Clear progress and statistics"),
                            systemImage: "trash", role: .destructive) { confirmingReset = true }
                 } footer: {
                     Text(AppLanguage.text("Todo se guarda solo en este dispositivo.", "Everything is stored on this device only."))
                 }
+                .listRowBackground(PZColor.surface)
             }
+            .scrollContentBackground(.hidden)
+            .background(PZColor.canvas)
+            .tint(PZColor.accent)
             .navigationTitle(AppLanguage.text("Ajustes", "Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -44,5 +50,6 @@ struct QuizzySettingsView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }

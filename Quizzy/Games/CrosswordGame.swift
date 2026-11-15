@@ -219,7 +219,7 @@ struct CrosswordGame: View {
         }
         .aspectRatio(CGFloat(puzzle.cols) / CGFloat(puzzle.rows), contentMode: .fit)
         .padding(10)
-        .background(Color(.secondarySystemGroupedBackground),
+        .background(PZColor.surface,
                     in: RoundedRectangle(cornerRadius: 14))
     }
 
@@ -238,11 +238,16 @@ struct CrosswordGame: View {
                 // flips with the colour scheme, which in dark mode inverted the
                 // grid — blocks turned white and playable cells black, so the
                 // puzzle read as its own negative.
-                .fill(isBlock ? PZ.gridBlock
-                      : isCursor ? PZ.crossword.opacity(0.34)
-                      : isLocked ? PZ.gridLocked
-                      : inWord ? PZ.crossword.opacity(0.14)
-                      : PZ.gridCell)
+                .fill(isBlock ? PZ.gridBlock : isLocked ? PZ.gridLocked : PZ.gridCell)
+                // El resalte de cursor y palabra va SOBRE el papel claro: como
+                // relleno translúcido directo dejaba la casilla oscura con
+                // tinta oscura encima (ilegible con el fondo marino).
+                .overlay {
+                    if !isBlock, isCursor || (inWord && !isLocked) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(PZ.crossword.opacity(isCursor ? 0.45 : 0.20))
+                    }
+                }
             if !isBlock {
                 if let num = numbers[key] {
                     Text("\(num)")
@@ -294,7 +299,7 @@ struct CrosswordGame: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 16).padding(.vertical, 14)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(PZColor.surface)
         .overlay(alignment: .top) { Divider() }
     }
 

@@ -95,10 +95,10 @@ enum PZSpace {
 // MARK: - Radii
 
 enum PZRadius {
-    static let chip:  CGFloat = 8
-    static let tile:  CGFloat = 12
-    static let card:  CGFloat = 16
-    static let hero:  CGFloat = 20
+    static let chip:  CGFloat = 10
+    static let tile:  CGFloat = 14
+    static let card:  CGFloat = 22
+    static let hero:  CGFloat = 26
     static let sheet: CGFloat = 28
     static func rect(_ r: CGFloat) -> RoundedRectangle {
         RoundedRectangle(cornerRadius: r, style: .continuous)
@@ -107,40 +107,31 @@ enum PZRadius {
 
 // MARK: - Type ramp
 //
-// Serif for titles gives the puzzles an editorial voice instead of reading
-// like a generic casual game; SF Pro stays for labels and metadata.
+// Diseño «Noche» (docs/DISENO.md): sans del sistema en todo; el peso hace el
+// trabajo que antes hacía la serif. Estilos relativos, así que siguen
+// Dynamic Type.
 
 enum PZFont {
-    static let hero    = Font.system(.largeTitle, design: .serif).weight(.semibold)
-    static let display = Font.system(.title, design: .serif).weight(.semibold)
-    static let title   = Font.system(.title3, design: .serif).weight(.medium)
-    static let section = Font.system(.title3, design: .serif).weight(.semibold)
+    static let hero    = Font.largeTitle.weight(.bold)
+    static let display = Font.title.weight(.bold)
+    static let title   = Font.title3.weight(.semibold)
+    static let section = Font.title3.weight(.bold)
     static let metric  = Font.system(.title2, design: .rounded).weight(.semibold)
     static let body    = Font.body
     static let chip    = Font.subheadline.weight(.semibold)
     static let label   = Font.caption.weight(.semibold)
     static let caption = Font.caption
+    static let badge   = Font.caption2.weight(.bold)
+    static let action  = Font.headline
 
-    // Editorial ramp for the article surfaces. Relative text styles (not fixed
-    // point sizes) so headlines keep scaling with Dynamic Type.
-    static let headline = Font.system(.title2, design: .serif).weight(.semibold)
-    static let cardTitle = Font.system(.headline, design: .serif)
-    static let rowTitle  = Font.system(.callout, design: .serif).weight(.semibold)
+    static let headline = Font.title2.weight(.bold)
+    static let cardTitle = Font.headline
+    static let rowTitle  = Font.callout.weight(.semibold)
     static let summary   = Font.subheadline
-
-    /// Standfirst: the serif paragraph that sits under a headline and carries
-    /// the story, distinct from the grey `summary` support text.
-    static let lede = Font.system(.body, design: .serif)
-
-    // Long-read ramp. The article reader is the only surface that sets running
-    // text, so it gets its own two sizes: an opening paragraph one step up
-    // (the print convention for a story's first graf) and the body below it.
-    static let articleLead = Font.system(.title3, design: .serif)
-    static let article     = Font.system(.body, design: .serif)
-    /// The article's own display headline — larger than a card's `headline`
-    /// because nothing competes with it on the page.
-    static let articleTitle = Font.system(.title, design: .serif).weight(.semibold)
-    /// Photo credits and standing furniture under a rule.
+    static let lede = Font.body
+    static let articleLead = Font.title3
+    static let article     = Font.body
+    static let articleTitle = Font.title.weight(.bold)
     static let footnote = Font.footnote
 }
 
@@ -149,7 +140,7 @@ extension View {
     func pzLabelStyle() -> some View {
         self.font(PZFont.label)
             .textCase(.uppercase)
-            .kerning(0.8)
+            .kerning(1.2)
             .foregroundStyle(PZColor.inkSecondary)
     }
 
@@ -157,11 +148,11 @@ extension View {
     func pzEyebrowStyle(_ color: Color = PZColor.accent) -> some View {
         self.font(PZFont.label)
             .textCase(.uppercase)
-            .kerning(0.8)
+            .kerning(1.2)
             .foregroundStyle(color)
     }
 
-    /// White card on warm paper: a 1pt hairline instead of a drop shadow.
+    /// Tarjeta: superficie marina con borde de 1 pt, sin sombra.
     func pzCard(_ radius: CGFloat = PZRadius.card, fill: Color = PZColor.surface) -> some View {
         self.frame(maxWidth: .infinity, alignment: .leading)
             .background(fill)
@@ -179,7 +170,38 @@ extension View {
             .padding(.vertical, PZSpace.md - 2)
             .frame(maxWidth: wide ? .infinity : nil)
             .background(PZColor.wash(color), in: Capsule())
-            .overlay { Capsule().strokeBorder(color.opacity(0.35), lineWidth: 1) }
+            .overlay { Capsule().strokeBorder(color.opacity(0.45), lineWidth: 1) }
+    }
+
+    /// La acción principal de una pantalla: cápsula rellena en azul claro.
+    /// Una sola por pantalla; las demás usan `pzPill`.
+    func pzPrimaryPill() -> some View {
+        self.font(PZFont.action)
+            .foregroundStyle(PZColor.onAccent)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 50)
+            .background(PZColor.accent, in: Capsule())
+    }
+}
+
+/// Insignia en cápsula con texto en mayúsculas: lavado y borde de su color.
+/// Lleva siempre texto, así que el estado no depende solo del color.
+struct PZCapsuleBadge: View {
+    let text: String
+    var color: Color = PZColor.accent
+
+    var body: some View {
+        Text(text)
+            .font(PZFont.badge)
+            .kerning(1.2)
+            .textCase(.uppercase)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .foregroundStyle(color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(PZColor.wash(color), in: Capsule())
+            .overlay { Capsule().strokeBorder(color.opacity(0.55), lineWidth: 1) }
     }
 }
 
@@ -219,33 +241,30 @@ struct PZWashBadge<Content: View>: View {
 
 // MARK: - Colour
 //
-// Warm paper base rather than the blue-grey system grouped background, and
-// colour used as an accent (icon, hairline, 8% wash) instead of a full fill.
+// Diseño «Noche» (docs/DISENO.md): una sola apariencia, oscura. Los valores
+// coinciden con `MurdokuTheme` para que toda la app sea la misma mesa de juego.
+// El color señala (icono, insignia, marca); el azul claro es la acción principal.
 
 enum PZColor {
-    /// Same token as every other tab (LiquidDesign.canvas = systemGroupedBackground).
     static var canvas: Color { LiquidDesign.canvas }
-    static let surface  = Color(light: "FFFFFF", dark: "1C1C1F")
-    static let fill     = Color(light: "EFEDE8", dark: "26262A")
-    static let hairline = Color(light: "E3E1DC", dark: "34343A")
-    static let ink          = Color(light: "14141A", dark: "F2F2F5")
-    static let inkSecondary = Color(light: "6B6B72", dark: "9B9BA3")
+    static let surface  = Color(light: "1B2233", dark: "1B2233")
+    static let fill     = Color(light: "242C40", dark: "242C40")
+    static let hairline = Color(light: "2C3650", dark: "2C3650")
+    static let ink          = Color(light: "F4F6FB", dark: "F4F6FB")
+    static let inkSecondary = Color(light: "8E97AB", dark: "8E97AB")
     /// Non-text furniture only (chevrons, disabled marks) — below AA on purpose.
-    static let inkTertiary  = Color(light: "9A9AA1", dark: "6C6C74")
+    static let inkTertiary  = Color(light: "5E6880", dark: "5E6880")
 
-    /// Editorial accent for the reading surfaces (Noticias, Resumen, Comics,
-    /// Buscar). Deliberately the same desaturated, print-like register as the
-    /// puzzle accents — a saturated system blue would fight the warm paper.
-    /// Contrast on `surface`: 8.4:1 light, 8.9:1 dark.
-    static let accent = Color(light: "2C4A7C", dark: "8FB0E0")
-    /// The 8% wash. Never a full-bleed fill.
+    /// Acción principal. Contraste con `onAccent`: 9,8:1.
+    static let accent = Color(light: "8FC2F2", dark: "8FC2F2")
+    static let onAccent = Color(light: "10141D", dark: "10141D")
     static var accentWash: Color { wash(accent) }
-    /// Same wash for any accent — section inks and puzzle inks included.
-    static func wash(_ color: Color) -> Color { color.opacity(0.08) }
+    /// Lavado de cualquier tinta. 14 %: sobre marino, menos no se distingue.
+    static func wash(_ color: Color) -> Color { color.opacity(0.14) }
 
-    static let success  = Color(light: "2F7D4F", dark: "4FA974")
-    static let warning  = Color.orange
-    static let danger   = Color(light: "B23B2E", dark: "E0705F")
+    static let success  = Color(light: "5FD0B0", dark: "5FD0B0")
+    static let warning  = Color(light: "F2B95C", dark: "F2B95C")
+    static let danger   = Color(light: "F0766B", dark: "F0766B")
 
     /// Wordle states — `present` is deliberately darker than `correct`
     /// so the two stay separable in greyscale.

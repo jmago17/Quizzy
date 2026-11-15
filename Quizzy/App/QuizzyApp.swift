@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Quizzy: los juegos de Kaffa como app independiente (fase 1, extracción).
-/// La raíz es la misma PuzzlesScreen de Kaffa, sin barra de colecciones.
+/// Quizzy: los juegos de Kaffa como app independiente.
+/// Diseño «Noche» (docs/DISENO.md): una sola apariencia, oscura.
 @main
 struct QuizzyApp: App {
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
@@ -14,11 +14,18 @@ struct QuizzyApp: App {
             }
             .sheet(isPresented: $showingSettings) { QuizzySettingsView() }
             .environment(\.locale, AppLanguage.resolve(languageSelection).locale)
+            .tint(PZColor.accent)
+            .preferredColorScheme(.dark)
         }
     }
 
     private var settingsButton: some View {
-        Button { showingSettings = true } label: { Image(systemName: "gearshape") }
-            .accessibilityLabel(AppLanguage.text("Ajustes", "Settings"))
+        Button { showingSettings = true } label: {
+            Image(systemName: "gearshape")
+                .font(.body.weight(.semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel(AppLanguage.text("Ajustes", "Settings"))
     }
 }
