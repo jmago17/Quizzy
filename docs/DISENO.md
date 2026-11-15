@@ -53,7 +53,7 @@ Valores únicos (no cambian entre claro y oscuro). En código: `PZColor`.
   bloque a `#0C0F17`.
 - Decoder mantiene su aparato propio; solo cambia el fondo que lo rodea.
 
-Contraste comprobado por cálculo: `ink` sobre `surface` 14,6:1; `inkSecondary`
+Contraste comprobado por cálculo: `ink` sobre `surface` 14,7:1; `inkSecondary`
 sobre `surface` 5,4:1; `onAccent` sobre `accent` 9,8:1.
 
 ## Tipografía
