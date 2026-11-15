@@ -77,6 +77,33 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Al añadir ficheros hay que `xcodegen generate` (el .xcodeproj está versionado): falló el build hasta hacerlo.
 - 2026-11-15 (tarde): `main` = diseño «Noche» (`diseno/noche-20261115`) + fix Anygram, sin conflictos. Build subido a 22;
   archivo OK pero export FALLA (llavero bloqueado: "Cloud signing permission error"); falta `Run` manual desde Xcode y repetir `ship.sh`.
+- 2026-11-15 (tarde) — revisión del diccionario y de los generadores (todo verificado con el harness salvo lo dicho):
+  - **Ñ:** los JSON no tenían NINGUNA Ñ (SEÑOR era SENOR; el teclado tenía tecla Ñ inútil). Restaurada con frecuencias
+    de subtítulos (`Tools/lexicon/enie.py`); sustitución en el sitio. El relleno de la sopa en español lleva Ñ.
+  - **Crucigramas no deterministas en español:** `PuzzleGenerator.swift` (autodefinido) y `MiniCrossword.swift`
+    recorrían Dictionary/Set sin ordenar (solo el inglés ordenaba): misma semilla → otro tablero en otro proceso.
+    Ordenado. Nuevo modo `--mode fingerprint` (dos procesos); comprobado que FALLA con el código viejo.
+  - **Anygram:** el léxico (bases jugables) se recalculaba en cada puzzle (29 M comparaciones, ~10 s). Ahora
+    `AnygramLexicon.shared` (0,13 s una vez). Comprobado IGUAL al viejo en 8 semillas con los datos de entonces.
+    Además tope de búsqueda determinista `searchStepLimit = 20_000`: máx. 7 s → 0,9 s (Mac, -O, 100 semillas);
+    cambia el tablero del 27 % de semillas, calidad igual (10,74 vs 10,84 palabras de media).
+  - **"Jugar otro" seguía pareciendo no hacer nada** cuando no había precalculado: la partida terminada seguía en
+    pantalla sin señal mientras se generaba. El UI test daba FALSO POSITIVO (esperaba un texto que también está en la
+    partida vieja); ahora exige que cambien las letras de la rueda (`accessibilityValue` de la rueda). Añadido aviso
+    "Preparando otro …" (`preparingKind` en `PuzzlesScreen`). Release en simulador: 3,0 s sin precalculado, 2,9 s con
+    él, desde el toque (incluye cierre de hoja). Debug: 13–21 s (no representativo).
+  - **Escalera de palabras:** eliminada (ya no se ofrecía; era código muerto). Queda el `case .ladder` para decodificar.
+  - **Listas:** `common_words` sin 162 nombres propios/inglés/regionalismos; nuevo `answer_words.json` (sin
+    conjugaciones) para soluciones de Quartiles y Sopa; Wordle: 162 respuestas sustituidas en el sitio (conjugaciones,
+    nombres, inglés, palabrotas) + ÑANDU; el Wordle de hoy y los 3 siguientes no cambian. Pistas: 146 reescritas a mano,
+    MARICA y 7 rarezas fuera, 86 palabras cortas nuevas. Hashtag: 4 → 124 plantillas.
+  - **Autodefinido:** con el banco nuevo 1/40 semillas no llegaba a la densidad mínima y caía al fijo de puzzles.json
+    (hipótesis "es el orden fijo" DESCARTADA: con solo el orden fijo pasa; con solo las pistas nuevas falla). Ahora
+    reintenta con semillas derivadas (el intento 0 es el de siempre).
+  - Efecto en partidas empezadas: sopa/quartiles/crucigramas/anygram de hoy están en snapshot → no cambian. Hashtag
+    de hoy SÍ puede cambiar (no tiene snapshot y cambió el número de plantillas).
+  - Fuentes y límites: `Tools/lexicon/README.md`. Quedan conjugaciones que el etiquetador no ve (RUEGA, COMPRENDIO) y
+    ~1.400 pistas sin revisar una a una. Nada de esto probado en iPhone real.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,
   portada y ajustes. Compilado en el Mac (Xcode 27.3, simulador): BUILD SUCCEEDED; tests Decoder y

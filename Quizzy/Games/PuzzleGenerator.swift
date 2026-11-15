@@ -52,6 +52,10 @@ enum PuzzleLexicon {
     /// forms of frequent stems (AGUANTARE, AGUJEREAN, RESULTASE...), minus
     /// dictionary curiosities nobody would ever guess (DESBAGASE, ASTAMENTA).
     /// Used to accept plays in Quartiles without rejecting real Spanish.
+    /// `commonWords` sin formas que solo son conjugación (ABANDONASTE, COMPROMETA...). De aquí
+    /// salen las SOLUCIONES de Quartiles y Sopa de letras; las jugadas se siguen aceptando con
+    /// las listas amplias. Generada con `Tools/lexicon/` (ver README allí).
+    static let answerWords: [String] = load("answer_words", as: [String].self) ?? commonWords
     static let playableWords: [String] = load("playable_words", as: [String].self) ?? words
     static let playableSet = Set(playableWords)
     /// Hand-filtered 5-letter answers for Wordle: common nouns and adjectives
@@ -113,7 +117,7 @@ enum ProceduralPuzzleGenerator {
         // (CATETEARA, BAMBONEAR, DELEZNARE...) and "ghost" 4-fragment
         // solutions that inflated the 5-quartile counter with combinations
         // nobody would recognise as real words.
-        let lexicon = PuzzleLexicon.commonWords
+        let lexicon = PuzzleLexicon.answerWords
         let lexiconSet = PuzzleLexicon.playableSet
         let seeds = lexicon.filter {
             (9...12).contains($0.count) && isGoodSeed($0)
@@ -222,7 +226,7 @@ enum ProceduralPuzzleGenerator {
         // Curated frequent words keep the hidden words recognisable even as
         // the grid grows — a bigger haystack should not also hide obscure
         // needles.
-        let candidates = (language == .english ? EnglishPuzzleLexicon.words : PuzzleLexicon.commonWords).filter { (4...min(9, size)).contains($0.count) && isGoodSeed($0) }
+        let candidates = (language == .english ? EnglishPuzzleLexicon.words : PuzzleLexicon.answerWords).filter { (4...min(9, size)).contains($0.count) && isGoodSeed($0) }
         var grid = Array(repeating: Array<String?>(repeating: nil, count: size), count: size)
         var placed: [PlacedWord] = []
         let dirs = [(0,1),(1,0),(1,1),(1,-1),(0,-1),(-1,0),(-1,-1),(-1,1)]
@@ -247,13 +251,28 @@ enum ProceduralPuzzleGenerator {
             placed.append(PlacedWord(word: word, cells: cells, clue: nil))
         }
         guard placed.count == count else { return nil }
-        let letters = Array("AAAAAABBCCDDEEEEEEEFGHIIIIIJLLLMMNNOOOOOPQRRRSSSSTTUUUVXYZ").map(String.init)
+        // En español el relleno también lleva Ñ: si no, una Ñ en la sopa delataría la palabra.
+        let letters = Array(language == .english ? "AAAAAABBCCDDEEEEEEEFGHIIIIIJLLLMMNNOOOOOPQRRRSSSSTTUUUVXYZ"
+                                                 : "AAAAAABBCCDDEEEEEEEFGHIIIIIJLLLMMNNÑOOOOOPQRRRSSSSTTUUUVXYZ").map(String.init)
         let complete = grid.map { row in row.map { $0 ?? letters[rng.int(letters.count)] } }
         return WordSearchPuzzle(id: "\(language == .english ? "en-" : "")w-gen-\(seed)", size: size, grid: complete, words: placed)
     }
 
     // MARK: Crossword with natural clues
     static func crossword(seed: UInt64, size: Int = 9, language: PuzzleLanguage = .spanish) -> CrosswordPuzzle? {
+        if language == .english { return crosswordAttempt(seed: seed, idSeed: seed, size: size, language: language) }
+        // Algunas semillas no llegan a la densidad mínima (≈1 de cada 40 con el banco actual) y la app
+        // caía al autodefinido fijo de puzzles.json. Se reintenta con semillas derivadas, como el Mini.
+        // El intento 0 es el de siempre, así que las semillas que ya funcionaban no cambian; el id
+        // sigue siendo el de la semilla original (el progreso guardado va por id).
+        for attempt in 0..<8 {
+            let s = attempt == 0 ? seed : seed &+ UInt64(attempt) &* 0x9E37_79B9_7F4A_7C15
+            if let p = crosswordAttempt(seed: s, idSeed: seed, size: size, language: language) { return p }
+        }
+        return nil
+    }
+
+    private static func crosswordAttempt(seed: UInt64, idSeed: UInt64, size: Int, language: PuzzleLanguage) -> CrosswordPuzzle? {
         var rng = SeededGenerator(seed: seed)
         let source = rng.shuffled((language == .english ? EnglishPuzzleLexicon.clues : PuzzleLexicon.clues).filter { (3...9).contains($0.word.count) })
         var letters: [GridCell: Character] = [:]
@@ -337,7 +356,9 @@ enum ProceduralPuzzleGenerator {
                 guard !used.contains(item.word) else { continue }
                 var options: [(Int, Int, Bool, Int)] = []
                 for (wi, ch) in item.word.enumerated() {
-                    for (cell, old) in (language == .english ? letters.sorted { ($0.key.row, $0.key.col) < ($1.key.row, $1.key.col) } : Array(letters)) where old == ch {
+                    // Orden fijo en ambos idiomas: recorrer el Dictionary tal cual cambia en cada
+                    // ejecución (hash con semilla por proceso) y la misma semilla daba otro tablero.
+                    for (cell, old) in letters.sorted(by: { ($0.key.row, $0.key.col) < ($1.key.row, $1.key.col) }) where old == ch {
                         let crossingDirs = occupied[cell] ?? []
                         if crossingDirs.contains("H") {
                             let r = cell.row - wi, c = cell.col
@@ -370,14 +391,14 @@ enum ProceduralPuzzleGenerator {
         // but reachable with the curated clue bank. Falling below this used to
         // return nil, which silently dropped the game from the hub.
         guard entries.count >= 8, letters.count >= (size * size) / 4 else {
-            return language == .english ? EnglishPuzzleLexicon.crossword(id: "en-c-gen-\(seed)", variant: seed) : nil
+            return language == .english ? EnglishPuzzleLexicon.crossword(id: "en-c-gen-\(idSeed)", variant: idSeed) : nil
         }
         let blocks=(0..<size).flatMap { r in (0..<size).compactMap { c -> [Int]? in
             letters[GridCell(row:r,col:c)] == nil ? [r,c] : nil
         }}
         let solution=Dictionary(uniqueKeysWithValues: letters.map { ($0.key.key,String($0.value)) })
         entries.sort { ($0.row,$0.col,$0.dir) < ($1.row,$1.col,$1.dir) }
-        return CrosswordPuzzle(id:"\(language == .english ? "en-" : "")c-gen-\(seed)",size:size,blocks:blocks,
+        return CrosswordPuzzle(id:"\(language == .english ? "en-" : "")c-gen-\(idSeed)",size:size,blocks:blocks,
                                solution:solution,entries:entries,full:true)
     }
 }

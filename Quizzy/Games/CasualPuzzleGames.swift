@@ -109,57 +109,6 @@ private enum TriviaBank {
     ]
 }
 
-struct WordLadderPuzzle: Identifiable, Sendable, Hashable {
-    let id: String
-    let start: String
-    let end: String
-    /// A curated Spanish lexicon. A ladder is only generated from these words,
-    /// avoiding the proper nouns and dictionary curiosities in broad word lists.
-    let validWords: Set<String>
-    /// One shortest route. Its length equals the Hamming distance between the
-    /// endpoints, which proves that no shorter route can exist.
-    let solution: [String]
-
-    var minimumSteps: Int { solution.count - 1 }
-
-    func isValidStep(from previous: String, to next: String) -> Bool {
-        guard next.count == start.count, validWords.contains(next), previous != next else { return false }
-        return zip(previous, next).filter { $0 != $1 }.count == 1
-    }
-
-    static func generate(seed: UInt64) -> WordLadderPuzzle {
-        var rng = SeededGenerator(seed: seed)
-        let routes = WordLadderBank.routes
-        let solution = routes.isEmpty ? ["CASA", "CAMA", "CIMA"] : routes[rng.int(routes.count)]
-        return .init(id: "ladder-\(seed)", start: solution[0], end: solution.last!,
-                     validWords: WordLadderBank.words, solution: solution)
-    }
-}
-
-private enum WordLadderBank {
-    /// Every route changes exactly one letter per rung and has as many moves
-    /// as its endpoints' differing positions, making it globally shortest.
-    static let routes: [[String]] = [
-        ["CASA", "CAMA", "CIMA"],
-        ["CAMA", "CIMA", "CITA"],
-        ["PESO", "PISO", "PITO", "PITA"],
-        ["RAMA", "RIMA", "CIMA"],
-        ["PELO", "PALO", "PATO"],
-        ["RICO", "RITO", "RATO", "RATA"],
-        ["LOBO", "LOCO", "LOCA"],
-        ["FOTO", "FOCO", "FOCA"],
-        ["MANO", "MALO", "PALO", "PALA"],
-        ["RANA", "RARA", "PARA", "PARE"],
-        ["SECO", "SENO", "SANO", "MANO"],
-        ["RAMA", "RIMA", "CIMA", "CITA"],
-        ["PERA", "PELA", "PALA", "SALA"],
-        ["ROSA", "RISA", "RIMA", "CIMA"],
-        ["CARO", "CARA", "CAMA", "CIMA"]
-    ]
-
-    static let words = Set(routes.flatMap { $0 })
-}
-
 struct DifferencesPuzzle: Identifiable, Sendable, Hashable {
     struct Item: Identifiable, Sendable, Hashable { let id: Int; let name: String; let x: Double; let y: Double; let color: String; let changed: Bool }
     let id: String; let left: [Item]; let right: [Item]; let differenceIDs: Set<Int>
@@ -171,203 +120,6 @@ struct DifferencesPuzzle: Identifiable, Sendable, Hashable {
         let diff=Set(Array(0..<12).shuffled().prefix(7)); var right:[Item]=[]
         for it in left { if diff.contains(it.id) { let mode=rng.int(3); right.append(.init(id:it.id,name: mode==0 ? names[rng.int(names.count)] : it.name, x:min(0.9,max(0.1,it.x + (mode==1 ? 0.08 : 0))), y:min(0.9,max(0.1,it.y + (mode==1 ? -0.06 : 0))), color: mode==2 ? colors[rng.int(colors.count)] : it.color, changed:true)) } else { right.append(it) } }
         return .init(id:"diff-\(seed)", left:left, right:right, differenceIDs:diff)
-    }
-}
-
-// MARK: - Escalera de palabras
-
-struct WordLadderGame: View {
-    let puzzle: WordLadderPuzzle
-    @ObservedObject private var progress = PuzzleProgress.shared
-
-    @State private var rungs: [String] = []
-    @State private var entry = ""
-    @State private var elapsed = 0
-    @State private var finished = false
-    @State private var toast: PZToast?
-    @State private var result: PZResult?
-    @FocusState private var entryFocused: Bool
-
-    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
-    private var current: String { rungs.last ?? puzzle.start }
-    private var nextNumber: Int { rungs.count + 2 }
-    private var remaining: Int { puzzle.minimumSteps - rungs.count }
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: PZSpace.lg) {
-                header
-                instructions
-                ladderCard
-                entryCard
-            }
-            .padding(.horizontal, PZSpace.screenH)
-            .padding(.vertical, PZSpace.md)
-        }
-        .background(LiquidCanvasBackground())
-        .navigationTitle("Escalera de palabras")
-        .navigationBarTitleDisplayMode(.inline)
-        .pzRules(.ladder)
-        .pzToast($toast)
-        .onAppear { restore() }
-        .onReceive(tick) { _ in
-            guard !finished else { return }
-            elapsed += 1
-            if elapsed.isMultiple(of: 5) { progress.setElapsed(puzzle.id, elapsed) }
-        }
-        .sheet(item: $result) { PZResultSheet(result: $0) }
-    }
-
-    private var header: some View {
-        HStack {
-            PZStat(label: "Pasos", value: "\(rungs.count)/\(puzzle.minimumSteps)")
-            Spacer()
-            PZStat(label: "Tiempo", value: PuzzleTiming.clock(TimeInterval(elapsed)), alignment: .trailing)
-        }
-    }
-
-    private var instructions: some View {
-        VStack(alignment: .leading, spacing: PZSpace.xs) {
-            Text("CAMBIA UNA LETRA")
-                .pzEyebrowStyle(PZ.ladder)
-            Text("Llega de \(puzzle.start) a \(puzzle.end) en \(puzzle.minimumSteps) pasos. Cada peldaño debe ser una palabra española válida.")
-                .font(PZFont.body)
-                .foregroundStyle(PZColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var ladderCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ladderRow(number: 1, word: puzzle.start, change: "inicio", isEndpoint: true)
-            ForEach(Array(rungs.enumerated()), id: \.offset) { index, word in
-                PZRule()
-                ladderRow(number: index + 2, word: word,
-                          change: changeDescription(from: index == 0 ? puzzle.start : rungs[index - 1], to: word),
-                          isEndpoint: word == puzzle.end)
-            }
-            if !finished {
-                PZRule()
-                HStack(spacing: PZSpace.md) {
-                    Text("\(nextNumber)").font(PZFont.metric).foregroundStyle(PZColor.inkTertiary)
-                    Text(remaining == 1 ? "Último peldaño" : "Quedan \(max(0, remaining)) peldaños")
-                        .font(PZFont.body).foregroundStyle(PZColor.inkSecondary)
-                }
-                .padding(PZSpace.cardPad)
-            }
-        }
-        .pzCard()
-    }
-
-    private func ladderRow(number: Int, word: String, change: String, isEndpoint: Bool) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: PZSpace.md) {
-            Text("\(number)").font(PZFont.metric).foregroundStyle(PZ.ladder).monospacedDigit()
-            Text(word).font(.system(.title3, design: .monospaced).weight(.bold)).tracking(2)
-            Spacer(minLength: PZSpace.sm)
-            Text(change).font(PZFont.caption).foregroundStyle(isEndpoint ? PZ.ladder : PZColor.inkSecondary)
-        }
-        .padding(PZSpace.cardPad)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var entryCard: some View {
-        VStack(alignment: .leading, spacing: PZSpace.md) {
-            Text("SIGUIENTE PALABRA").pzEyebrowStyle(PZ.ladder)
-            HStack(spacing: PZSpace.sm) {
-                TextField("4 letras", text: $entry)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled()
-                    .font(.system(.title3, design: .monospaced).weight(.bold))
-                    .tracking(2)
-                    .focused($entryFocused)
-                    .onChange(of: entry) { _, value in
-                        entry = normalized(value)
-                    }
-                    .onSubmit { submit() }
-                    .disabled(finished)
-                Button("Añadir", action: submit)
-                    .buttonStyle(.borderedProminent)
-                    .tint(PZ.ladder)
-                    .disabled(entry.count != 4 || finished)
-            }
-            Text("Solo se acepta un cambio de letra y no puedes repetir un peldaño.")
-                .font(PZFont.caption).foregroundStyle(PZColor.inkSecondary)
-        }
-        .padding(PZSpace.cardPad)
-        .pzCard()
-    }
-
-    private func restore() {
-        guard rungs.isEmpty else { return }
-        elapsed = progress.elapsed(puzzle.id)
-        let saved = progress.found(puzzle.id)
-        var previous = puzzle.start
-        for word in saved where puzzle.isValidStep(from: previous, to: word) && !rungs.contains(word) {
-            rungs.append(word)
-            previous = word
-        }
-        finished = rungs.last == puzzle.end && rungs.count == puzzle.minimumSteps
-        entryFocused = !finished
-    }
-
-    private func submit() {
-        let word = normalized(entry)
-        guard !word.isEmpty else { return }
-        guard word.count == puzzle.start.count else {
-            toast = PZToast(text: "Escribe una palabra de 4 letras", kind: .error); return
-        }
-        guard !rungs.contains(word) && word != puzzle.start else {
-            toast = PZToast(text: "No puedes repetir un peldaño", kind: .error); return
-        }
-        guard puzzle.validWords.contains(word) else {
-            toast = PZToast(text: "Esa palabra no está en el diccionario del juego", kind: .error); return
-        }
-        guard puzzle.isValidStep(from: current, to: word) else {
-            toast = PZToast(text: "Cambia una sola letra", kind: .error); return
-        }
-        guard rungs.count < puzzle.minimumSteps else {
-            toast = PZToast(text: "La ruta más corta ya no admite más pasos", kind: .error); return
-        }
-        let proposedSteps = rungs.count + 1
-        guard word != puzzle.end || proposedSteps == puzzle.minimumSteps else {
-            toast = PZToast(text: "Aún no has llegado en la ruta más corta", kind: .error); return
-        }
-        guard word == puzzle.end || proposedSteps < puzzle.minimumSteps else {
-            toast = PZToast(text: "El último peldaño debe ser \(puzzle.end)", kind: .error); return
-        }
-
-        rungs.append(word)
-        progress.setFound(puzzle.id, rungs)
-        entry = ""
-        PZHaptics.success()
-
-        if word == puzzle.end {
-            finish()
-        }
-    }
-
-    private func finish() {
-        guard !finished else { return }
-        finished = true
-        progress.markDone(puzzle.id)
-        progress.recordTime(TimeInterval(max(5, elapsed)), kind: .ladder, puzzleID: puzzle.id)
-        progress.noteDayIfComplete()
-        result = PZResult(kind: .ladder, didWin: true, headline: "¡Escalera completa!",
-                          detail: "Ruta más corta en \(puzzle.minimumSteps) pasos.",
-                          metrics: [("Pasos", "\(puzzle.minimumSteps)"),
-                                    ("Tiempo", PuzzleTiming.clock(TimeInterval(elapsed)))],
-                          shareText: "NewsRaider Escalera de palabras · \(puzzle.minimumSteps) pasos · \(PuzzleTiming.clock(TimeInterval(elapsed)))")
-    }
-
-    private func normalized(_ value: String) -> String {
-        value.uppercased().folding(options: .diacriticInsensitive, locale: Locale(identifier: "es_ES"))
-            .filter(\.isLetter).prefix(4).uppercased()
-    }
-
-    private func changeDescription(from previous: String, to next: String) -> String {
-        guard let pair = zip(previous, next).enumerated().first(where: { $0.element.0 != $0.element.1 }) else { return "" }
-        return "\(pair.element.0)→\(pair.element.1), pos. \(pair.offset + 1)"
     }
 }
 
@@ -1281,7 +1033,128 @@ private enum HashtagBank {
         .init(horizontalTop: "GATOS", horizontalBottom: "NUBES",
               verticalLeft: "SALUD", verticalRight: "PODER"),
         .init(horizontalTop: "MESAS", horizontalBottom: "COLOR",
-              verticalLeft: "MENOR", verticalRight: "CALOR")
+              verticalLeft: "MENOR", verticalRight: "CALOR"),
+        // Generadas 2026-11-15 con Tools/lexicon/hashtag.py desde wordle_answers (sin palabras repetidas).
+        .init(horizontalTop: "HUEVO", horizontalBottom: "PERSA", verticalLeft: "TUNEL", verticalRight: "AVISO"),
+        .init(horizontalTop: "DUNAS", horizontalBottom: "IDEAL", verticalLeft: "HUIDA", verticalRight: "CANAL"),
+        .init(horizontalTop: "HINDU", horizontalBottom: "GNOMO", verticalLeft: "PIANO", verticalRight: "EDEMA"),
+        .init(horizontalTop: "AEREA", horizontalBottom: "ANGEL", verticalLeft: "PERNO", verticalRight: "VEJEZ"),
+        .init(horizontalTop: "JAMON", horizontalBottom: "PALOS", verticalLeft: "CAPAZ", verticalRight: "MODOS"),
+        .init(horizontalTop: "GANSO", horizontalBottom: "COLON", verticalLeft: "CANOA", verticalRight: "ASNOS"),
+        .init(horizontalTop: "PECHO", horizontalBottom: "MOSCA", verticalLeft: "CEROS", verticalRight: "CHICA"),
+        .init(horizontalTop: "CALIZ", horizontalBottom: "ISLAM", verticalLeft: "SALSA", verticalRight: "RIVAL"),
+        .init(horizontalTop: "PLEBE", horizontalBottom: "OVNIS", verticalLeft: "LLAVE", verticalRight: "ABRIL"),
+        .init(horizontalTop: "NATAL", horizontalBottom: "IDOLO", verticalLeft: "ÑANDU", verticalRight: "CALLE"),
+        .init(horizontalTop: "SEDAL", horizontalBottom: "MACHO", verticalLeft: "RENAL", verticalRight: "BACHE"),
+        .init(horizontalTop: "LOGRO", horizontalBottom: "LINCE", verticalLeft: "COPIA", verticalRight: "TRECE"),
+        .init(horizontalTop: "LIDER", horizontalBottom: "AGUDA", verticalLeft: "BINGO", verticalRight: "CELDA"),
+        .init(horizontalTop: "TIESO", horizontalBottom: "ATLAS", verticalLeft: "NIETO", verticalRight: "USUAL"),
+        .init(horizontalTop: "BRAZO", horizontalBottom: "MAGNO", verticalLeft: "ORCAS", verticalRight: "OZONO"),
+        .init(horizontalTop: "DALIA", horizontalBottom: "CIELO", verticalLeft: "MATIZ", verticalRight: "RIFLE"),
+        .init(horizontalTop: "GORRA", horizontalBottom: "AMIGO", verticalLeft: "NORMA", verticalRight: "TRIGO"),
+        .init(horizontalTop: "NECIO", horizontalBottom: "GALOS", verticalLeft: "SEÑAS", verticalRight: "LICOR"),
+        .init(horizontalTop: "MONJE", horizontalBottom: "GRAVE", verticalLeft: "TORRE", verticalRight: "OJIVA"),
+        .init(horizontalTop: "FEROZ", horizontalBottom: "HELIO", verticalLeft: "RESES", verticalRight: "FOBIA"),
+        .init(horizontalTop: "MITIN", horizontalBottom: "AMADA", verticalLeft: "RITMO", verticalRight: "HINDI"),
+        .init(horizontalTop: "TIMON", horizontalBottom: "CRETA", verticalLeft: "LIBRE", verticalRight: "AORTA"),
+        .init(horizontalTop: "VIGAS", horizontalBottom: "OMEGA", verticalLeft: "FIRME", verticalRight: "RANGO"),
+        .init(horizontalTop: "PAÑOS", horizontalBottom: "SOCIO", verticalLeft: "CAJON", verticalRight: "COJIN"),
+        .init(horizontalTop: "POLLO", horizontalBottom: "LLENO", verticalLeft: "COPLA", verticalRight: "PLENA"),
+        .init(horizontalTop: "BAYAS", horizontalBottom: "HOGAR", verticalLeft: "TALON", verticalRight: "RAMAS"),
+        .init(horizontalTop: "TRIBU", horizontalBottom: "DEBIL", verticalLeft: "ARTES", verticalRight: "EBRIO"),
+        .init(horizontalTop: "LAPIZ", horizontalBottom: "ELFOS", verticalLeft: "GALLO", verticalRight: "BIDON"),
+        .init(horizontalTop: "BOXEO", horizontalBottom: "INDIO", verticalLeft: "HORNO", verticalRight: "GENIO"),
+        .init(horizontalTop: "CARTA", horizontalBottom: "ALMAS", verticalLeft: "SABLE", verticalRight: "ATRAS"),
+        .init(horizontalTop: "ROLLO", horizontalBottom: "AVARO", verticalLeft: "POLVO", verticalRight: "CLERO"),
+        .init(horizontalTop: "ZORRA", horizontalBottom: "GAITA", verticalLeft: "LOCAL", verticalRight: "FRUTA"),
+        .init(horizontalTop: "TENUE", horizontalBottom: "PLANO", verticalLeft: "VELLO", verticalRight: "BUENA"),
+        .init(horizontalTop: "PARED", horizontalBottom: "JEREZ", verticalLeft: "CAFES", verticalRight: "GENES"),
+        .init(horizontalTop: "CAQUI", horizontalBottom: "LEJIA", verticalLeft: "PANES", verticalRight: "LUCIO"),
+        .init(horizontalTop: "BUDIN", horizontalBottom: "MITAD", verticalLeft: "FURIA", verticalRight: "VIRAL"),
+        .init(horizontalTop: "GRITO", horizontalBottom: "COFRE", verticalLeft: "PRIOR", verticalRight: "UTERO"),
+        .init(horizontalTop: "SESOS", horizontalBottom: "ACTAS", verticalLeft: "PESCA", verticalRight: "SOGAS"),
+        .init(horizontalTop: "SELVA", horizontalBottom: "QUEJA", verticalLeft: "FEMUR", verticalRight: "OVEJA"),
+        .init(horizontalTop: "TUTOR", horizontalBottom: "GALAN", verticalLeft: "AULAS", verticalRight: "LOCAS"),
+        .init(horizontalTop: "MAMUT", horizontalBottom: "MOTIN", verticalLeft: "MAYOR", verticalRight: "PUDIN"),
+        .init(horizontalTop: "BANAL", horizontalBottom: "ASTRO", verticalLeft: "PAUSA", verticalRight: "SABRE"),
+        .init(horizontalTop: "METAL", horizontalBottom: "ENANO", verticalLeft: "REINA", verticalRight: "FAUNA"),
+        .init(horizontalTop: "HUECA", horizontalBottom: "ATROZ", verticalLeft: "CULTA", verticalRight: "OCHOS"),
+        .init(horizontalTop: "SERIO", horizontalBottom: "POMPA", verticalLeft: "HEROE", verticalRight: "MIOPE"),
+        .init(horizontalTop: "CHATO", horizontalBottom: "PLACA", verticalLeft: "CHELO", verticalRight: "ETICA"),
+        .init(horizontalTop: "NUEVE", horizontalBottom: "JABON", verticalLeft: "RURAL", verticalRight: "AVION"),
+        .init(horizontalTop: "LISTO", horizontalBottom: "DULCE", verticalLeft: "TIFUS", verticalRight: "ATICO"),
+        .init(horizontalTop: "CAÑON", horizontalBottom: "CINTA", verticalLeft: "SABIO", verticalRight: "MONTE"),
+        .init(horizontalTop: "NOVIO", horizontalBottom: "ATAUD", verticalLeft: "TONTO", verticalRight: "VIRUS"),
+        .init(horizontalTop: "GATAS", horizontalBottom: "ISLAS", verticalLeft: "CAUSA", verticalRight: "PAPAL"),
+        .init(horizontalTop: "LUCHA", horizontalBottom: "NOBLE", verticalLeft: "BUZON", verticalRight: "CHULO"),
+        .init(horizontalTop: "TABLA", horizontalBottom: "ETICO", verticalLeft: "VASTO", verticalRight: "FLACO"),
+        .init(horizontalTop: "FRESA", horizontalBottom: "VERDE", verticalLeft: "ORDEN", verticalRight: "OSADA"),
+        .init(horizontalTop: "LUPUS", horizontalBottom: "BAJON", verticalLeft: "PURAS", verticalRight: "BUHOS"),
+        .init(horizontalTop: "NIÑOS", horizontalBottom: "TOTEM", verticalLeft: "VISOR", verticalRight: "GOLES"),
+        .init(horizontalTop: "GASES", horizontalBottom: "UNION", verticalLeft: "VAINA", verticalRight: "HEDOR"),
+        .init(horizontalTop: "LANCE", horizontalBottom: "TRONO", verticalLeft: "BAGRE", verticalRight: "ICONO"),
+        .init(horizontalTop: "BUSES", horizontalBottom: "TONTA", verticalLeft: "HUNOS", verticalRight: "DELTA"),
+        .init(horizontalTop: "MALTA", horizontalBottom: "TRIPA", verticalLeft: "TAURO", verticalRight: "ETAPA"),
+        .init(horizontalTop: "SOFAS", horizontalBottom: "ACTOS", verticalLeft: "HORCA", verticalRight: "RAROS"),
+        .init(horizontalTop: "ROBOT", horizontalBottom: "OBESO", verticalLeft: "BOMBO", verticalRight: "BOLSO"),
+        .init(horizontalTop: "RIGOR", horizontalBottom: "OGROS", verticalLeft: "RIEGO", verticalRight: "FOTOS"),
+        .init(horizontalTop: "VALOR", horizontalBottom: "MISMO", verticalLeft: "PATIN", verticalRight: "FORMA"),
+        .init(horizontalTop: "PARTO", horizontalBottom: "ARAÑA", verticalLeft: "CATRE", verticalRight: "OTOÑO"),
+        .init(horizontalTop: "PAVOR", horizontalBottom: "ACRES", verticalLeft: "BARCO", verticalRight: "JOVEN"),
+        .init(horizontalTop: "CORAL", horizontalBottom: "TAREA", verticalLeft: "ROPAS", verticalRight: "NAVES"),
+        .init(horizontalTop: "FLECO", horizontalBottom: "ARROZ", verticalLeft: "FLORA", verticalRight: "ACTOR"),
+        .init(horizontalTop: "NIDOS", horizontalBottom: "FENIX", verticalLeft: "FIDEO", verticalRight: "PODIO"),
+        .init(horizontalTop: "ROQUE", horizontalBottom: "DEUDA", verticalLeft: "MOTEL", verticalRight: "RUEDO"),
+        .init(horizontalTop: "TENAZ", horizontalBottom: "ARABE", verticalLeft: "METRO", verticalRight: "CAOBA"),
+        .init(horizontalTop: "SIMIO", horizontalBottom: "TOSCO", verticalLeft: "MITOS", verticalRight: "CINCO"),
+        .init(horizontalTop: "CURVA", horizontalBottom: "HIMNO", verticalLeft: "SUCIO", verticalRight: "AVENA"),
+        .init(horizontalTop: "FACIL", horizontalBottom: "RATOS", verticalLeft: "NASAL", verticalRight: "PITON"),
+        .init(horizontalTop: "HUECO", horizontalBottom: "GRASA", verticalLeft: "MUGRE", verticalRight: "OCASO"),
+        .init(horizontalTop: "CASPA", horizontalBottom: "TOSCA", verticalLeft: "TAPON", verticalRight: "EPICO"),
+        .init(horizontalTop: "REINO", horizontalBottom: "DOGMA", verticalLeft: "MELON", verticalRight: "ANIMO"),
+        .init(horizontalTop: "DOCIL", horizontalBottom: "IGUAL", verticalLeft: "BONGO", verticalRight: "FINAL"),
+        .init(horizontalTop: "FALSO", horizontalBottom: "OPERA", verticalLeft: "CAMPO", verticalRight: "OSTRA"),
+        .init(horizontalTop: "TORNO", horizontalBottom: "VITAL", verticalLeft: "MOMIA", verticalRight: "ANUAL"),
+        .init(horizontalTop: "MILES", horizontalBottom: "HAYAS", verticalLeft: "LILAS", verticalRight: "NENAS"),
+        .init(horizontalTop: "TECHO", horizontalBottom: "BRUTA", verticalLeft: "NEGRA", verticalRight: "CHATA"),
+        .init(horizontalTop: "BUCAL", horizontalBottom: "LUNAR", verticalLeft: "DUQUE", verticalRight: "CACAO"),
+        .init(horizontalTop: "RUINA", horizontalBottom: "CLARO", verticalLeft: "MUSLO", verticalRight: "ENERO"),
+        .init(horizontalTop: "MEJOR", horizontalBottom: "OREJA", verticalLeft: "LEPRA", verticalRight: "MONJA"),
+        .init(horizontalTop: "PUÑAL", horizontalBottom: "POLIO", verticalLeft: "RUDOS", verticalRight: "LABIO"),
+        .init(horizontalTop: "HORAS", horizontalBottom: "BILIS", verticalLeft: "NORIA", verticalRight: "MAFIA"),
+        .init(horizontalTop: "LORES", horizontalBottom: "MISMA", verticalLeft: "BOTIN", verticalRight: "REUMA"),
+        .init(horizontalTop: "RAZON", horizontalBottom: "CRUDA", verticalLeft: "PADRE", verticalRight: "BORDE"),
+        .init(horizontalTop: "GALAS", horizontalBottom: "SETAS", verticalLeft: "MAREA", verticalRight: "DAGAS"),
+        .init(horizontalTop: "RUMBO", horizontalBottom: "MORSA", verticalLeft: "HUMOR", verticalRight: "ABUSO"),
+        .init(horizontalTop: "HIELO", horizontalBottom: "URNAS", verticalLeft: "LIBRO", verticalRight: "ALTAR"),
+        .init(horizontalTop: "LOTES", horizontalBottom: "ARPIA", verticalLeft: "HONRA", verticalRight: "REDIL"),
+        .init(horizontalTop: "VUELO", horizontalBottom: "DIQUE", verticalLeft: "JULIO", verticalRight: "ALBUM"),
+        .init(horizontalTop: "SIGLO", horizontalBottom: "AGUJA", verticalLeft: "CIEGO", verticalRight: "FLOJO"),
+        .init(horizontalTop: "MANIA", horizontalBottom: "FRENO", verticalLeft: "CABRA", verticalRight: "HIENA"),
+        .init(horizontalTop: "LETRA", horizontalBottom: "CORTO", verticalLeft: "TEMOR", verticalRight: "GRUTA"),
+        .init(horizontalTop: "BRASA", horizontalBottom: "CONDE", verticalLeft: "ARDOR", verticalRight: "ASADA"),
+        .init(horizontalTop: "CARGO", horizontalBottom: "SENDA", verticalLeft: "BARES", verticalRight: "AGUDO"),
+        .init(horizontalTop: "MUSEO", horizontalBottom: "HONGO", verticalLeft: "FUROR", verticalRight: "BEIGE"),
+        .init(horizontalTop: "TAPIZ", horizontalBottom: "MEDIO", verticalLeft: "LATEX", verticalRight: "LITIO"),
+        .init(horizontalTop: "FOCAS", horizontalBottom: "ESQUI", verticalLeft: "TORSO", verticalRight: "SAQUE"),
+        .init(horizontalTop: "SEÑOR", horizontalBottom: "FALDA", verticalLeft: "SEÑAL", verticalRight: "HORDA"),
+        .init(horizontalTop: "ARDUO", horizontalBottom: "BELLO", verticalLeft: "CRUEL", verticalRight: "SUELA"),
+        .init(horizontalTop: "RIÑON", horizontalBottom: "ZONAS", verticalLeft: "HIJOS", verticalRight: "GOTAS"),
+        .init(horizontalTop: "CISNE", horizontalBottom: "TRUCO", verticalLeft: "SIDRA", verticalRight: "UNICO"),
+        .init(horizontalTop: "TAZON", horizontalBottom: "TEMPO", verticalLeft: "CAREY", verticalRight: "GOLPE"),
+        .init(horizontalTop: "PELEA", horizontalBottom: "INCAS", verticalLeft: "LEONA", verticalRight: "YEMAS"),
+        .init(horizontalTop: "RICAS", horizontalBottom: "CHICO", verticalLeft: "BICHO", verticalRight: "VASCO"),
+        .init(horizontalTop: "COÑAC", horizontalBottom: "COSTO", verticalLeft: "COLOR", verticalRight: "PARTE"),
+        .init(horizontalTop: "TORAX", horizontalBottom: "FRIOS", verticalLeft: "POTRO", verticalRight: "VAPOR"),
+        .init(horizontalTop: "SAPOS", horizontalBottom: "FOCOS", verticalLeft: "CAROS", verticalRight: "BOTON"),
+        .init(horizontalTop: "PANEL", horizontalBottom: "FLOTA", verticalLeft: "CABLE", verticalRight: "OESTE"),
+        .init(horizontalTop: "JUNIO", horizontalBottom: "MANTA", verticalLeft: "FUGAZ", verticalRight: "VISTO"),
+        .init(horizontalTop: "RUSOS", horizontalBottom: "OIDOS", verticalLeft: "FUSIL", verticalRight: "POCOS"),
+        .init(horizontalTop: "LABOR", horizontalBottom: "VIRGO", verticalLeft: "LATIN", verticalRight: "CONGA"),
+        .init(horizontalTop: "MILLA", horizontalBottom: "POEMA", verticalLeft: "TIFON", verticalRight: "PLUMA"),
+        .init(horizontalTop: "RUBOR", horizontalBottom: "POLEA", verticalLeft: "TUMOR", verticalRight: "HOTEL"),
+        .init(horizontalTop: "SITIO", horizontalBottom: "CERDO", verticalLeft: "LICEO", verticalRight: "MIEDO"),
+        .init(horizontalTop: "LLANO", horizontalBottom: "ONDAS", verticalLeft: "LLENA", verticalRight: "ONZAS")
     ]
 }
 
@@ -1669,6 +1542,7 @@ private struct AnygramWheel: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(AppLanguage.text("Rueda de letras", "Letter wheel"))
+            .accessibilityValue(letters.map(String.init).joined(separator: ", "))
         }
         .frame(height: side)
     }

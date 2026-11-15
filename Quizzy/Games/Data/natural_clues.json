@@ -1,7 +1,7 @@
 [
 [
 "ABRIGO",
-"Prenda de vestir que se pone encima de las demás y sirve para abrigar"
+"Prenda gruesa que se pone encima de la ropa"
 ],
 [
 "ABUSIVO",
@@ -37,7 +37,7 @@
 ],
 [
 "AGRESION",
-"Acción agredir a alguna persona o cosa con el fin de ocasionarle un daño"
+"Ataque contra alguien"
 ],
 [
 "AGUA",
@@ -61,7 +61,7 @@
 ],
 [
 "ALCAIDE",
-"Funcionario designado por el rey para la defensa de una fortaleza durante el Medioevo"
+"Director de una cárcel"
 ],
 [
 "ALCALDE",
@@ -69,11 +69,11 @@
 ],
 [
 "ALEACION",
-"Sustancia compuesta de una mezcla de dos o más metales o de varios metales con otra sustancia no metálica"
+"Mezcla de metales"
 ],
 [
 "ALERTAR",
-"Dar la alerta. Avisar"
+"Avisar de un peligro"
 ],
 [
 "ALFABETO",
@@ -93,7 +93,7 @@
 ],
 [
 "AMULETO",
-"Objeto o cosa que al cual se le atribuyen poderes protectores para quien sea el portador del mismo"
+"Objeto que se cree que da suerte"
 ],
 [
 "ANDANTE",
@@ -105,11 +105,11 @@
 ],
 [
 "ANTERIOR",
-"Que ocurrió antes. Formado como grado comparativo irregular del adverbio"
+"Que va o sucede antes"
 ],
 [
 "ANTIBALAS",
-"Dicho de un elemento: que resiste la penetración de las balas de disparos"
+"Que resiste los disparos"
 ],
 [
 "APELAR",
@@ -125,11 +125,11 @@
 ],
 [
 "APOSTAR",
-"Pactar que si no se verifica lo que alguno asegura perderá una cantidad o cosa"
+"Jugarse dinero a un resultado"
 ],
 [
 "APOYO",
-"Dícese de cualquier clase de objeto que sirva para apoyar o apoyarse"
+"Lo que sirve para sostener algo"
 ],
 [
 "APRETADO",
@@ -177,7 +177,7 @@
 ],
 [
 "ASESINO",
-"Que asesina o ha asesinado, en especial si lo tiene por hábito, inclinación u oficio"
+"Persona que mata a otra"
 ],
 [
 "ASUNTO",
@@ -205,18 +205,18 @@
 ],
 [
 "AZOTE",
-"Instrumento con que se azota"
+"Látigo para castigar"
 ],
 [
 "BABOSO",
-"Que segrega baba (sustancia viscosa animal o vegetal, en particular la saliva)"
+"Que suelta saliva"
 ],
 [
 "BANDEJA",
 "Recipiente ancho y plano usado para almacenar o transportar objetos"
 ],
 [
-"BANERA",
+"BAÑERA",
 "Recipiente grande y largo destinado para bañarse"
 ],
 [
@@ -245,11 +245,11 @@
 ],
 [
 "BOCADILLO",
-"Comida compuesta por uno o varios ingredientes entre dos o más capas de pan"
+"Pan relleno de embutido u otra cosa"
 ],
 [
 "BOLSILLO",
-"Bolsa pequeña, ubicada en algunas prendas de vestir, que se usa para guardar cosas"
+"Bolsa cosida en la ropa"
 ],
 [
 "BOSQUE",
@@ -269,7 +269,7 @@
 ],
 [
 "BRUJA",
-"Mujer a la que se le atribuyen poderes mágicos y sobrenaturales, en la mayoría de los casos empleados para hacer el mal"
+"Mujer que hace hechizos"
 ],
 [
 "BRUTAL",
@@ -277,7 +277,7 @@
 ],
 [
 "BUFANDA",
-"Prenda larga y estrecha, por lo común de lana o seda, con que se envuelve y abriga el cuello y la boca"
+"Prenda que abriga el cuello"
 ],
 [
 "CABECILLA",
@@ -321,11 +321,11 @@
 ],
 [
 "CAMBIANTE",
-"Reflejo de diversos colores que hace la luz sobre algún material, especialmente en telas"
+"Que cambia a menudo"
 ],
 [
 "CAMELLO",
-"Persona que se dedica al tráfico de drogas psicotrópicas, especialmente al por menor"
+"Animal de dos jorobas"
 ],
 [
 "CAMINO",
@@ -337,7 +337,7 @@
 ],
 [
 "CANSANCIO",
-"Debilidad general del organismo de carácter transitorio, provocada por el exceso de ejercicio o por alguna enfermedad"
+"Falta de fuerzas tras un esfuerzo"
 ],
 [
 "CAPAZ",
@@ -345,7 +345,7 @@
 ],
 [
 "CARA",
-"En los humanos y algunos animales, es la parte frontal de la cabeza, donde se encuentran los ojos, nariz y boca"
+"Parte de la cabeza con ojos, nariz y boca"
 ],
 [
 "CARACOL",
@@ -361,7 +361,7 @@
 ],
 [
 "CASCADA",
-"Accidente geográfico formado por la caída de un curso de agua desde un acantilado o desnivel brusco del terreno"
+"Caída de agua de un río"
 ],
 [
 "CASCO",
@@ -373,7 +373,7 @@
 ],
 [
 "CASO",
-"Evento o asunto llevado ante la consideración de la justicia o investigado por los organismos competentes"
+"Asunto que investiga la policía"
 ],
 [
 "CAVA",
@@ -381,7 +381,7 @@
 ],
 [
 "CAVIAR",
-"Manjar de huevas de esturión u otro pescado, saladas para su conserva, que se considera una delicadeza gastronómica"
+"Huevas de esturión"
 ],
 [
 "CEBOLLA",
@@ -405,11 +405,11 @@
 ],
 [
 "CHAVAL",
-"Ser humano de corta edad, en especial el que no ha llegado a la pubertad"
+"Niño o muchacho"
 ],
 [
 "CHECO",
-"Persona que es originaria de la República Checa"
+"Natural de Praga, por ejemplo"
 ],
 [
 "CHEQUEAR",
@@ -429,11 +429,11 @@
 ],
 [
 "CINTA",
-"Tira larga y delgada de papel, plástico, tela u otro material que tiene a veces fines decorativos"
+"Tira larga y estrecha"
 ],
 [
 "CISTERNA",
-"Depósito subterráneo hecho para conservar el agua de lluvia o de algún manantial o río"
+"Depósito de agua"
 ],
 [
 "CITACION",
@@ -441,7 +441,7 @@
 ],
 [
 "CITAR",
-"Avisar, prevenir, emplazar a alguno, señalándole día, hora y lugar para tratar de algún negocio"
+"Mencionar; también, convocar"
 ],
 [
 "CIUDAD",
@@ -457,7 +457,7 @@
 ],
 [
 "CLORO",
-"Mezcla de agua con una baja concentración de hipoclorito de sodio, usada para limpiar, blanquear las telas o desinfectar"
+"Lejía; elemento químico"
 ],
 [
 "COBARDE",
@@ -473,7 +473,7 @@
 ],
 [
 "COHETE",
-"Artefacto autopropulsado que obtiene su empuje por la reacción de la expulsión rápida de gases de combustión"
+"Vehículo que viaja al espacio"
 ],
 [
 "COLA",
@@ -481,7 +481,7 @@
 ],
 [
 "COLEGA",
-"Persona con la que se comparte el pertenecer a una profesión o equipo de trabajo u organización"
+"Compañero de profesión"
 ],
 [
 "COLINA",
@@ -497,7 +497,7 @@
 ],
 [
 "COMISARIO",
-"El que tiene poder y facultad de otro para ejecutar alguna orden o entender en algún negocio"
+"Mando de la policía"
 ],
 [
 "COMODIDAD",
@@ -509,7 +509,7 @@
 ],
 [
 "CONQUE",
-"Úsase para introducir una oración que expresa la conclusión o consecuencia de lo antedicho"
+"Así que"
 ],
 [
 "CONSEJO",
@@ -517,7 +517,7 @@
 ],
 [
 "CONSERVA",
-"Alimento preparado y envasado de tal manera de mantenerse comestible durante largo tiempo"
+"Alimento envasado en lata"
 ],
 [
 "CONSULADO",
@@ -545,7 +545,7 @@
 ],
 [
 "CONVOCAR",
-"Reclamar la presencia de alguien en un lugar o para concurrir en un acto"
+"Llamar a una reunión"
 ],
 [
 "COOPERAR",
@@ -557,7 +557,7 @@
 ],
 [
 "CORRUPTO",
-"Se aplica a las personas que cometen irregularidades o infrigen la ley para obtener un beneficio particular"
+"Que se deja sobornar"
 ],
 [
 "COSECHAR",
@@ -569,11 +569,11 @@
 ],
 [
 "CREACION",
-"Dícese de lo ya creado, especialmente lo que se encuentra en la naturaleza"
+"Obra que se inventa o produce"
 ],
 [
 "CRISTIANO",
-"Propio de, relativo a o devoto del cristianismo"
+"Que sigue la doctrina de Jesús"
 ],
 [
 "CRUZADA",
@@ -585,7 +585,7 @@
 ],
 [
 "CUCHARADA",
-"Lo que cabe dentro de una cuchara"
+"Lo que cabe en un cubierto para sopa"
 ],
 [
 "CUENTO",
@@ -593,7 +593,7 @@
 ],
 [
 "CUNA",
-"Motivo de distanciamiento entre dos personas, introducido por un tercero"
+"Cama de un bebé"
 ],
 [
 "CURA",
@@ -625,7 +625,7 @@
 ],
 [
 "DESHONRA",
-"Pérdida o disminución de la dignidad, la estima y la respetabilidad de una persona o de una cosa"
+"Pérdida de la buena fama"
 ],
 [
 "DESPEJADO",
@@ -637,7 +637,7 @@
 ],
 [
 "DESVIAR",
-"Hacer que alguien o algo se salga de la ruta o dirección que llevaba o quería seguir"
+"Apartar de su camino"
 ],
 [
 "DIA",
@@ -645,7 +645,7 @@
 ],
 [
 "DIBUJO",
-"Arte que enseña a dibujar"
+"Imagen trazada con lápiz"
 ],
 [
 "DICTADOR",
@@ -677,7 +677,7 @@
 ],
 [
 "DOTE",
-"Caudal (bienes) que aporta la mujer cuando se casa, o que adquiere después de casada"
+"Bienes que aporta la novia"
 ],
 [
 "DURAR",
@@ -701,11 +701,11 @@
 ],
 [
 "ELOGIO",
-"Expresión verbal o escrita que se hace de las cualidades y bondades de algo"
+"Alabanza"
 ],
 [
 "EMBOSCADA",
-"Ocultación de una o varias personas en parte retirada para atacar por sorpresa a otra u otras"
+"Ataque por sorpresa desde un escondite"
 ],
 [
 "EMBROLLO",
@@ -717,7 +717,7 @@
 ],
 [
 "EMOCION",
-"Interés o atención intensos con que se participa en una vivencia o acontecimiento"
+"Sentimiento intenso"
 ],
 [
 "EMPLEAR",
@@ -729,7 +729,7 @@
 ],
 [
 "ENCINTA",
-"Mujer que está en embarazo (con un embrión fecundado y luego un feto gestándose en el vientre)"
+"Embarazada"
 ],
 [
 "ENE",
@@ -737,7 +737,7 @@
 ],
 [
 "ENJAMBRE",
-"Grupo abundante de abejas que sale de una colmena para engendrar una nueva colonia"
+"Grupo de abejas"
 ],
 [
 "ENOJADO",
@@ -769,7 +769,7 @@
 ],
 [
 "ESPECIAL",
-"Singular o particular, que se diferencia de lo común, ordinario o general"
+"Fuera de lo común"
 ],
 [
 "ESPECIE",
@@ -781,11 +781,11 @@
 ],
 [
 "ESTAFAR",
-"Cometer estafa"
+"Engañar para quitar dinero"
 ],
 [
 "ESTATURA",
-"Dícese del tamaño que alguien tiene desde los pies a la cabeza, o viceversa"
+"Altura de una persona"
 ],
 [
 "ESTRELLA",
@@ -805,7 +805,7 @@
 ],
 [
 "EVACUAR",
-"Desalojar o abandonar un lugar rápidamente, a menudo debido a una emergencia"
+"Desalojar un lugar"
 ],
 [
 "EXAGERADO",
@@ -857,7 +857,7 @@
 ],
 [
 "FERIA",
-"Conjunto de instalaciones recreativas que se montan, generalmente al aire libre, para celebrar un evento especial"
+"Fiesta con atracciones"
 ],
 [
 "FIAR",
@@ -869,7 +869,7 @@
 ],
 [
 "FIERA",
-"Animal feroz, por lo común mamífero carnívoro que impresiona y asusta por su tamaño"
+"Animal salvaje"
 ],
 [
 "FINAL",
@@ -889,19 +889,19 @@
 ],
 [
 "FORMA",
-"Apariencia, figura, disposición, configuración, silueta o estructura externa y visible de algo"
+"Figura exterior de algo"
 ],
 [
 "FORMAR",
-"Dar forma o figura, crear, componer"
+"Dar figura; también, educar"
 ],
 [
 "FORTUNA",
-"Causa fortuita o de origen indeterminado de cualquier hecho"
+"Suerte; también, gran riqueza"
 ],
 [
 "FRAMBUESA",
-"Fruto del frambueso, es una polidrupa comestible de color rojizo o amarillo"
+"Fruto rojo parecido a la mora"
 ],
 [
 "FRITA",
@@ -925,7 +925,7 @@
 ],
 [
 "GALLO",
-"(Lepidorhombus boscii) pez pleuronectiforme de unos 20 centímetros de largo, parecido al lenguado"
+"Ave que canta al amanecer"
 ],
 [
 "GAMA",
@@ -953,7 +953,7 @@
 ],
 [
 "GRANDIOSO",
-"Que sobresale o destaca mucho por lo grande de alguna o de varias cualidades"
+"Magnífico"
 ],
 [
 "GRANO",
@@ -969,7 +969,7 @@
 ],
 [
 "HASTA",
-"Preposición que indica el fin o término de una actividad, sea en sentido locativo, cronológico o cuantitativo"
+"Preposición de límite"
 ],
 [
 "HEDOR",
@@ -977,7 +977,7 @@
 ],
 [
 "HEREJE",
-"Persona que va contra uno o varios de los dogmas establecidos de una determinada religión"
+"Que niega un dogma religioso"
 ],
 [
 "HIELO",
@@ -1021,7 +1021,7 @@
 ],
 [
 "INFUSION",
-"Disolución que se prepara para ser inyectada en el cuerpo, o bien ser suministrada vía oral"
+"Té o manzanilla, por ejemplo"
 ],
 [
 "INODORO",
@@ -1029,7 +1029,7 @@
 ],
 [
 "INSTINTO",
-"Tendencia o impulso innato y genéticamente determinado hacia un comportamiento"
+"Impulso innato"
 ],
 [
 "INSULTAR",
@@ -1037,11 +1037,11 @@
 ],
 [
 "INTENTAR",
-"Prepararse para hacer algo, tomar las medidas necesarias y hacer el esfuerzo para conseguirlo"
+"Tratar de hacer algo"
 ],
 [
 "INTERFAZ",
-"Punto de interconexión entre dos entidades, sistemas, equipos, conceptos, etc"
+"Conexión entre dos sistemas"
 ],
 [
 "INTERIOR",
@@ -1049,7 +1049,7 @@
 ],
 [
 "INTRUSION",
-"Acción o efecto de penetrar o introducirse (intrusarse) de forma inadecuada o ilegítima en un lugar o una situación"
+"Entrada sin permiso"
 ],
 [
 "INVOCAR",
@@ -1061,11 +1061,11 @@
 ],
 [
 "JUERGA",
-"Fiesta o una reunión con amigos en la que se puede encontrar música, algarabía, licor y comida"
+"Fiesta animada"
 ],
 [
 "JUEZA",
-"Esposa del juez"
+"Mujer que dicta sentencias"
 ],
 [
 "JUICIO",
@@ -1073,7 +1073,7 @@
 ],
 [
 "JULIO",
-"Séptimo mes del año en el calendario gregoriano, entre junio y agosto. Dura 31 días"
+"Séptimo mes"
 ],
 [
 "JUNTA",
@@ -1089,7 +1089,7 @@
 ],
 [
 "LAGUNA",
-"Gran acumulación de agua dulce, rara vez agua salada, de menor tamaño que un lago"
+"Lago pequeño; también, olvido"
 ],
 [
 "LAMENTO",
@@ -1097,11 +1097,11 @@
 ],
 [
 "LANCE",
-"En el poema dramático y en la novela, suceso, acontecimiento, situación interesante o notable"
+"Episodio; también, lanzamiento"
 ],
 [
 "LANZA",
-"En un carro, vara unida al eje delantero. Sirve para dirigir el vehículo"
+"Arma de asta larga con punta"
 ],
 [
 "LATA",
@@ -1141,7 +1141,7 @@
 ],
 [
 "LUMBAR",
-"Referente al lomo y a la cadera, especialmente a cualquiera de las cinco vértebras de la porción inferior de la espalda"
+"De la parte baja de la espalda"
 ],
 [
 "LUNA",
@@ -1153,11 +1153,11 @@
 ],
 [
 "MACHISTA",
-"Propio de, relativo a o partidario del machismo"
+"Que discrimina a la mujer"
 ],
 [
 "MAGDALENA",
-"Bollo de masa de bizcocho normalmente presentado en un molde de papel acanalado"
+"Bollo de bizcocho"
 ],
 [
 "MAL",
@@ -1165,7 +1165,7 @@
 ],
 [
 "MANCO",
-"Que le falta un brazo o una mano, o que no puede usar alguno de estos miembros"
+"Que le falta una mano o un brazo"
 ],
 [
 "MAPA",
@@ -1173,15 +1173,11 @@
 ],
 [
 "MAQUETA",
-"Modelo tridimensional de un objeto, casa o edificio a escala reducida, construido en cartón, plástico u otro material"
+"Modelo a escala"
 ],
 [
 "MAR",
 "Gran extensión de agua salada"
-],
-[
-"MARICA",
-"Hombre que siente atracción sexual por personas de su mismo sexo biológico"
 ],
 [
 "MEDIA",
@@ -1201,7 +1197,7 @@
 ],
 [
 "MEZCLA",
-"Combinación de dos o más sustancias en la cual no ocurren reacciones químicas"
+"Unión de varias cosas"
 ],
 [
 "MIL",
@@ -1213,7 +1209,7 @@
 ],
 [
 "MIMADO",
-"Que, por demasiados mimos, protección o condescendencia, tiende a ser egoísta y caprichoso"
+"Consentido"
 ],
 [
 "MITIN",
@@ -1221,7 +1217,7 @@
 ],
 [
 "MOMIA",
-"Cadáver que naturalmente o por preparación artificial se deseca con el transcurso del tiempo sin entrar en putrefacción"
+"Cadáver embalsamado"
 ],
 [
 "MONEDERO",
@@ -1241,19 +1237,19 @@
 ],
 [
 "MULTA",
-"Sanción económica que la autoridad hacendaria impone a los contribuyentes que en alguna forma han infringido la ley"
+"Sanción con dinero"
 ],
 [
 "MUNICIPIO",
-"Por extensión, también se usa para referirse al ayuntamiento o municipalidad en sí"
+"Término gobernado por un ayuntamiento"
 ],
 [
 "MUTUO",
-"Que se hace o posee de modo recíproco entre dos o más, en una relación de correspondencia de uno al otro"
+"Recíproco"
 ],
 [
 "NACIONAL",
-"Perteneciente o relativo a una nación"
+"Relativo a un país"
 ],
 [
 "NADA",
@@ -1297,7 +1293,7 @@
 ],
 [
 "OBSESION",
-"Preocupación o atención compulsiva, irracional o recurrente hacia una sola cosa"
+"Idea fija"
 ],
 [
 "OCASO",
@@ -1357,11 +1353,11 @@
 ],
 [
 "PARCELA",
-"Porción pequeña de terreno, de ordinario sobrante de otra mayor que se ha comprado, expropiado o adjudicado"
+"Trozo de terreno"
 ],
 [
 "PARECER",
-"Tener cierto aspecto o apariencia; verse o ser considerado de determinada manera"
+"Opinión; también, aparentar"
 ],
 [
 "PARO",
@@ -1369,7 +1365,7 @@
 ],
 [
 "PASEO",
-"Acción de pasear"
+"Caminata por placer"
 ],
 [
 "PASTOR",
@@ -1389,7 +1385,7 @@
 ],
 [
 "PEGO",
-"Fullería que consiste en pegar disimuladamente dos naipes para que salgan como uno solo, cuando le convenga al tramposo"
+"Del verbo pegar: yo ..."
 ],
 [
 "PELO",
@@ -1397,7 +1393,7 @@
 ],
 [
 "PELOTAS",
-"Arreglo o moño que lleva la empollerada sobre el pecho y la espalda como parte del atuendo típico panameño (pollera)"
+"Balones"
 ],
 [
 "PENSION",
@@ -1405,7 +1401,7 @@
 ],
 [
 "PERPLEJO",
-"Dícese de una persona o ente sorprendido debido a un suceso, situación o evento inesperado o incomprensible"
+"Desconcertado"
 ],
 [
 "PERSONA",
@@ -1413,15 +1409,15 @@
 ],
 [
 "PERSUADIR",
-"Hacer que alguien adopte una manera de pensar o de actuar mediante el uso de argumentos"
+"Convencer"
 ],
 [
 "PEZ",
-"Masa viscosa del recubrimiento intestinal que expele a modo de excremento el recién nacido"
+"Animal que vive en el agua"
 ],
 [
 "PIADOSO",
-"Benigno, blando, misericordioso; que se inclina a la piedad y conmiseración"
+"Devoto"
 ],
 [
 "PIEDRA",
@@ -1441,7 +1437,7 @@
 ],
 [
 "PISCINA",
-"Estanque artificial para bañarse, nadar o hacer deportes o juegos acuáticos"
+"Estanque para nadar"
 ],
 [
 "PLACER",
@@ -1493,7 +1489,7 @@
 ],
 [
 "PROMESA",
-"Seguridad dada a alguien de palabra o por escrito de que se dará o se hará algo"
+"Compromiso de hacer algo"
 ],
 [
 "PRONTO",
@@ -1501,7 +1497,7 @@
 ],
 [
 "PSICOSIS",
-"Enfermedad mental caracterizada por síntomas como delirios o alucinaciones, perdida de contacto con la realidad"
+"Trastorno mental grave"
 ],
 [
 "PUENTE",
@@ -1553,7 +1549,7 @@
 ],
 [
 "REBOTAR",
-"Cambiar de dirección un cuerpo tras chocar con otro fijo por principio de acción y reacción, especialmente los elásticos"
+"Botar de nuevo tras chocar"
 ],
 [
 "RECADO",
@@ -1581,7 +1577,7 @@
 ],
 [
 "REINO",
-"Estado gobernado o encabezado por un rey o reina"
+"Estado con monarca"
 ],
 [
 "RELOJ",
@@ -1597,7 +1593,7 @@
 ],
 [
 "RESERVA",
-"Guarda o custodia que se hace de una cosa, o prevención de ella para que sirva a su tiempo"
+"Lo que se guarda para después"
 ],
 [
 "RESERVADO",
@@ -1613,7 +1609,7 @@
 ],
 [
 "RETO",
-"Muestra de desaprobación de las acciones de una persona mediante vituperaciones y castigos"
+"Desafío"
 ],
 [
 "REVENTADO",
@@ -1621,7 +1617,7 @@
 ],
 [
 "REVERENDO",
-"Digno de reverencia"
+"Tratamiento de un sacerdote"
 ],
 [
 "RIO",
@@ -1637,7 +1633,7 @@
 ],
 [
 "RODEO",
-"Camino más largo que el habitual, usado para evitar obstáculos o dificultades que presenta el camino más corto"
+"Camino más largo"
 ],
 [
 "RODILLA",
@@ -1657,7 +1653,7 @@
 ],
 [
 "RUTA",
-"Faja de terreno despejado y, habitualmente, acondicionado, para el tránsito de personas y vehículos"
+"Itinerario"
 ],
 [
 "SABLE",
@@ -1665,7 +1661,7 @@
 ],
 [
 "SACUDIDA",
-"Sacudir o de sacudirse"
+"Movimiento brusco"
 ],
 [
 "SALA",
@@ -1684,20 +1680,16 @@
 "Por extensión, cualquier anfibio"
 ],
 [
-"SATO",
-"Tierra sembrada, hayan o no germinado y crecido las semillas"
-],
-[
 "SAVIA",
-"Líquido que corre por los vasos de las plantas portando los elementos y sustancias necesarias para su desarrollo"
+"Jugo que circula por las plantas"
 ],
 [
 "SEMILLA",
 "Parte de una planta capaz de originar otra"
 ],
 [
-"SENAL",
-"Marca o nota que se pone o hay en las cosas para darlas a conocer y distinguirlas de otras"
+"SEÑAL",
+"Marca o aviso"
 ],
 [
 "SENCILLO",
@@ -1705,19 +1697,19 @@
 ],
 [
 "SENDA",
-"Camino estrecho por el que sólo pueden circular personas a pie o animales pequeños"
+"Camino estrecho"
 ],
 [
-"SENORA",
-"Forma respetuosa de referirse a una mujer. Utilizado comúnmente para mujeres adultas o de edad madura"
+"SEÑORA",
+"Mujer adulta, con respeto"
 ],
 [
 "SERIAL",
-"Programa de radio o televisión que se transmite por episodios sucesivos"
+"Telenovela por capítulos"
 ],
 [
 "SERVICIAL",
-"Que tiene buena disposición o voluntad para ayudar o prestar algún servicio"
+"Dispuesto a ayudar"
 ],
 [
 "SINIESTRO",
@@ -1725,11 +1717,11 @@
 ],
 [
 "SOBORNO",
-"Algo (generalmente dinero) que se da a cambio de influencia o de acciones deshonestas"
+"Dinero para corromper"
 ],
 [
 "SOBRA",
-"Porción de algo que excede su cantidad, peso, valor, límite o tamaño convencionales o habituales"
+"Lo que queda de más"
 ],
 [
 "SOBRE",
@@ -1745,7 +1737,7 @@
 ],
 [
 "SONDEO",
-"Sondear (encuestar)"
+"Encuesta de opinión"
 ],
 [
 "SOPLO",
@@ -1753,19 +1745,15 @@
 ],
 [
 "SOSPECHAR",
-"Suponer, imaginar o formar una opinión o juicio a partir de ciertos indicios o conjeturas"
+"Desconfiar"
 ],
 [
 "SOSTENIDO",
 "Apoyado con el favor de otro"
 ],
 [
-"SPOT",
-"Lampara o foco brillante"
-],
-[
 "SUCESO",
-"Situación o estado que sobreviene, en especial si reviste cierta importancia"
+"Acontecimiento"
 ],
 [
 "SUERTE",
@@ -1790,10 +1778,6 @@
 [
 "TALLADO",
 "Con los adverbios \"bien\" o \"mal\", de buen, o mal, talle"
-],
-[
-"TANO",
-"Dicho de un persona, de origen italiano"
 ],
 [
 "TAPON",
@@ -1821,7 +1805,7 @@
 ],
 [
 "TERCO",
-"Que no cambia su opinión o proceder, pese a las razones en sentido contrario"
+"Testarudo"
 ],
 [
 "TERRIBLE",
@@ -1844,20 +1828,12 @@
 "Recipiente para bañarse"
 ],
 [
-"TIPA",
-"Cesta hecha de cuero de buey"
-],
-[
-"TITO",
-"Planta de flores moradas y blancas"
-],
-[
 "TIZA",
 "Barra blanda usada para escribir en una pizarra"
 ],
 [
 "TOCA",
-"Adorno que sirve para cubrir la cabeza y que regularmente usan las religiosas"
+"Prenda de monja"
 ],
 [
 "TORO",
@@ -1869,7 +1845,7 @@
 ],
 [
 "TRAPO",
-"Trozo de tela sobrante, vieja o de mala calidad, por lo general sin uso o utilidad"
+"Trozo de tela para limpiar"
 ],
 [
 "TREN",
@@ -1881,7 +1857,7 @@
 ],
 [
 "TROMPETA",
-"En la lotería y juegos afines, embudo por donde ruedan las bolas desde el bombo hasta la copa"
+"Instrumento de metal"
 ],
 [
 "TRUCHA",
@@ -1893,7 +1869,7 @@
 ],
 [
 "TURISTA",
-"Persona que viaja y recorre un país o lugar por recreación, distracción, recreo, relajación, etc"
+"Persona que viaja por placer"
 ],
 [
 "UNO",
@@ -1925,7 +1901,7 @@
 ],
 [
 "VEGA",
-"Terreno bajo, llano y fértil atravesado o regado por un cuerpo de agua, generalmente un río"
+"Terreno fértil junto a un río"
 ],
 [
 "VENADO",
@@ -1933,11 +1909,11 @@
 ],
 [
 "VENCIDA",
-"Vencer o ser vencido"
+"Derrotada; también, caducada"
 ],
 [
 "VENENOSO",
-"Que por contacto, ingesta o inoculación resulta dañino o letal para un organismo vivo"
+"Tóxico"
 ],
 [
 "VIAJE",
@@ -1945,7 +1921,7 @@
 ],
 [
 "VICIOSO",
-"Que tiene, padece o causa vicio, error o defecto"
+"Que tiene malas costumbres"
 ],
 [
 "VIGILAR",
@@ -1957,7 +1933,7 @@
 ],
 [
 "VIOLENTO",
-"Propio o relativo al uso de la violencia"
+"Que actúa con fuerza brusca"
 ],
 [
 "VISTAS",
@@ -2061,7 +2037,7 @@
 ],
 [
 "CAL",
-"Óxido de calcio usado en construcción"
+"Polvo blanco para encalar paredes"
 ],
 [
 "CALA",
@@ -2528,10 +2504,6 @@
 "Perro, en lenguaje culto"
 ],
 [
-"CAP",
-"Prenda que cubre la cabeza"
-],
-[
 "COL",
 "Verdura de hojas apretadas"
 ],
@@ -2590,10 +2562,6 @@
 [
 "SER",
 "Existir o tener vida"
-],
-[
-"SUB",
-"Prefijo que indica debajo"
 ],
 [
 "TAL",
@@ -3629,7 +3597,7 @@
 ],
 [
 "ANTES",
-"En tiempo anterior"
+"Lo contrario de después"
 ],
 [
 "ANTRO",
@@ -3653,7 +3621,7 @@
 ],
 [
 "ARABE",
-"Natural de Arabia"
+"Idioma de Marruecos y Egipto"
 ],
 [
 "ARCOS",
@@ -3825,7 +3793,7 @@
 ],
 [
 "BELGA",
-"Natural de Bélgica"
+"Natural de Bruselas, por ejemplo"
 ],
 [
 "BELLO",
@@ -3857,7 +3825,7 @@
 ],
 [
 "BOLSO",
-"Bolsa de mano"
+"Complemento para llevar la cartera y las llaves"
 ],
 [
 "BOMBA",
@@ -4377,7 +4345,7 @@
 ],
 [
 "INDIO",
-"Natural de la India"
+"Natural de Nueva Delhi, por ejemplo"
 ],
 [
 "JAULA",
@@ -4605,7 +4573,7 @@
 ],
 [
 "OLIVA",
-"Fruto del olivo"
+"Aceituna"
 ],
 [
 "OMBLIGO",
@@ -5089,7 +5057,7 @@
 ],
 [
 "ABADIA",
-"Monasterio regido por un abad"
+"Monasterio"
 ],
 [
 "ABEJAS",
@@ -5241,7 +5209,7 @@
 ],
 [
 "ARENAL",
-"Terreno cubierto de arena"
+"Terreno cubierto de dunas"
 ],
 [
 "ARMARIO",
@@ -5905,7 +5873,7 @@
 ],
 [
 "PECERA",
-"Recipiente donde viven peces"
+"Acuario doméstico"
 ],
 [
 "PELIGRO",
@@ -6130,5 +6098,309 @@
 [
 "VOLCAN",
 "Montaña que expulsa lava"
+],
+[
+"AÑO",
+"Doce meses"
+],
+[
+"ERA",
+"Periodo histórico"
+],
+[
+"FAX",
+"Aparato que envía documentos por teléfono"
+],
+[
+"GEN",
+"Unidad de la herencia"
+],
+[
+"GIN",
+"Ginebra, en inglés"
+],
+[
+"IDA",
+"Lo contrario de vuelta"
+],
+[
+"OCA",
+"Ganso; juego de casillas"
+],
+[
+"OIR",
+"Percibir sonidos"
+],
+[
+"PUS",
+"Líquido de una herida infectada"
+],
+[
+"RON",
+"Licor de caña"
+],
+[
+"SOY",
+"Del verbo ser: yo ..."
+],
+[
+"UVA",
+"Fruto de la vid"
+],
+[
+"VIA",
+"Camino; carril del tren"
+],
+[
+"ZOO",
+"Parque con animales"
+],
+[
+"EÑE",
+"Letra de España"
+],
+[
+"ESE",
+"Nombre de la letra s"
+],
+[
+"ELE",
+"Nombre de la letra l"
+],
+[
+"EME",
+"Nombre de la letra m"
+],
+[
+"ERE",
+"Nombre de la letra r"
+],
+[
+"EFE",
+"Nombre de la letra f"
+],
+[
+"OLE",
+"Grito de ánimo en los toros"
+],
+[
+"PIO",
+"Sonido del pollito"
+],
+[
+"SIN",
+"Lo contrario de con"
+],
+[
+"CON",
+"Lo contrario de sin"
+],
+[
+"TUL",
+"Tejido fino de los velos"
+],
+[
+"REO",
+"Acusado"
+],
+[
+"LIO",
+"Enredo, follón"
+],
+[
+"TIA",
+"Hermana del padre"
+],
+[
+"HOZ",
+"Herramienta curva para segar"
+],
+[
+"COZ",
+"Patada de caballo"
+],
+[
+"TEZ",
+"Piel de la cara"
+],
+[
+"OSA",
+"Hembra del oso"
+],
+[
+"MUS",
+"Juego de cartas con envites"
+],
+[
+"HEZ",
+"Poso; lo más vil"
+],
+[
+"CAÑA",
+"Tallo hueco; vaso de cerveza"
+],
+[
+"PEÑA",
+"Roca grande; grupo de amigos"
+],
+[
+"SEÑA",
+"Gesto para avisar"
+],
+[
+"MOÑO",
+"Pelo recogido en la nuca"
+],
+[
+"ÑOÑO",
+"Remilgado, soso"
+],
+[
+"CUÑA",
+"Pieza para calzar"
+],
+[
+"DAÑO",
+"Perjuicio"
+],
+[
+"PAÑO",
+"Trozo de tela"
+],
+[
+"AÑIL",
+"Azul oscuro"
+],
+[
+"ANIS",
+"Licor dulce de grano"
+],
+[
+"AZUL",
+"Color del cielo"
+],
+[
+"BUZO",
+"Persona que trabaja bajo el agua"
+],
+[
+"CEJA",
+"Pelo sobre el ojo"
+],
+[
+"CIEN",
+"Diez veces diez"
+],
+[
+"COJO",
+"Que cojea"
+],
+[
+"FOTO",
+"Imagen de cámara"
+],
+[
+"GOMA",
+"Material elástico"
+],
+[
+"HOYO",
+"Agujero en el suelo"
+],
+[
+"IDEA",
+"Ocurrencia"
+],
+[
+"KILO",
+"Mil gramos"
+],
+[
+"LAVA",
+"Roca fundida de un volcán"
+],
+[
+"LIRA",
+"Instrumento de cuerdas antiguo"
+],
+[
+"LOCO",
+"Que ha perdido el juicio"
+],
+[
+"MAGO",
+"Hace trucos"
+],
+[
+"MIMO",
+"Caricia; actor sin palabras"
+],
+[
+"MOTO",
+"Vehículo de dos ruedas"
+],
+[
+"NUCA",
+"Parte de atrás del cuello"
+],
+[
+"OVNI",
+"Objeto volador no identificado"
+],
+[
+"PAPA",
+"Patata; el pontífice"
+],
+[
+"PATA",
+"Pierna de animal"
+],
+[
+"PAVO",
+"Ave de Navidad"
+],
+[
+"PIPA",
+"Semilla de girasol"
+],
+[
+"PURE",
+"Crema de verduras"
+],
+[
+"RICO",
+"Con mucho dinero; sabroso"
+],
+[
+"SEIS",
+"Cinco más uno"
+],
+[
+"SUMO",
+"Lucha japonesa"
+],
+[
+"TACO",
+"Palabrota; trozo de madera"
+],
+[
+"TAPA",
+"Aperitivo; cubierta"
+],
+[
+"TOPO",
+"Animal que cava galerías"
+],
+[
+"VAGO",
+"Perezoso"
+],
+[
+"VELO",
+"Tela que cubre la cara"
+],
+[
+"BOLI",
+"Bolígrafo"
 ]
 ]

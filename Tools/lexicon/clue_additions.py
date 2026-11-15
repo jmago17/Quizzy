@@ -1,0 +1,28 @@
+# Palabras cortas añadidas a mano (2026-11-15) para que el mini crucigrama tenga más relleno.
+DROP = {"SPOT", "TANO", "SUB", "TIPA", "SATO", "TITO", "CAP"}
+ADD = {
+"AÑO": "Doce meses", "ERA": "Periodo histórico", "FAX": "Aparato que envía documentos por teléfono",
+"GEN": "Unidad de la herencia", "GIN": "Ginebra, en inglés", "IDA": "Lo contrario de vuelta",
+"OCA": "Ganso; juego de casillas", "OIR": "Percibir sonidos", "PUS": "Líquido de una herida infectada",
+"RON": "Licor de caña", "SOY": "Del verbo ser: yo ...", "UVA": "Fruto de la vid",
+"VIA": "Camino; carril del tren", "ZOO": "Parque con animales", "EÑE": "Letra de España",
+"ESE": "Nombre de la letra s", "ELE": "Nombre de la letra l", "EME": "Nombre de la letra m",
+"ERE": "Nombre de la letra r", "EFE": "Nombre de la letra f", "OLE": "Grito de ánimo en los toros",
+"PIO": "Sonido del pollito", "SIN": "Lo contrario de con", "CON": "Lo contrario de sin",
+"TUL": "Tejido fino de los velos", "REO": "Acusado", "LIO": "Enredo, follón", "TIA": "Hermana del padre",
+"HOZ": "Herramienta curva para segar", "COZ": "Patada de caballo", "TEZ": "Piel de la cara",
+"OSA": "Hembra del oso", "MUS": "Juego de cartas con envites", "HEZ": "Poso; lo más vil",
+"CAÑA": "Tallo hueco; vaso de cerveza", "PEÑA": "Roca grande; grupo de amigos", "SEÑA": "Gesto para avisar",
+"MOÑO": "Pelo recogido en la nuca", "ÑOÑO": "Remilgado, soso", "CUÑA": "Pieza para calzar",
+"DAÑO": "Perjuicio", "PAÑO": "Trozo de tela", "AÑIL": "Azul oscuro", "ANIS": "Licor dulce de grano",
+"AZUL": "Color del cielo", "BUZO": "Persona que trabaja bajo el agua", "CEJA": "Pelo sobre el ojo",
+"CIEN": "Diez veces diez", "COJO": "Que cojea", "FOTO": "Imagen de cámara", "GOMA": "Material elástico",
+"HOYO": "Agujero en el suelo", "IDEA": "Ocurrencia", "KILO": "Mil gramos", "LAVA": "Roca fundida de un volcán",
+"LIRA": "Instrumento de cuerdas antiguo", "LOCO": "Que ha perdido el juicio", "MAGO": "Hace trucos",
+"MIMO": "Caricia; actor sin palabras", "MOTO": "Vehículo de dos ruedas", "NUCA": "Parte de atrás del cuello",
+"OVNI": "Objeto volador no identificado", "PAPA": "Patata; el pontífice", "PATA": "Pierna de animal",
+"PAVO": "Ave de Navidad", "PIPA": "Semilla de girasol", "PURE": "Crema de verduras",
+"RICO": "Con mucho dinero; sabroso", "SEIS": "Cinco más uno", "SUMO": "Lucha japonesa",
+"TACO": "Palabrota; trozo de madera", "TAPA": "Aperitivo; cubierta", "TOPO": "Animal que cava galerías",
+"VAGO": "Perezoso", "VELO": "Tela que cubre la cara", "BOLI": "Bolígrafo",
+}

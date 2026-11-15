@@ -31,6 +31,8 @@ struct GamesLanguageChecks {
         }
         if mode == "all" || mode == "spanish" { spanishAndMazeChecks() }
         if mode == "spanish-anygram" { spanishAnygramChecks() }
+        if mode == "spanish-wide" { stage("Spanish wide"); spanishWideChecks() }
+        if mode == "fingerprint" { fingerprintChecks() }
         if mode == "all" || mode == "progress" {
             stage("progress checks")
             await progressChecks()

@@ -130,7 +130,7 @@ enum MiniCrosswordGenerator {
         var rng = SeededGenerator(seed: seed)
         var pools: [Int: [String]] = [:]
         let lengths = Set(slots.map(\.length))
-        for length in (language == .english ? lengths.sorted() : Array(lengths)) {
+        for length in lengths.sorted() {   // también en español: un Set no tiene orden estable entre ejecuciones
             pools[length] = rng.shuffled(byLength[length] ?? [])
         }
 

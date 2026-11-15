@@ -481,7 +481,13 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
         return result
     }
 
-    static func generate(seed: UInt64, language: PuzzleLanguage = .spanish) -> AnygramPuzzle? {
+    /// Tope de pasos de la búsqueda de tablero (por intento). Determinista: misma semilla →
+    /// mismo puzzle. Sin tope, la búsqueda es exponencial: mediana 0,36 s pero p90 3 s y máx. 7 s
+    /// (100 semillas, Mac, -O); "Jugar otro" sin precalculado se quedaba esperando eso.
+    static let searchStepLimit = 20_000
+
+    static func generate(seed: UInt64, language: PuzzleLanguage = .spanish,
+                         stepLimit: Int = searchStepLimit) -> AnygramPuzzle? {
         if language == .english {
             let variants: [(String, Int, Int, [Entry])] = [
             ( "PLANET", 9, 10, [
@@ -524,26 +530,6 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
             var letters: [GridCell: Character]
             var directions: [GridCell: Set<Entry.Direction>]
             var entries: [Entry]
-        }
-
-        func isClean(_ word: String) -> Bool {
-            guard (3...6).contains(word.count), word.unicodeScalars.count == word.count else {
-                return false
-            }
-            return word.unicodeScalars.allSatisfy { (65...90).contains($0.value) }
-        }
-
-        func counts(_ word: String) -> [Character: Int] {
-            var result: [Character: Int] = [:]
-            for letter in word {
-                result[letter, default: 0] += 1
-            }
-            return result
-        }
-
-        func canForm(_ word: String, from available: [Character: Int]) -> Bool {
-            let needed = counts(word)
-            return needed.allSatisfy { available[$0.key, default: 0] >= $0.value }
         }
 
         func stableRank(_ word: String, salt: UInt64) -> UInt64 {
@@ -674,10 +660,12 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
             return lhsLength > rhsLength
         }
 
+        var steps = 0
         func search(_ words: [String], index: Int, board: Board,
                     salt: UInt64, best: inout Board?) {
             if better(board, than: best) { best = board }
-            guard index < words.count,
+            steps += 1
+            guard steps <= stepLimit, index < words.count,
                   board.entries.count + words.count - index >= max(8, best?.entries.count ?? 0) else {
                 return
             }
@@ -691,68 +679,13 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
             search(words, index: index + 1, board: board, salt: salt, best: &best)
         }
 
-        let blacklist: Set<String> = [
-            "PUTA", "PUTO", "PORNO", "COÑO", "CULO", "PENE", "SEXO"
-        ]
-        // Natural clues are useful source material, but also contain uncommon
-        // dictionary forms. Keep Anygram's hidden targets deliberately familiar:
-        // guessing the layout should be the challenge, not guessing the lexicon.
-        let friendlyWords: Set<String> = [
-            "AIRE", "ALGO", "ALTERO", "ALTO", "AMO", "AMOR", "ANIMAL", "ARENA", "ARO",
-            "AROMA", "ARTE", "BALON", "BARCO", "BARRO", "BRAZO", "CABRA", "CALOR",
-            "CAMARA", "CAMINO", "CAMION", "CAMISA", "CAMPO", "CANTO", "CARA", "CARNE",
-            "CARO", "CARTA", "CARTON", "CASA", "CASERO", "CASINO", "CASO", "CASTOR",
-            "CELO", "CIELO", "CIMA", "CIRCO", "CLORO", "COCHE", "COLA", "COLEGA",
-            "COLOR", "COMA", "COMPRA", "CONTRA", "COPA", "CORTAS", "CORTE", "COSTAR",
-            "CREMA", "CUERDA", "CURA", "DEDO", "DENTRO", "DIA", "DINERO", "DUDA",
-            "DUNA", "EGO", "FARO", "FERIA", "FIAR", "FIERA", "FLOR", "FORMA", "FORMAR",
-            "FRUTA", "FUEGO", "GALO", "GATO", "GIRO", "GOLA", "GOTA", "GRATO", "GRITO",
-            "HIELO", "IMAN", "ISLA", "JARDIN", "LADO", "LAGO", "LARGO", "LAS", "LATA",
-            "LECHO", "LIBRO", "LIMA", "LIMO", "LIMON", "LINO", "LISTA", "LISTO", "LOBO",
-            "LOMO", "LORO", "LOROS", "LUNAR", "LUZ", "MADERA", "MAL", "MALETA", "MANCO",
-            "MANO", "MANTEL", "MANTO", "MAPA", "MAR", "MARCO", "MARTES", "MESA", "METRO",
-            "MIEDO", "MIL", "MIRADA", "MOLE", "MONA", "MONEDA", "MONTA", "MONTE", "MORA",
-            "MOTOR", "MURO", "MUSA", "MUSICA", "NACER", "NIDO", "NIEVE", "NOCHE", "NOTA",
-            "NUBE", "NUDO", "OLA", "OLOR", "OPINA", "OPTA", "ORAL", "ORO", "OSO", "OTRO",
-            "PADRE", "PALETO", "PALO", "PALOS", "PAN", "PARO", "PARQUE", "PASO", "PASTO",
-            "PATIO", "PATO", "PAZ", "PELO", "PELOTA", "PERA", "PERLAS", "PERRO", "PIANO",
-            "PIEDRA", "PISAR", "PISTA", "PLANTA", "PLATA", "PLATO", "PLAYA", "PODAR",
-            "POSA", "PRADO", "PRENDA", "PRISA", "PROA", "PUENTE", "PUERTA", "RAMA",
-            "RAMO", "RAMPA", "RASTRO", "RATO", "RATON", "REAL", "RECADO", "RECTO",
-            "RED", "REINO", "RENO", "RETO", "RIO", "RISA", "ROCA", "ROL", "ROPA",
-            "ROSA", "ROSAL", "ROSTRO", "ROTO", "RUEDA", "RUMOR", "RUTA", "SACA", "SAL",
-            "SALA", "SALIDA", "SALON", "SALTO", "SAPO", "SENDA", "SERIAL", "SIERRA",
-            "SILLA", "SIRENA", "SITIO", "SOL", "SOLAR", "SOLO", "SONIDO", "SOPA",
-            "SOPLA", "SUELO", "SUERTE", "SUMA", "TALCO", "TALON", "TAPO", "TARDE",
-            "TARIMA", "TELA", "TENOR", "TERNO", "TESORO", "TIEMPO", "TIENDA", "TIMBRE",
-            "TINTA", "TOCAR", "TOGA", "TOMATE", "TONER", "TONO", "TOPE", "TORO",
-            "TRAMO", "TREN", "TRIGO", "TRINEO", "TRONO", "TROZO", "TRUCHA", "TRUENO",
-            "VELA", "VERANO", "VIAJE", "VIENTO", "VOZ"
-        ]
-        // The hand-written list above stays as a *preference*, not as the whole
-        // vocabulary. Intersecting the clue words with those 252 entries left
-        // 190 usable words and, after demanding a family of 8, only five
-        // playable wheels — so the seed rotation had almost nothing to rotate
-        // through and every round looked the same. common_words.json is the
-        // curated frequent-word list Quartiles already seeds from: 3,276
-        // distinct wheels, which is years of daily play.
-        let vocabulary = Set(PuzzleLexicon.commonWords.map { $0.uppercased() })
-            .filter { isClean($0) && !blacklist.contains($0) }
-        // Distinct wheels only: bases sharing a letter multiset (CASTOR / CORTAS /
-        // COSTAR) would produce an identical wheel, so keep one representative.
-        var wheelKeys = Set<String>()
-        let allBases = vocabulary.filter { (5...6).contains($0.count) }
-            .sorted()
-            // Bases from the friendly list first: when several wheels are
-            // equally valid, prefer the everyday word.
-            .sorted { friendlyWords.contains($0) && !friendlyWords.contains($1) }
-            .filter { wheelKeys.insert(String($0.sorted())).inserted }
-        // Only bases with a rich enough family are playable; rotate through them
-        // with the seed so consecutive days never land on the same wheel.
-        let playable = allBases.filter { base in
-            let available = counts(base)
-            return vocabulary.filter { canForm($0, from: available) }.count >= 8
-        }
+        // Vocabulario y bases jugables NO dependen de la semilla: se calculan una vez
+        // por proceso (`AnygramLexicon`). Antes se recalculaban en cada partida:
+        // ~4.400 bases × ~6.500 palabras = 29 M comparaciones con un diccionario
+        // nuevo por palabra, ~10 s en Release. El resultado es el mismo.
+        let lexicon = AnygramLexicon.shared
+        let vocabulary = lexicon.vocabulary
+        let playable = lexicon.playable
         let bases: [String]
         if playable.isEmpty {
             bases = []
@@ -763,8 +696,7 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
 
         var generated: (base: String, board: Board)?
         for (baseIndex, base) in bases.enumerated() {
-            let available = counts(base)
-            let formable = vocabulary.filter { canForm($0, from: available) }
+            let formable = lexicon.formable(from: base)
             guard formable.contains(base), formable.count >= 8 else { continue }
 
             let others = formable.filter { $0 != base }.sorted {
@@ -784,6 +716,7 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
 
             var best: Board?
             for attempt in 0..<4 {
+                steps = 0
                 var tail = Array(selected.dropFirst())
                 tail.sort {
                     let lhs = stableRank($0, salt: UInt64(attempt) ^ UInt64(baseIndex))
@@ -836,6 +769,119 @@ struct AnygramPuzzle: Identifiable, Sendable, Hashable {
                      boardRows: 7,
                      boardCols: 8,
                      entries: fallbackEntries)
+    }
+}
+
+/// Vocabulario de Anygram en español y bases jugables, calculados una sola vez.
+/// Nada de esto depende de la semilla; solo de `common_words.json`.
+final class AnygramLexicon: Sendable {
+    static let shared = AnygramLexicon(words: PuzzleLexicon.commonWords)
+
+    static let blacklist: Set<String> = [
+        "PUTA", "PUTO", "PORNO", "COÑO", "CULO", "PENE", "SEXO"
+    ]
+    // Natural clues are useful source material, but also contain uncommon
+    // dictionary forms. Keep Anygram's hidden targets deliberately familiar:
+    // guessing the layout should be the challenge, not guessing the lexicon.
+    static let friendlyWords: Set<String> = [
+        "AIRE", "ALGO", "ALTERO", "ALTO", "AMO", "AMOR", "ANIMAL", "ARENA", "ARO",
+        "AROMA", "ARTE", "BALON", "BARCO", "BARRO", "BRAZO", "CABRA", "CALOR",
+        "CAMARA", "CAMINO", "CAMION", "CAMISA", "CAMPO", "CANTO", "CARA", "CARNE",
+        "CARO", "CARTA", "CARTON", "CASA", "CASERO", "CASINO", "CASO", "CASTOR",
+        "CELO", "CIELO", "CIMA", "CIRCO", "CLORO", "COCHE", "COLA", "COLEGA",
+        "COLOR", "COMA", "COMPRA", "CONTRA", "COPA", "CORTAS", "CORTE", "COSTAR",
+        "CREMA", "CUERDA", "CURA", "DEDO", "DENTRO", "DIA", "DINERO", "DUDA",
+        "DUNA", "EGO", "FARO", "FERIA", "FIAR", "FIERA", "FLOR", "FORMA", "FORMAR",
+        "FRUTA", "FUEGO", "GALO", "GATO", "GIRO", "GOLA", "GOTA", "GRATO", "GRITO",
+        "HIELO", "IMAN", "ISLA", "JARDIN", "LADO", "LAGO", "LARGO", "LAS", "LATA",
+        "LECHO", "LIBRO", "LIMA", "LIMO", "LIMON", "LINO", "LISTA", "LISTO", "LOBO",
+        "LOMO", "LORO", "LOROS", "LUNAR", "LUZ", "MADERA", "MAL", "MALETA", "MANCO",
+        "MANO", "MANTEL", "MANTO", "MAPA", "MAR", "MARCO", "MARTES", "MESA", "METRO",
+        "MIEDO", "MIL", "MIRADA", "MOLE", "MONA", "MONEDA", "MONTA", "MONTE", "MORA",
+        "MOTOR", "MURO", "MUSA", "MUSICA", "NACER", "NIDO", "NIEVE", "NOCHE", "NOTA",
+        "NUBE", "NUDO", "OLA", "OLOR", "OPINA", "OPTA", "ORAL", "ORO", "OSO", "OTRO",
+        "PADRE", "PALETO", "PALO", "PALOS", "PAN", "PARO", "PARQUE", "PASO", "PASTO",
+        "PATIO", "PATO", "PAZ", "PELO", "PELOTA", "PERA", "PERLAS", "PERRO", "PIANO",
+        "PIEDRA", "PISAR", "PISTA", "PLANTA", "PLATA", "PLATO", "PLAYA", "PODAR",
+        "POSA", "PRADO", "PRENDA", "PRISA", "PROA", "PUENTE", "PUERTA", "RAMA",
+        "RAMO", "RAMPA", "RASTRO", "RATO", "RATON", "REAL", "RECADO", "RECTO",
+        "RED", "REINO", "RENO", "RETO", "RIO", "RISA", "ROCA", "ROL", "ROPA",
+        "ROSA", "ROSAL", "ROSTRO", "ROTO", "RUEDA", "RUMOR", "RUTA", "SACA", "SAL",
+        "SALA", "SALIDA", "SALON", "SALTO", "SAPO", "SENDA", "SERIAL", "SIERRA",
+        "SILLA", "SIRENA", "SITIO", "SOL", "SOLAR", "SOLO", "SONIDO", "SOPA",
+        "SOPLA", "SUELO", "SUERTE", "SUMA", "TALCO", "TALON", "TAPO", "TARDE",
+        "TARIMA", "TELA", "TENOR", "TERNO", "TESORO", "TIEMPO", "TIENDA", "TIMBRE",
+        "TINTA", "TOCAR", "TOGA", "TOMATE", "TONER", "TONO", "TOPE", "TORO",
+        "TRAMO", "TREN", "TRIGO", "TRINEO", "TRONO", "TROZO", "TRUCHA", "TRUENO",
+        "VELA", "VERANO", "VIAJE", "VIENTO", "VOZ"
+    ]
+    // The hand-written list above stays as a *preference*, not as the whole
+    // vocabulary. Intersecting the clue words with those 252 entries left
+    // 190 usable words and, after demanding a family of 8, only five
+    // playable wheels — so the seed rotation had almost nothing to rotate
+    // through and every round looked the same. common_words.json is the
+    // curated frequent-word list Quartiles already seeds from: 3,276
+    // distinct wheels, which is years of daily play.
+
+    /// Palabras de 3–6 letras, solo A–Z y Ñ, sin las de `blacklist`. Ordenadas.
+    let vocabulary: [String]
+    /// Bases de 5–6 letras con al menos 8 palabras formables, una por multiconjunto
+    /// de letras, las de `friendlyWords` primero. El orden importa: la semilla rota por él.
+    let playable: [String]
+    private let vocabularyCounts: [[UInt8]]
+
+    static let alphabet: [Character] = Array("ABCDEFGHIJKLMNÑOPQRSTUVWXYZ")
+    private static let letterIndex: [Character: Int] =
+        Dictionary(uniqueKeysWithValues: alphabet.enumerated().map { ($1, $0) })
+
+    static func isClean(_ word: String) -> Bool {
+        (3...6).contains(word.count) && word.allSatisfy { letterIndex[$0] != nil }
+    }
+
+    static func counts(_ word: String) -> [UInt8] {
+        var c = [UInt8](repeating: 0, count: alphabet.count)
+        for letter in word { if let i = letterIndex[letter] { c[i] &+= 1 } }
+        return c
+    }
+
+    init(words: [String]) {
+        let vocabulary = Set(words.map { $0.uppercased() })
+            .filter { Self.isClean($0) && !Self.blacklist.contains($0) }
+            .sorted()
+        let counts = vocabulary.map(Self.counts)
+        func formableCount(_ base: [UInt8]) -> Int {
+            var n = 0
+            outer: for c in counts {
+                for i in 0..<c.count where c[i] > base[i] { continue outer }
+                n += 1
+            }
+            return n
+        }
+        // Distinct wheels only: bases sharing a letter multiset (CASTOR / CORTAS /
+        // COSTAR) would produce an identical wheel, so keep one representative.
+        var wheelKeys = Set<String>()
+        let friendly = Self.friendlyWords
+        let allBases = vocabulary.filter { (5...6).contains($0.count) }
+            // Bases from the friendly list first: when several wheels are
+            // equally valid, prefer the everyday word.
+            .sorted { friendly.contains($0) && !friendly.contains($1) }
+            .filter { wheelKeys.insert(String($0.sorted())).inserted }
+        // Only bases with a rich enough family are playable; rotate through them
+        // with the seed so consecutive days never land on the same wheel.
+        self.playable = allBases.filter { formableCount(Self.counts($0)) >= 8 }
+        self.vocabulary = vocabulary
+        self.vocabularyCounts = counts
+    }
+
+    /// Palabras del vocabulario que se pueden formar con las letras de `base`.
+    func formable(from base: String) -> Set<String> {
+        let available = Self.counts(base)
+        var result = Set<String>()
+        outer: for (word, c) in zip(vocabulary, vocabularyCounts) {
+            for i in 0..<c.count where c[i] > available[i] { continue outer }
+            result.insert(word)
+        }
+        return result
     }
 }
 #endif

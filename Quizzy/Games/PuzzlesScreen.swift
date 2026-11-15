@@ -81,6 +81,10 @@ struct PuzzlesScreen: View {
     @ObservedObject private var progress = PuzzleProgress.shared
     @State private var generated: [PuzzleKind: AnyPuzzle] = [:]
     @State private var generating = Set<PuzzleKind>()
+    /// "Jugar otro" pedido desde la hoja de resultado y aún generándose: se muestra un aviso
+    /// encima de la partida terminada. Sin él, la partida vieja seguía en pantalla sin ninguna
+    /// señal durante la generación (8 s en Debug, simulador) y parecía que el botón no hacía nada.
+    @State private var preparingKind: PuzzleKind?
     @State private var error: String?
     @State private var route: AnyPuzzle?
     @State private var completedResult: PZResult?
@@ -396,7 +400,7 @@ struct PuzzlesScreen: View {
             let levels = MurdlePuzzle.Difficulty.allCases
             return .u(MurdlePuzzle.generate(seed: seed, difficulty: levels[Int(seed % UInt64(levels.count))], language: language))
         case .murdoku:    return .k(MurdokuPuzzle.generate(seed: seed, language: language))
-        case .ladder:     return .l(WordLadderPuzzle.generate(seed: seed))
+        case .ladder:     return nil   // retirado: solo se conserva el case para decodificar datos antiguos
         case .decoder:    return .r(DecoderGame.make(seed: seed, spanish: language == .spanish))
         }
     }
@@ -420,7 +424,7 @@ struct PuzzlesScreen: View {
                 progress.rememberTodaysPuzzleID(puzzle.id, kind: kind)
             }
         }
-        // Anygram (español) tarda ~10 s en generarse: si no hay uno guardado para hoy se usa el
+        // Anygram (español) puede tardar unos segundos en generarse: si no hay uno guardado para hoy se usa el
         // incluido en la app (la primera vez, o el día en que no hubo tiempo de precalcular) y
         // no se genera nada en el arranque. El de mañana y un aleatorio se preparan en segundo plano.
         if generated[.anygram] == nil, language == .spanish, available.contains(.anygram),
@@ -491,6 +495,7 @@ struct PuzzlesScreen: View {
         let language = AppLanguage.current
         let token = generationToken
         generating.insert(kind)
+        if openWhenReady { preparingKind = kind }
         Task {
             let seed = PuzzleSeed.random()
             let recentWords: Set<String> = kind == .wordle
@@ -505,7 +510,7 @@ struct PuzzlesScreen: View {
                 case .trivia:
                     return .t(TriviaPuzzle.generate(seed: seed, excluding: recentQuestions))
                 case .anygram:
-                    // Si hay uno ya preparado, instantáneo; si no, se genera (≈10 s en español).
+                    // Si hay uno ya preparado, instantáneo; si no, se genera (unos segundos en español).
                     if let ready = AnygramPrefetch.take(language: language, defaults: defaults) { return .a(ready) }
                     return Self.make(kind, seed: seed, language: language)
                 default:
@@ -513,6 +518,7 @@ struct PuzzlesScreen: View {
                 }
             }.value
             await MainActor.run {
+                if preparingKind == kind { preparingKind = nil }
                 guard token == generationToken, language == AppLanguage.current else { return }
                 if let game {
                     generated[kind] = game
@@ -589,11 +595,28 @@ struct PuzzlesScreen: View {
             case .u(let p): MurdleGame(puzzle: p)
             case .k(let p): MurdokuGame(puzzle: p)
             case .x(let p): CrosswordGame(puzzle: p)
-            case .l(let p): WordLadderGame(puzzle: p)
             case .r(let g): DecoderGameView(game: g)
             }
         }
         .id(item.id) // cada partida es una vista nueva: no hereda el estado de la anterior del mismo juego
+        .overlay {
+            if let kind = preparingKind {
+                ZStack {
+                    Rectangle().fill(.black.opacity(0.35)).ignoresSafeArea()
+                    VStack(spacing: PZSpace.sm) {
+                        ProgressView().controlSize(.large)
+                        Text(AppLanguage.text("Preparando otro \(kind.title)…", "Preparing another \(kind.title)…"))
+                            .font(PZFont.section)
+                            .foregroundStyle(PZColor.ink)
+                    }
+                    .padding(PZSpace.lg)
+                    .background(PZColor.surface, in: PZRadius.rect(PZRadius.tile))
+                    .accessibilityElement(children: .combine)
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: preparingKind)
         .toolbar(.visible, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }
@@ -604,7 +627,6 @@ enum AnyPuzzle: Identifiable, Sendable, Hashable {
     case t(TriviaPuzzle), n(NumbersPuzzle), a(AnygramPuzzle), h(HashtagPuzzle), u(MurdlePuzzle)
     case k(MurdokuPuzzle)
     case x(CrosswordPuzzle)
-    case l(WordLadderPuzzle)
     case r(DecoderGame)
     var id: String {
         switch self {
@@ -620,7 +642,6 @@ enum AnyPuzzle: Identifiable, Sendable, Hashable {
         case .u(let p): return p.id
         case .k(let p): return p.id
         case .x(let p): return p.id
-        case .l(let p): return p.id
         case .r(let g): return g.id
         }
     }
@@ -638,7 +659,6 @@ enum AnyPuzzle: Identifiable, Sendable, Hashable {
         case .u(let p): return AppLanguage.text("\(p.suspects.count) sospechosos · \(p.difficulty.title)", "\(p.suspects.count) suspects · \(p.difficulty.title)")
         case .k(let p): return AppLanguage.text("\(p.size) × \(p.size) · \(p.suspects.count) sospechosos", "\(p.size) × \(p.size) · \(p.suspects.count) suspects")
         case .x(let p): return AppLanguage.text("\(p.entries.count) palabras cruzadas", "\(p.entries.count) crossing words")
-        case .l(let p): return "\(p.minimumSteps) pasos mínimos"
         case .r:        return AppLanguage.text("4 casillas · 6 colores · 7 intentos", "4 slots · 6 colours · 7 attempts")
         }
     }

@@ -27,6 +27,7 @@
 		94482512A2B0051B0B732427 /* AnygramDefaultData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F195A13656D1370F855535D5 /* AnygramDefaultData.swift */; };
 		964DE6883D646963FA123F62 /* DecoderGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */; };
 		A4474DF9F0F2445B18B0AE4D /* EnglishPuzzleLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */; };
+		AB0BF3C160A5CC027D4500FF /* answer_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 0EE4BF8589A9F754CEECFB35 /* answer_words.json */; };
 		B9C0B8092C74F7D56F207B12 /* playable_words.json in Resources */ = {isa = PBXBuildFile; fileRef = DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */; };
 		BD7B861F5E4ABA29AD032AD5 /* PZRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F6DBBFBD1C8E201B7652AC /* PZRules.swift */; };
 		BF7DC090510D9F69C60E0D60 /* common_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 89E237A3EC0534F1CDDC4BCD /* common_words.json */; };
@@ -50,6 +51,7 @@
 		07A86C5D85E163FE524111E8 /* MurdleGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MurdleGame.swift; sourceTree = "<group>"; };
 		0B7BFD54DB46ED769E4078CF /* PuzzleTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleTiming.swift; sourceTree = "<group>"; };
 		0C43E2413306A16EC42B1228 /* Quizzy.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Quizzy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0EE4BF8589A9F754CEECFB35 /* answer_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = answer_words.json; sourceTree = "<group>"; };
 		1A59F2E092EB61696DFBDC1F /* WordleGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordleGame.swift; sourceTree = "<group>"; };
 		1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnglishPuzzleLexicon.swift; sourceTree = "<group>"; };
 		1E8FEC07AB38BD68118122BA /* natural_clues.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = natural_clues.json; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 		FC7FE8133C048C55BAAB3364 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				0EE4BF8589A9F754CEECFB35 /* answer_words.json */,
 				89E237A3EC0534F1CDDC4BCD /* common_words.json */,
 				1E8FEC07AB38BD68118122BA /* natural_clues.json */,
 				DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */,
@@ -238,6 +241,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				244A975F5ED585BF6A93B526 /* Assets.xcassets in Resources */,
+				AB0BF3C160A5CC027D4500FF /* answer_words.json in Resources */,
 				BF7DC090510D9F69C60E0D60 /* common_words.json in Resources */,
 				4ACA15F21028DF4206492ADD /* natural_clues.json in Resources */,
 				B9C0B8092C74F7D56F207B12 /* playable_words.json in Resources */,

@@ -24,9 +24,18 @@ Spanish Anygram's existing large-vocabulary generator is separate:
 python3 Tests/GamesLanguage/run.py --mode spanish-anygram --runtime-timeout 180
 ```
 
-That slow mode was not completed in this task. An earlier broader run timed out;
-its coarse stage logging did not identify the precise generator. Do not report
-that timeout as a puzzle validity failure or as passing coverage.
+Since 2026-11-15 this mode completes in seconds (the Anygram lexicon is computed
+once instead of on every puzzle).
+
+Broader Spanish checks (added 2026-11-15):
+
+```sh
+python3 Tests/GamesLanguage/run.py --mode spanish-wide   # 40 seeds per game, Ñ, clues, Wordle answers
+python3 Tests/GamesLanguage/run.py --mode fingerprint    # same seed → same puzzle across TWO processes
+```
+
+`fingerprint` exists because Swift seeds hashing per process: iterating a
+Dictionary/Set made the Spanish crosswords differ between launches.
 
 Other modes (`english`, `spanish`, `progress`) narrow diagnostics without changing
 production algorithms. `spanish` excludes Anygram. UIKit rendering, navigation,

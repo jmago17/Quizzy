@@ -1,9 +1,10 @@
 #if os(iOS)
 import Foundation
 
-// Anygram (español) tarda ~10 s en generarse (medido en Release, simulador). Antes se
-// regeneraba entero en cada arranque, así que la tarjeta no aparecía hasta terminar y
-// "Jugar otro Anygram" esperaba igual. Aquí se guarda y se deja preparado el siguiente:
+// Anygram (español) tardaba ~10 s en generarse porque recalculaba el léxico entero en cada
+// partida; desde 2026-11-15 el léxico se calcula una vez (`AnygramLexicon`) y cada puzzle tarda
+// ~0,05–4 s (Mac, -O). Aun así se guarda y se deja preparado el siguiente, para que abrir la app
+// y "Jugar otro" no esperen nunca:
 //  · el diario de mañana (semilla determinista por fecha → idéntico en todos los dispositivos);
 //  · un puzzle aleatorio listo para "Jugar otro" / "Generar otro".
 // El inglés es una lista fija (instantáneo) y no pasa por aquí.
@@ -58,6 +59,8 @@ enum AnygramPrefetch {
     /// Es idempotente: si ya están guardados no hace nada, y solo hay una pasada a la vez.
     static func ensureReady(language: PuzzleLanguage, defaults: UserDefaults) {
         guard language == .spanish, runner.begin() else { return }
+        // UserDefaults es seguro entre hilos (documentado), aunque no esté marcado Sendable.
+        nonisolated(unsafe) let defaults = defaults
         Task.detached(priority: .utility) {
             defer { runner.end() }
             prepareTomorrow(language: language, defaults: defaults)
