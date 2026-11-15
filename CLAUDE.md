@@ -30,7 +30,7 @@ Regenerar solo al añadir/quitar ficheros o cambiar `project.yml`.
 ## Subir a TestFlight a mano
 
 Archivar con `-configuration Release -destination 'generic/platform=iOS'` y exportar con
-`method=app-store-connect`, `destination=upload`, `-allowProvisioningUpdates`.
+`method=app-store-connect`, `destination=upload`, `-allowProvisioningUpdates` (sin `-authenticationKey*`).
 - Con la sesión de Apple ID de Xcode funciona SOLO si el llavero está desbloqueado (por SSH da
   `User interaction is not allowed` / "Failed to Use Accounts"; se arregla con un `Run` manual desde Xcode).
 - La clave API `AW7HJ2N6AV` (`~/.appstoreconnect`, issuer en `issuer_id`) NO puede crear certificados de
@@ -77,6 +77,9 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Al añadir ficheros hay que `xcodegen generate` (el .xcodeproj está versionado): falló el build hasta hacerlo.
 - 2026-11-15 (tarde): `main` = diseño «Noche» (`diseno/noche-20261115`) + fix Anygram, sin conflictos. Build subido a 22;
   archivo OK pero export FALLA (llavero bloqueado: "Cloud signing permission error"); falta `Run` manual desde Xcode y repetir `ship.sh`.
+  → Tras el `Run` manual: **build 22 subido** (commit `5609022`, incluye la revisión del diccionario). Funcionó con solo
+  `-allowProvisioningUpdates` (sesión Apple ID de Xcode), SIN los flags `-authenticationKey*` (con ellos fue el fallo de
+  "Cloud signing"; no se ha probado si con llavero abierto también fallaría).
 - 2026-11-15 (tarde) — revisión del diccionario y de los generadores (todo verificado con el harness salvo lo dicho):
   - **Ñ:** los JSON no tenían NINGUNA Ñ (SEÑOR era SENOR; el teclado tenía tecla Ñ inútil). Restaurada con frecuencias
     de subtítulos (`Tools/lexicon/enie.py`); sustitución en el sitio. El relleno de la sopa en español lleva Ñ.
