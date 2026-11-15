@@ -32,8 +32,8 @@ enum PZ {
     // black — so the puzzle read as a photographic negative of itself. Dark
     // mode instead gets a softer paper and dimmer ink, keeping the contrast
     // direction intact while staying easy on the eye.
-    static let gridCell       = Color(light: "FBFAF7", dark: "D8D4CC")
-    static let gridBlock      = Color(light: "23252B", dark: "16181C")
+    static let gridCell       = Color(light: "FBFAF7", dark: "DDE3EE")
+    static let gridBlock      = Color(light: "23252B", dark: "0C0F17")
     static let gridInk        = Color(light: "1A1C20", dark: "1A1C20")
     /// A letter confirmed correct: it can no longer be edited, so it is shown
     /// settled rather than merely highlighted.
@@ -74,6 +74,7 @@ struct PuzzlesScreen: View {
     private let fallback = PuzzleLoader.load()
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
     @Environment(\.locale) private var interfaceLocale
+    @Environment(\.horizontalSizeClass) private var hubSizeClass
     @State private var cachedGames: [PuzzleLanguage: [PuzzleKind: AnyPuzzle]] = [:]
     @State private var generationToken = UUID()
     @State private var generationLanguage = AppLanguage.current
@@ -111,9 +112,7 @@ struct PuzzlesScreen: View {
                     .font(PZFont.section)
                     .foregroundStyle(PZColor.ink)
                     .padding(.top, PZSpace.lg)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: PZSpace.md),
-                                    GridItem(.flexible(), spacing: PZSpace.md)],
-                          spacing: PZSpace.md) {
+                LazyVGrid(columns: hubColumns, spacing: PZSpace.md) {
                     ForEach(others, id: \.self) { kind in
                         if let item = puzzle(kind) {
                             Button { open(item, kind: kind) } label: {
@@ -236,8 +235,19 @@ struct PuzzlesScreen: View {
                 }
             }
             #endif
-        } label: { Image(systemName: "plus.circle") }
+        } label: {
+            Image(systemName: "plus")
+                .font(.body.weight(.semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
         .accessibilityLabel(AppLanguage.text("Generar nuevos puzzles", "Generate new puzzles"))
+    }
+
+    /// Filas de juegos: una columna en iPhone, dos en iPad.
+    private var hubColumns: [GridItem] {
+        let column = GridItem(.flexible(), spacing: PZSpace.md)
+        return hubSizeClass == .compact ? [column] : [column, column]
     }
 
     /// Raíz de pestaña iPhone: sin botón de salida ni topBar.
@@ -251,11 +261,15 @@ struct PuzzlesScreen: View {
             horizontalPadding: 0,
             detail: streak > 0 ? AppLanguage.text("Racha · \(streak) día\(streak == 1 ? "" : "s")", "Streak · \(streak) day\(streak == 1 ? "" : "s")") : nil)
             .overlay(alignment: .topTrailing) {
-                HStack(spacing: PZSpace.md) {
+                HStack(spacing: 0) {
                     if let headerAccessory { headerAccessory }
                     generateMenu
                 }
-                .padding(.top, 8)
+                .tint(PZColor.ink)
+                .padding(.horizontal, PZSpace.xs)
+                .background(PZColor.surface, in: Capsule())
+                .overlay { Capsule().strokeBorder(PZColor.hairline, lineWidth: 1) }
+                .padding(.top, 4)
             }
     }
 
@@ -617,11 +631,9 @@ enum AnyPuzzle: Identifiable, Sendable, Hashable {
 
 // MARK: - Featured card
 
-/// The lead of the Juegos hub, built like the lead of a page: white card, the
-/// game's ink as a 3pt rule and an eyebrow, the title in serif ink. The glyph
-/// stays a watermark at wash strength instead of white-on-saturated, so the
-/// hero belongs to the same publication as the news cards. No fixed height —
-/// the card grows with Dynamic Type instead of clipping.
+/// Tarjeta destacada de la portada (docs/DISENO.md): icono del juego en un
+/// azulejo con su tinta, insignia de estado, título y la única acción
+/// principal de la pantalla. Sin alto fijo: crece con Dynamic Type.
 struct PZFeaturedCard: View {
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
     let kind: PuzzleKind
@@ -633,11 +645,18 @@ struct PZFeaturedCard: View {
 
     var body: some View {
         let _ = languageSelection
-        VStack(alignment: .leading, spacing: 0) {
-            PZAccentRule(color: ink)
-            VStack(alignment: .leading, spacing: PZSpace.sm) {
-                Text(heroEyebrow)
-                    .pzEyebrowStyle(ink)
+        VStack(alignment: .leading, spacing: PZSpace.lg) {
+            HStack(alignment: .top, spacing: PZSpace.md) {
+                Image(systemName: kind.symbol)
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(ink)
+                    .frame(width: 56, height: 56)
+                    .background(PZColor.wash(ink), in: PZRadius.rect(PZRadius.tile))
+                    .accessibilityHidden(true)
+                Spacer(minLength: PZSpace.sm)
+                PZCapsuleBadge(text: heroEyebrow, color: badgeColor)
+            }
+            VStack(alignment: .leading, spacing: PZSpace.xs + 2) {
                 Text(kind.title)
                     .font(PZFont.hero)
                     .foregroundStyle(PZColor.ink)
@@ -647,40 +666,36 @@ struct PZFeaturedCard: View {
                     .foregroundStyle(PZColor.inkSecondary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: PZSpace.md) {
-                    Text(heroAction)
-                        .pzPill(ink)
-                    Text(generating ? AppLanguage.text("Generando…", "Generating…") : subtitle)
-                        .font(PZFont.caption)
-                        .foregroundStyle(PZColor.inkSecondary)
-                    Spacer(minLength: 0)
-                    if generating { ProgressView().tint(ink) }
-                }
-                .padding(.top, PZSpace.xs)
             }
-            .padding(PZSpace.xl)
+            HStack(spacing: PZSpace.sm) {
+                Text(generating ? AppLanguage.text("Generando…", "Generating…") : subtitle)
+                    .font(PZFont.caption)
+                    .foregroundStyle(PZColor.inkSecondary)
+                Spacer(minLength: 0)
+                if generating { ProgressView().tint(ink) }
+            }
+            Text(heroAction)
+                .pzPrimaryPill()
         }
+        .padding(PZSpace.xl)
         .pzCard(PZRadius.hero)
-        // Bottom-right, so it never sits under the "…" menu the hub overlays
-        // on the top-right corner.
-        .overlay(alignment: .bottomTrailing) {
-            Image(systemName: kind.symbol)
-                .font(.system(size: 76, weight: .bold))
-                .foregroundStyle(PZColor.wash(ink))
-                .offset(x: 14, y: 14)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-        }
-        .clipShape(PZRadius.rect(PZRadius.hero))
         .accessibilityElement(children: .combine)
         .accessibilityHint(state.hint)
+    }
+
+    private var badgeColor: Color {
+        switch state {
+        case .fresh:   return PZColor.success
+        case .started: return PZColor.accent
+        case .done:    return PZColor.danger
+        }
     }
 
     private var heroEyebrow: String {
         switch state {
         case .fresh:   return AppLanguage.text("Empieza por aquí", "Start here")
-        case .started: return AppLanguage.text("Continúa donde lo dejaste", "Pick up where you left off")
-        case .done:    return AppLanguage.text("Ya completado", "Already completed")
+        case .started: return AppLanguage.text("En curso", "In progress")
+        case .done:    return AppLanguage.text("Hecho", "Done")
         }
     }
 
@@ -694,8 +709,8 @@ struct PZFeaturedCard: View {
 
 }
 
-/// Small status dot used on the cards: empty ring when untouched, half-filled
-/// while in progress, solid check once solved.
+/// Estado de un juego en su fila: nada si no se ha tocado, «En curso» en
+/// azul claro, «Hecho» en coral. Siempre con texto.
 struct PZStateBadge: View {
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
     let kind: PuzzleKind
@@ -706,22 +721,14 @@ struct PZStateBadge: View {
         Group {
             switch state {
             case .fresh:
-                Circle()
-                    .strokeBorder(PZColor.hairline, lineWidth: 1.5)
-                    .frame(width: 15, height: 15)
+                EmptyView()
             case .started:
-                ZStack {
-                    Circle().strokeBorder(PZ.color(kind), lineWidth: 1.5)
-                    Circle().trim(from: 0, to: 0.5).fill(PZ.color(kind)).padding(3)
-                }
-                .frame(width: 15, height: 15)
+                PZCapsuleBadge(text: AppLanguage.text("En curso", "In progress"), color: PZColor.accent)
             case .done:
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(PZ.color(kind))
+                PZCapsuleBadge(text: AppLanguage.text("Hecho", "Done"), color: PZColor.danger)
             }
         }
-        .accessibilityLabel(state.label)
+        .accessibilityHidden(true)
     }
 }
 
@@ -744,8 +751,8 @@ extension PuzzleState {
 
 // MARK: - Game card
 
-/// A smaller sibling of `PZFeaturedCard`: same visual language (gradient,
-/// oversized glyph, pill) so every game reads as a card instead of a list row.
+/// Fila de juego en tarjeta: icono redondo con la tinta del juego, título,
+/// detalle, insignia de estado y flecha.
 struct PZGameCard: View {
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
     let kind: PuzzleKind
@@ -755,23 +762,14 @@ struct PZGameCard: View {
 
     var body: some View {
         let _ = languageSelection
-        VStack(alignment: .leading, spacing: 0) {
-            Rectangle()
-                .fill(PZ.color(kind))
-                .frame(height: 3)
-            VStack(alignment: .leading, spacing: PZSpace.xs) {
-                HStack {
-                    Image(systemName: kind.symbol)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(PZ.color(kind))
-                    Spacer()
-                    if generating {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        PZStateBadge(kind: kind, state: state)
-                    }
-                }
-                Spacer(minLength: PZSpace.sm)
+        HStack(spacing: PZSpace.md) {
+            Image(systemName: kind.symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(PZ.color(kind))
+                .frame(width: 44, height: 44)
+                .background(PZColor.wash(PZ.color(kind)), in: Circle())
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: PZSpace.xxs) {
                 Text(kind.title)
                     .font(PZFont.title)
                     .foregroundStyle(PZColor.ink)
@@ -783,16 +781,23 @@ struct PZGameCard: View {
                     .foregroundStyle(PZColor.inkSecondary)
                     .lineLimit(1)
             }
-            .padding(PZSpace.lg)
+            Spacer(minLength: PZSpace.sm)
+            if generating {
+                ProgressView().controlSize(.small)
+            } else {
+                PZStateBadge(kind: kind, state: state)
+            }
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(PZColor.inkTertiary)
+                .accessibilityHidden(true)
         }
-        .frame(height: 132, alignment: .topLeading)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(state == .done ? PZColor.wash(PZ.color(kind)) : PZColor.surface)
-        .clipShape(PZRadius.rect(PZRadius.card))
-        .overlay {
-            PZRadius.rect(PZRadius.card).stroke(PZColor.hairline, lineWidth: 1)
-        }
+        .padding(.horizontal, PZSpace.lg)
+        .padding(.vertical, PZSpace.md)
+        .frame(minHeight: 72)
+        .pzCard(PZRadius.card)
         .accessibilityElement(children: .combine)
+        .accessibilityValue(state.label)
         .accessibilityHint(state.hint)
     }
 }

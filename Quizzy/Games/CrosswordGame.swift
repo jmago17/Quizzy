@@ -219,7 +219,7 @@ struct CrosswordGame: View {
         }
         .aspectRatio(CGFloat(puzzle.cols) / CGFloat(puzzle.rows), contentMode: .fit)
         .padding(10)
-        .background(Color(.secondarySystemGroupedBackground),
+        .background(PZColor.surface,
                     in: RoundedRectangle(cornerRadius: 14))
     }
 
@@ -294,7 +294,7 @@ struct CrosswordGame: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 16).padding(.vertical, 14)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(PZColor.surface)
         .overlay(alignment: .top) { Divider() }
     }
 

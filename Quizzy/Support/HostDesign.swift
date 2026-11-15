@@ -1,85 +1,63 @@
 import SwiftUI
 import UIKit
 
-// Equivalentes locales mínimos de los símbolos de Kaffa que usan los juegos
-// (Shared/Views/NewDesign/LiquidDesignTokens.swift y PortadaHeader.swift, 944663d).
-// Mismos nombres para no tocar el código de los juegos; sin sincronización,
-// ajustes de apariencia ni localización .xcstrings. La fase 2 (rediseño) puede
-// reemplazar este fichero entero.
+// Anfitrión de los juegos: los símbolos que el código heredado de Kaffa espera
+// (`LiquidDesign`, `LiquidCanvasBackground`, `liquidSerif`, `PortadaHeader`),
+// con los mismos nombres pero ya en el diseño «Noche» de Quizzy
+// (docs/DISENO.md): fondo marino liso y sans del sistema.
 
 enum LiquidDesign {
-    static var canvas: Color { Color(uiColor: .systemGroupedBackground) }
+    static var canvas: Color { Color(uiColor: UIColor(hex: "12151F")) }
 
     static func appBackground(_ scheme: ColorScheme) -> Color { canvas }
 
-    /// En Kaffa el acento editorial es el AccentColor del catálogo.
-    static func beanAccent(_ scheme: ColorScheme) -> Color { Color.accentColor }
+    static func beanAccent(_ scheme: ColorScheme) -> Color { PZColor.accent }
 
-    static func hairline(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? Color(red: 0x38/255, green: 0x35/255, blue: 0x2F/255)
-                        : Color(red: 0xDE/255, green: 0xD9/255, blue: 0xD1/255)
-    }
+    static func hairline(_ scheme: ColorScheme) -> Color { PZColor.hairline }
 }
 
 private struct LiquidSerifModifier: ViewModifier {
     @ScaledMetric private var size: CGFloat
     private let weight: Font.Weight
-    private let italic: Bool
 
-    init(size: CGFloat, weight: Font.Weight, relativeTo textStyle: Font.TextStyle, italic: Bool) {
+    init(size: CGFloat, weight: Font.Weight, relativeTo textStyle: Font.TextStyle) {
         _size = ScaledMetric(wrappedValue: size, relativeTo: textStyle)
         self.weight = weight
-        self.italic = italic
     }
 
     func body(content: Content) -> some View {
-        let font = Font.system(size: size, weight: weight, design: .serif)
-        content.font(italic ? font.italic() : font)
+        content.font(Font.system(size: size, weight: weight))
     }
 }
 
 extension View {
+    /// Conserva el nombre de Kaffa; en Quizzy es sans del sistema y nunca cursiva.
     func liquidSerif(_ size: CGFloat, weight: Font.Weight = .bold,
                      relativeTo textStyle: Font.TextStyle = .body, italic: Bool = false) -> some View {
-        modifier(LiquidSerifModifier(size: size, weight: weight, relativeTo: textStyle, italic: italic))
+        modifier(LiquidSerifModifier(size: size, weight: weight, relativeTo: textStyle))
     }
 }
 
 struct LiquidHairline: View {
     var opacity: Double = 1
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Rectangle()
-            .fill(LiquidDesign.hairline(colorScheme).opacity(opacity))
+            .fill(PZColor.hairline.opacity(opacity))
             .frame(height: 1)
             .accessibilityHidden(true)
     }
 }
 
-/// Fondo de la app: el mismo lienzo teñido de Kaffa (base + degradado + brillo).
+/// Fondo de la app: marino liso, sin degradados.
 struct LiquidCanvasBackground: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        let bean = LiquidDesign.beanAccent(colorScheme)
-        ZStack {
-            LiquidDesign.appBackground(colorScheme)
-            LinearGradient(
-                colors: colorScheme == .dark
-                    ? [bean.opacity(0.30), .clear, bean.opacity(0.16)]
-                    : [bean.opacity(0.22), .clear, bean.opacity(0.14)],
-                startPoint: .topLeading, endPoint: .bottomTrailing)
-            RadialGradient(
-                colors: [Color.white.opacity(colorScheme == .dark ? 0.08 : 0.55), .clear],
-                center: .top, startRadius: 0, endRadius: 460)
-        }
-        .ignoresSafeArea()
+        LiquidDesign.canvas.ignoresSafeArea()
     }
 }
 
-/// Cabecera serif de la raíz (título + saludo + detalle). Versión de Kaffa sin
-/// estado de sincronización de iCloud.
+/// Cabecera de la portada: título en heavy y, debajo, saludo y detalle en gris.
+/// Sin barra de acento ni raya.
 struct PortadaHeader: View {
     @AppStorage(AppLanguage.storageKey) private var appLanguageSelection = "system"
     let title: LocalizedStringKey
@@ -89,27 +67,17 @@ struct PortadaHeader: View {
     var bottomPadding: CGFloat = 4
     var detail: String? = nil
 
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
         let _ = appLanguageSelection
-        VStack(alignment: .leading, spacing: 4) {
-            Rectangle()
-                .fill(LiquidDesign.beanAccent(colorScheme))
-                .frame(width: 34, height: 3)
-                .clipShape(Capsule())
-                .padding(.bottom, 6)
-                .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .liquidSerif(34, weight: .heavy, relativeTo: .largeTitle)
-                .foregroundStyle(.primary)
+                .foregroundStyle(PZColor.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(eyebrowText)
-                .liquidSerif(15, weight: .medium, relativeTo: .subheadline, italic: true)
-                .foregroundStyle(.secondary)
-            LiquidHairline()
-                .padding(.top, 8)
+                .font(.subheadline)
+                .foregroundStyle(PZColor.inkSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, horizontalPadding)

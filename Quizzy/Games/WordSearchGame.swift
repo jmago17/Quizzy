@@ -145,7 +145,7 @@ struct WordSearchGame: View {
                     .foregroundStyle(PZColor.inkTertiary)
             } else {
                 Text(word.lowercased())
-                    .font(.system(size: 20, weight: .bold, design: .serif))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(isWord ? PZColor.success : PZColor.ink)
                     .kerning(1.5)
                     .lineLimit(1)
@@ -212,7 +212,7 @@ struct WordSearchGame: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .padding(10)
-        .background(Color(.secondarySystemGroupedBackground),
+        .background(PZColor.surface,
                     in: RoundedRectangle(cornerRadius: 14))
         .padding(.vertical, 12)
     }
@@ -295,7 +295,7 @@ struct WordSearchGame: View {
                 }
                 .opacity(done ? 0.42 : 1)
                 .padding(.horizontal, 11).padding(.vertical, 8)
-                .background(Color(.secondarySystemGroupedBackground),
+                .background(PZColor.surface,
                             in: RoundedRectangle(cornerRadius: 9))
                 .contentShape(Rectangle())
                 .onTapGesture { if definable { definitionWord = .init(word: w.word) } }
