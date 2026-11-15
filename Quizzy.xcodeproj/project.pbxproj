@@ -314,7 +314,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.maromeapps.quotamini;
+				PRODUCT_BUNDLE_IDENTIFIER = com.maromeapps.quizzies;
 				PRODUCT_NAME = Quizzy;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -414,7 +414,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.maromeapps.quotamini;
+				PRODUCT_BUNDLE_IDENTIFIER = com.maromeapps.quizzies;
 				PRODUCT_NAME = Quizzy;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

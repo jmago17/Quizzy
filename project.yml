@@ -25,7 +25,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Quizzy
-        PRODUCT_BUNDLE_IDENTIFIER: com.maromeapps.quotamini
+        PRODUCT_BUNDLE_IDENTIFIER: com.maromeapps.quizzies
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
         SUPPORTS_MACCATALYST: NO

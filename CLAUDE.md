@@ -20,12 +20,17 @@ Regenerar solo al añadir/quitar ficheros o cambiar `project.yml`.
 
 ## Identidad en App Store Connect (IMPORTANTE)
 
-- **Bundle ID: `com.maromeapps.quotamini`** — PRESTADO del registro de QuotaMini (proyecto abandonado,
-  app 6822259409, equipo `ES2766ARHJ`). En ASC la app sigue llamándose "QuotaMini": "Quizzy" está cogido
-  por otra cuenta (409 al renombrar). En el iPhone se ve "Quizzy" (`CFBundleDisplayName`).
-- Si Quizzy se publica de verdad: crear app nueva con bundle ID propio y limpiar esto.
-- Builds: `CURRENT_PROJECT_VERSION` debe superar el último subido (QuotaMini llegó a 8; Quizzy: 20, 21...).
-- TestFlight: grupo interno "Personal" de esa app.
+- **Desde 2026-11-15 (noche): app propia "Kuizzy"** (ASC app 6835185679, bundle ID `com.maromeapps.quizzies`,
+  equipo `ES2766ARHJ`). "Quizzy" está cogido por otra cuenta. En el iPhone se ve "Quizzy" (`CFBundleDisplayName`).
+  Es OTRA app en el dispositivo: el progreso de la instalación vieja no pasa.
+- Antes (builds 20–22): bundle ID prestado `com.maromeapps.quotamini` (app QuotaMini 6822259409, abandonada;
+  grupo "Personal"). Ya no se usa; queda por limpiar.
+- **Xcode Cloud** (producto "Quizzy", repo `jmago17/Quizzy`): workflow "Default" (build en cada push a `main`) e
+  "Internal TestFlight Build" (archive → TestFlight interno, solo manual). Xcode Cloud pone su propio número de build;
+  subir solo desde ahí (si se sube a mano un número mayor, ajustar el "next build number" del producto).
+- TestFlight: grupo interno "Internal" con dos testers (correos fuera del repo).
+- La 1.ª archive de Xcode Cloud (run 2) falló en "Preparing build for App Store Connect" porque el proyecto aún tenía
+  el bundle ID de QuotaMini (visto en el log de exportación).
 
 ## Subir a TestFlight a mano
 

@@ -1,0 +1,13 @@
+{
+  "id" : "3da65425-c0d7-4fbf-8436-450be5af06a5",
+  "targets" : [
+    {
+      "id" : "bd98fc30-6cc3-45f8-9eae-6fbe19ca15cb",
+      "name" : "Quizzy"
+    },
+    {
+      "id" : "4e8ed6a8-ef79-4fe8-b5e2-046320ffc2d9",
+      "name" : "QuotaMini"
+    }
+  ]
+}
