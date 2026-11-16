@@ -114,6 +114,16 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     de hoy SÍ puede cambiar (no tiene snapshot y cambió el número de plantillas).
   - Fuentes y límites: `Tools/lexicon/README.md`. Quedan conjugaciones que el etiquetador no ve (RUEGA, COMPRENDIO) y
     ~1.400 pistas sin revisar una a una. Nada de esto probado en iPhone real.
+- 2026-11-16 — Anygram: lag al deslizar que crece con las palabras encontradas (reportado en iPhone):
+  - Hipótesis principal (NO medida en dispositivo): cada chip de palabra (`PZDefinableWord`) llamaba a
+    `UIReferenceLibraryViewController.dictionaryHasDefinition` (síncrona, lenta) sin caché, y todo `AnygramGame` se
+    re-evaluaba en cada letra seleccionada y cada segundo (timer). Coste ∝ palabras encontradas → encaja con el síntoma.
+  - Arreglo: caché en `PZDictionary` (también la usan Sopa, Wordle, Quartiles); tablero y tira de palabras pasan a
+    `AnygramBoard`/`AnygramFoundStrip` (`Equatable` + `.equatable()`), que no se recalculan con letras ni segundero.
+  - Descartado: `PuzzleProgress` (solo escribe al enviar palabra y cada 5 s, no durante el deslizamiento).
+  - Verificado: build + UI tests Anygram en simulador (Release). El lag en sí NO se ha reproducido ni medido: confirmar en iPhone.
+  - Scripts `anygram_flow*.sh` actualizados al bundle ID nuevo.
+- Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,
   portada y ajustes. Compilado en el Mac (Xcode 27.3, simulador): BUILD SUCCEEDED; tests Decoder y

@@ -520,16 +520,24 @@ struct PZDefinitionTerm: Identifiable, Equatable {
     var id: String { word }
 }
 
+@MainActor
 enum PZDictionary {
+    /// `dictionaryHasDefinition` es una consulta síncrona al diccionario del sistema (lenta en dispositivo) y se
+    /// llamaba en cada render por cada palabra encontrada: en Anygram el lag crecía con las palabras. Se cachea.
+    private static var cache: [String: Bool] = [:]
+
     /// Whether the system can define this word. Returns false when the user has
     /// no Spanish dictionary installed, which is why callers must treat a
     /// missing definition as normal rather than as an error.
     static func hasDefinition(for term: String) -> Bool {
-        if AppLanguage.current == .english {
-            return EnglishPuzzleLexicon.cluePairs.contains { $0.0 == term.uppercased() }
-        }
-        return UIReferenceLibraryViewController
-            .dictionaryHasDefinition(forTerm: term.lowercased())
+        let english = AppLanguage.current == .english
+        let key = (english ? "en|" : "es|") + term.lowercased()
+        if let hit = cache[key] { return hit }
+        let value = english
+            ? EnglishPuzzleLexicon.cluePairs.contains { $0.0 == term.uppercased() }
+            : UIReferenceLibraryViewController.dictionaryHasDefinition(forTerm: term.lowercased())
+        cache[key] = value
+        return value
     }
 }
 

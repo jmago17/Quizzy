@@ -1548,6 +1548,110 @@ private struct AnygramWheel: View {
     }
 }
 
+/// Tablero de Anygram. `Equatable` + `.equatable()`: no se recalcula al seleccionar letras ni con el segundero
+/// (antes todo `AnygramGame` se re-evaluaba en cada letra y cada segundo).
+private struct AnygramBoard: View, Equatable {
+    let rows: Int
+    let cols: Int
+    let english: Bool
+    let maxHeight: CGFloat
+    let cells: [GridCell: Character]
+    let shown: Set<GridCell>
+    let found: Int
+    let total: Int
+
+    var body: some View {
+        GeometryReader { geo in
+            let spacing: CGFloat = 3
+            let available = min(geo.size.width, 300)
+            let widthTile = min(44, (available - spacing * CGFloat(cols - 1)) / CGFloat(cols))
+            let tile = english
+                ? min(widthTile, (maxHeight - spacing * CGFloat(rows - 1)) / CGFloat(rows))
+                : widthTile
+            let width = tile * CGFloat(cols) + spacing * CGFloat(cols - 1)
+            let height = tile * CGFloat(rows) + spacing * CGFloat(rows - 1)
+
+            VStack(spacing: spacing) {
+                ForEach(0..<rows, id: \.self) { row in
+                    HStack(spacing: spacing) {
+                        ForEach(0..<cols, id: \.self) { col in
+                            let cell = GridCell(row: row, col: col)
+                            if let letter = cells[cell] {
+                                Text(shown.contains(cell) ? String(letter) : "")
+                                    .font(.system(size: min(22, tile * 0.5), weight: .bold, design: .rounded))
+                                    .foregroundStyle(PZColor.ink)
+                                    .frame(width: tile, height: tile)
+                                    .background(PZColor.surface, in: PZRadius.rect(PZRadius.tile))
+                                    .overlay {
+                                        PZRadius.rect(PZRadius.tile)
+                                            .stroke(PZ.anygram.opacity(0.35), lineWidth: 1)
+                                    }
+                            } else {
+                                Color.clear.frame(width: tile, height: tile)
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(width: width, height: height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(height: maxHeight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(AppLanguage.text("Tablero de palabras cruzadas", "Crossed-word board"))
+        .accessibilityValue(AppLanguage.text("\(found) de \(total) palabras reveladas", "\(found) of \(total) words revealed"))
+    }
+}
+
+/// Tira de palabras encontradas: igual que el tablero, solo se recalcula cuando cambian las palabras.
+private struct AnygramFoundStrip: View, Equatable {
+    let targets: [String]
+    let extras: [String]
+    let total: Int
+    let english: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(AppLanguage.text("TABLERO  \(targets.count)/\(total)", "BOARD  \(targets.count)/\(total)")).pzLabelStyle()
+                Spacer()
+                Text(AppLanguage.text("OTRAS  \(extras.count)", "EXTRAS  \(extras.count)")).pzLabelStyle()
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(targets, id: \.self) { word in chip(word, tint: PZ.anygram) }
+                    if !targets.isEmpty && !extras.isEmpty { Divider().frame(height: 24) }
+                    ForEach(extras, id: \.self) { word in chip(word, tint: PZColor.inkSecondary) }
+                    if targets.isEmpty && extras.isEmpty {
+                        Text(AppLanguage.text("Las palabras encontradas aparecerán aquí", "Your found words will appear here"))
+                            .font(PZFont.caption)
+                            .foregroundStyle(PZColor.inkSecondary)
+                    }
+                }
+            }
+            .frame(height: 34)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(PZColor.surface, in: PZRadius.rect(PZRadius.card))
+    }
+
+    private func chip(_ word: String, tint: Color) -> some View {
+        Group {
+            if english {
+                // System dictionaries follow installed OS dictionaries, not the in-app language.
+                Text(word).font(PZFont.caption).foregroundStyle(tint)
+            } else {
+                PZDefinableWord(word: word, font: PZFont.caption, tint: tint)
+            }
+        }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 6)
+        .background(PZColor.wash(tint), in: Capsule())
+    }
+}
+
 struct AnygramGame: View {
     let puzzle: AnygramPuzzle
     /// Calculado una vez: `puzzle.boardCells` reconstruye el diccionario entero en cada acceso.
@@ -1657,53 +1761,10 @@ struct AnygramGame: View {
     }
 
     private func crosswordBoard(maxHeight: CGFloat) -> some View {
-        GeometryReader { geo in
-            let spacing: CGFloat = 3
-            let available = min(geo.size.width, 300)
-            let widthTile = min(44, (available - spacing * CGFloat(puzzle.boardCols - 1))
-                                    / CGFloat(puzzle.boardCols))
-            let tile = puzzle.id.hasPrefix("en-")
-                ? min(widthTile, (maxHeight - spacing * CGFloat(puzzle.boardRows - 1)) / CGFloat(puzzle.boardRows))
-                : widthTile
-            let width = tile * CGFloat(puzzle.boardCols)
-                + spacing * CGFloat(puzzle.boardCols - 1)
-            let height = tile * CGFloat(puzzle.boardRows)
-                + spacing * CGFloat(puzzle.boardRows - 1)
-            let cells = boardCells
-            let revealed = revealedCells
-
-            VStack(spacing: spacing) {
-                ForEach(0..<puzzle.boardRows, id: \.self) { row in
-                    HStack(spacing: spacing) {
-                        ForEach(0..<puzzle.boardCols, id: \.self) { col in
-                            let cell = GridCell(row: row, col: col)
-                            if let letter = cells[cell] {
-                                Text(revealed.contains(cell) || isHint(cell) ? String(letter) : "")
-                                    .font(.system(size: min(22, tile * 0.5),
-                                                  weight: .bold,
-                                                  design: .rounded))
-                                    .foregroundStyle(PZColor.ink)
-                                    .frame(width: tile, height: tile)
-                                    .background(PZColor.surface,
-                                                in: PZRadius.rect(PZRadius.tile))
-                                    .overlay {
-                                        PZRadius.rect(PZRadius.tile)
-                                            .stroke(PZ.anygram.opacity(0.35), lineWidth: 1)
-                                    }
-                            } else {
-                                Color.clear.frame(width: tile, height: tile)
-                            }
-                        }
-                    }
-                }
-            }
-            .frame(width: width, height: height)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .frame(height: maxHeight)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(AppLanguage.text("Tablero de palabras cruzadas", "Crossed-word board"))
-        .accessibilityValue(AppLanguage.text("\(found.count) de \(puzzle.answers.count) palabras reveladas", "\(found.count) of \(puzzle.answers.count) words revealed"))
+        AnygramBoard(rows: puzzle.boardRows, cols: puzzle.boardCols, english: puzzle.id.hasPrefix("en-"),
+                     maxHeight: maxHeight, cells: boardCells, shown: revealedCells.union(hintedCells),
+                     found: found.count, total: puzzle.answers.count)
+            .equatable()
     }
 
     private var revealedCells: Set<GridCell> {
@@ -1758,48 +1819,9 @@ struct AnygramGame: View {
     }
 
     private var foundWords: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack {
-                Text(AppLanguage.text("TABLERO  \(found.count)/\(puzzle.answers.count)", "BOARD  \(found.count)/\(puzzle.answers.count)")).pzLabelStyle()
-                Spacer()
-                Text(AppLanguage.text("OTRAS  \(extraWords.count)", "EXTRAS  \(extraWords.count)")).pzLabelStyle()
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(puzzle.answers.filter(found.contains), id: \.self) { word in
-                        compactWordChip(word, tint: PZ.anygram)
-                    }
-                    if !found.isEmpty && !extraWords.isEmpty { Divider().frame(height: 24) }
-                    ForEach(extraWords.sorted(), id: \.self) { word in
-                        compactWordChip(word, tint: PZColor.inkSecondary)
-                    }
-                    if found.isEmpty && extraWords.isEmpty {
-                        Text(AppLanguage.text("Las palabras encontradas aparecerán aquí", "Your found words will appear here"))
-                            .font(PZFont.caption)
-                            .foregroundStyle(PZColor.inkSecondary)
-                    }
-                }
-            }
-            .frame(height: 34)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(PZColor.surface, in: PZRadius.rect(PZRadius.card))
-    }
-
-    private func compactWordChip(_ word: String, tint: Color) -> some View {
-        Group {
-            if puzzle.id.hasPrefix("en-") {
-                // System dictionaries follow installed OS dictionaries, not the in-app language.
-                Text(word).font(PZFont.caption).foregroundStyle(tint)
-            } else {
-                PZDefinableWord(word: word, font: PZFont.caption, tint: tint)
-            }
-        }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 6)
-            .background(PZColor.wash(tint), in: Capsule())
+        AnygramFoundStrip(targets: puzzle.answers.filter(found.contains), extras: extraWords.sorted(),
+                          total: puzzle.answers.count, english: puzzle.id.hasPrefix("en-"))
+            .equatable()
     }
 
     private func persistWords() {
