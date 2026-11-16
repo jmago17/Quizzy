@@ -30,7 +30,9 @@ Regenerar solo al añadir/quitar ficheros o cambiar `project.yml`.
   subir solo desde ahí (si se sube a mano un número mayor, ajustar el "next build number" del producto).
 - TestFlight: grupo interno "Internal" con dos testers (correos fuera del repo).
 - La 1.ª archive de Xcode Cloud (run 2) falló en "Preparing build for App Store Connect" porque el proyecto aún tenía
-  el bundle ID de QuotaMini (visto en el log de exportación).
+  el bundle ID de QuotaMini (visto en el log de exportación). Con `com.maromeapps.quizzies` la run 4 (2026-11-16,
+  lanzada por API: POST `/v1/ciBuildRuns`) subió el build 4 → VALID en TestFlight. En la app también hay un build 22.
+  Ojo: Xcode Cloud numera 4, 5… por debajo de ese 22.
 
 ## Subir a TestFlight a mano
 
