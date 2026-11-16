@@ -123,6 +123,13 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Descartado: `PuzzleProgress` (solo escribe al enviar palabra y cada 5 s, no durante el deslizamiento).
   - Verificado: build + UI tests Anygram en simulador (Release). El lag en sí NO se ha reproducido ni medido: confirmar en iPhone.
   - Scripts `anygram_flow*.sh` actualizados al bundle ID nuevo.
+- 2026-11-16 — Anygram con "carisma" (prueba solo en este juego, a petición de Josu: "parece una hoja de Excel"):
+  fondo `AnygramBackdrop` (resplandores del color del juego sobre el marino), casillas `AnygramTile` con volumen
+  (degradado, brillo arriba, sombra; al descubrirse se llenan de rosa y la letra entra con rebote en ola por fila/columna),
+  rueda con disco radial y fichas `AnygramWheelLetter` en relieve. **Rompe a propósito "sin sombras" de `docs/DISENO.md`**:
+  si gusta, extender al resto y actualizar la especificación. Capturas en `Quizzy-20261114/shots-anygram/carisma/`
+  (fuera del repo). Gancho DEBUG `NR_ANYFOUND=n` (con `NR_GAME=anygram`) descubre n palabras para capturas.
+  Sin ver en iPhone real ni comprobar fluidez de las sombras con muchas casillas.
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

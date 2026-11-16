@@ -1494,9 +1494,15 @@ private struct AnygramWheel: View {
             }
 
             ZStack {
+                // Disco con volumen: degradado radial del color del juego, borde con brillo arriba y sombra.
                 Circle()
-                    .fill(PZColor.surface)
-                    .overlay { Circle().stroke(PZ.anygram.opacity(0.2), lineWidth: 2) }
+                    .fill(RadialGradient(colors: [PZ.anygram.opacity(0.30), PZColor.surface],
+                                         center: .center, startRadius: 0, endRadius: side * 0.55))
+                    .overlay {
+                        Circle().stroke(LinearGradient(colors: [.white.opacity(0.18), PZ.anygram.opacity(0.15)],
+                                                       startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
+                    }
+                    .shadow(color: .black.opacity(0.45), radius: 14, y: 8)
 
                 Path { path in
                     guard let first = selected.first else { return }
@@ -1509,12 +1515,7 @@ private struct AnygramWheel: View {
 
                 ForEach(letters.indices, id: \.self) { index in
                     let isSelected = selected.contains(index)
-                    Text(String(letters[index]))
-                        .font(.system(size: 23, weight: .heavy, design: .rounded))
-                        .foregroundStyle(isSelected ? .white : PZ.anygram)
-                        .frame(width: 42, height: 42)
-                        .background(isSelected ? PZ.anygram : PZ.anygram.opacity(0.14), in: Circle())
-                        .overlay { Circle().stroke(PZ.anygram.opacity(0.35), lineWidth: 1.5) }
+                    AnygramWheelLetter(letter: letters[index], selected: isSelected)
                         .position(positions[index])
                         .accessibilityLabel(AppLanguage.text("Letra \(String(letters[index]))", "Letter \(String(letters[index]))"))
                         .accessibilityValue(isSelected ? AppLanguage.text("seleccionada", "selected") : "")
@@ -1548,6 +1549,76 @@ private struct AnygramWheel: View {
     }
 }
 
+/// Fondo de Anygram (prueba de "carisma", 2026-11-16): el marino de siempre con resplandores del color del juego.
+private struct AnygramBackdrop: View {
+    var body: some View {
+        ZStack {
+            PZColor.canvas
+            RadialGradient(colors: [PZ.anygram.opacity(0.32), .clear],
+                           center: UnitPoint(x: 0.5, y: 0.0), startRadius: 10, endRadius: 520)
+            RadialGradient(colors: [Color(light: "6B5BD6", dark: "6B5BD6").opacity(0.20), .clear],
+                           center: UnitPoint(x: 0.5, y: 0.85), startRadius: 10, endRadius: 380)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+/// Casilla del tablero con volumen (ficha): degradado vertical, brillo arriba y sombra. Al descubrirse se llena
+/// con el color del juego y la letra entra con un rebote; `delay` hace una ola por filas/columnas.
+private struct AnygramTile: View {
+    let letter: Character
+    let shown: Bool
+    let size: CGFloat
+    let delay: Double
+
+    var body: some View {
+        let shape = PZRadius.rect(PZRadius.tile)
+        ZStack {
+            shape.fill(LinearGradient(
+                colors: shown ? [PZ.anygram.mix(with: .white, by: 0.25), PZ.anygram.mix(with: .black, by: 0.25)]
+                              : [Color(light: "2A3350", dark: "2A3350"), Color(light: "1A2031", dark: "1A2031")],
+                startPoint: .top, endPoint: .bottom))
+            shape.stroke(LinearGradient(colors: [.white.opacity(shown ? 0.45 : 0.14), .clear],
+                                        startPoint: .top, endPoint: .bottom), lineWidth: 1)
+            Text(shown ? String(letter) : "")
+                .font(.system(size: min(22, size * 0.52), weight: .heavy, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.3), radius: 0, y: 1)
+                .scaleEffect(shown ? 1 : 0.4)
+                .opacity(shown ? 1 : 0)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: shown ? PZ.anygram.opacity(0.45) : .black.opacity(0.4), radius: shown ? 6 : 2, y: shown ? 0 : 2)
+        .animation(.spring(response: 0.45, dampingFraction: 0.65).delay(delay), value: shown)
+    }
+}
+
+/// Letra de la rueda como ficha en relieve; seleccionada se enciende y crece un poco.
+private struct AnygramWheelLetter: View {
+    let letter: Character
+    let selected: Bool
+
+    var body: some View {
+        Text(String(letter))
+            .font(.system(size: 23, weight: .heavy, design: .rounded))
+            .foregroundStyle(selected ? .white : PZ.anygram.mix(with: .white, by: 0.35))
+            .frame(width: 44, height: 44)
+            .background {
+                Circle().fill(LinearGradient(
+                    colors: selected ? [PZ.anygram.mix(with: .white, by: 0.2), PZ.anygram.mix(with: .black, by: 0.2)]
+                                     : [Color(light: "323B58", dark: "323B58"), Color(light: "1E2538", dark: "1E2538")],
+                    startPoint: .top, endPoint: .bottom))
+            }
+            .overlay {
+                Circle().stroke(LinearGradient(colors: [.white.opacity(selected ? 0.5 : 0.2), .clear],
+                                               startPoint: .top, endPoint: .bottom), lineWidth: 1.2)
+            }
+            .shadow(color: selected ? PZ.anygram.opacity(0.6) : .black.opacity(0.45), radius: selected ? 8 : 3, y: selected ? 0 : 3)
+            .scaleEffect(selected ? 1.12 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: selected)
+    }
+}
+
 /// Tablero de Anygram. `Equatable` + `.equatable()`: no se recalcula al seleccionar letras ni con el segundero
 /// (antes todo `AnygramGame` se re-evaluaba en cada letra y cada segundo).
 private struct AnygramBoard: View, Equatable {
@@ -1577,15 +1648,8 @@ private struct AnygramBoard: View, Equatable {
                         ForEach(0..<cols, id: \.self) { col in
                             let cell = GridCell(row: row, col: col)
                             if let letter = cells[cell] {
-                                Text(shown.contains(cell) ? String(letter) : "")
-                                    .font(.system(size: min(22, tile * 0.5), weight: .bold, design: .rounded))
-                                    .foregroundStyle(PZColor.ink)
-                                    .frame(width: tile, height: tile)
-                                    .background(PZColor.surface, in: PZRadius.rect(PZRadius.tile))
-                                    .overlay {
-                                        PZRadius.rect(PZRadius.tile)
-                                            .stroke(PZ.anygram.opacity(0.35), lineWidth: 1)
-                                    }
+                                AnygramTile(letter: letter, shown: shown.contains(cell), size: tile,
+                                            delay: Double(row + col) * 0.045)
                             } else {
                                 Color.clear.frame(width: tile, height: tile)
                             }
@@ -1703,7 +1767,7 @@ struct AnygramGame: View {
             .frame(maxWidth: 560, maxHeight: .infinity, alignment: .top)
             .frame(maxWidth: .infinity)
         }
-        .background(LiquidCanvasBackground())
+        .background(AnygramBackdrop())
         .background {
             PZHardwareKeyCapture { handleCapturedHardwareKey($0) }
                 .frame(width: 1, height: 1)
@@ -1736,6 +1800,15 @@ struct AnygramGame: View {
             if ProcessInfo.processInfo.environment["NR_AUTOWIN"] == "1", !AnygramAutoWin.used {
                 AnygramAutoWin.used = true
                 Task { @MainActor in try? await Task.sleep(for: .seconds(1)); finish() }
+            }
+            // Ayuda para capturas: NR_ANYFOUND=n descubre n palabras (sin guardar) para ver tablero y animación.
+            if let n = Int(ProcessInfo.processInfo.environment["NR_ANYFOUND"] ?? "") {
+                Task { @MainActor in
+                    for word in puzzle.answers.prefix(n) {
+                        try? await Task.sleep(for: .seconds(0.8))
+                        found.insert(word)
+                    }
+                }
             }
             #endif
         }
