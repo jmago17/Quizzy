@@ -60,7 +60,7 @@ struct WordSearchGame: View {
                 }
             }
         }
-        .background(LiquidCanvasBackground())
+        .background(PZGameBackdrop(color: PZ.wordsearch))
         .navigationTitle(AppLanguage.text("Sopa de letras", "Word Search"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -212,8 +212,8 @@ struct WordSearchGame: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .padding(10)
-        .background(PZColor.surface,
-                    in: RoundedRectangle(cornerRadius: 14))
+        // El tablero entero es una sola ficha apagada con volumen (una sola sombra, barata).
+        .pzVolume(radius: 14)
         .padding(.vertical, 12)
     }
 
@@ -224,12 +224,7 @@ struct WordSearchGame: View {
         return Text(puzzle.grid[r][c])
             .font(.system(size: max(11, size * 0.45), weight: .semibold))
             .frame(width: size, height: size)
-            .background(
-                picked ? PZ.wordsearch
-                : locked ? PZ.wordsearch.opacity(0.26)
-                : Color.clear,
-                in: RoundedRectangle(cornerRadius: 6)
-            )
+            .background { WordSearchCellFace(picked: picked, locked: locked) }
             .foregroundStyle(picked ? .white : .primary)
     }
 
@@ -307,6 +302,30 @@ struct WordSearchGame: View {
 
     private func flash(_ text: String, _ kind: PZToast.Kind = .info) {
         toast = PZToast(text: text, kind: kind)
+    }
+}
+
+/// Fondo de una casilla de la sopa. Con 100+ casillas que se redibujan en cada movimiento del dedo, el volumen
+/// va por niveles: las casillas libres no llevan nada (transparentes, como antes); las de palabras ya
+/// encontradas llevan degradado + brillo arriba SIN sombra (pueden ser muchas); solo las del trazo en curso
+/// (pocas) llevan la ficha completa con sombra (`pzVolume`).
+private struct WordSearchCellFace: View {
+    let picked: Bool
+    let locked: Bool
+
+    var body: some View {
+        if picked {
+            Color.clear.pzVolume(PZ.wordsearch, radius: 6)
+        } else if locked {
+            let base = PZ.wordsearch.mix(with: PZColor.surface, by: 0.55)
+            let shape = PZRadius.rect(6)
+            shape.fill(LinearGradient(colors: [base.mix(with: .white, by: 0.12), base.mix(with: .black, by: 0.18)],
+                                      startPoint: .top, endPoint: .bottom))
+                .overlay {
+                    shape.stroke(LinearGradient(colors: [.white.opacity(0.22), .clear],
+                                                startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                }
+        }
     }
 }
 #endif

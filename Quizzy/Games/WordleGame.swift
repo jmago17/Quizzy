@@ -114,7 +114,7 @@ struct WordleGame: View {
                 .padding(.top, PZSpace.md)
             }
         }
-        .background(LiquidCanvasBackground())
+        .background(PZGameBackdrop(color: PZ.wordle))
         .background {
             PZHardwareKeyCapture { handleCapturedHardwareKey($0) }
                 .frame(width: 1, height: 1)
@@ -320,12 +320,18 @@ struct WordleGame: View {
 
         return Text(ch)
             .font(.system(size: side * 0.46, weight: .bold))
+            // Volumen: la letra entra con un pequeño rebote al teclearla.
+            .scaleEffect(ch.isEmpty ? 0.5 : 1)
+            .animation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.55), value: ch)
             .frame(width: side, height: side)
-            .background(color(result), in: PZRadius.rect(PZRadius.chip))
+            // Ficha con volumen: apagada mientras no se comprueba; encendida con el color del resultado
+            // (verde/ámbar/gris de siempre). Solo la correcta lleva halo.
+            .pzVolume(result.map(color), radius: PZRadius.chip, glow: result == .correct)
             .overlay {
-                PZRadius.rect(PZRadius.chip)
-                    .stroke(ch.isEmpty ? Color.secondary.opacity(0.3) : Color.primary.opacity(0.4),
-                            lineWidth: result == nil ? 2 : 0)
+                // Casilla tecleada sin comprobar: borde claro para distinguirla de las vacías.
+                if result == nil, !ch.isEmpty {
+                    PZRadius.rect(PZRadius.chip).stroke(Color.primary.opacity(0.4), lineWidth: 2)
+                }
             }
             .overlay(alignment: .topTrailing) {
                 // Second channel for colour-blind users.
@@ -386,12 +392,10 @@ struct WordleGame: View {
                         .font(PZFont.chip)
                         .frame(maxWidth: 200)
                         .frame(height: 44)
-                        .background(current.count == 5 ? PZColor.wash(PZ.wordle) : PZColor.fill,
-                                    in: PZRadius.rect(PZRadius.chip))
-                        .foregroundStyle(current.count == 5 ? PZ.wordle : PZColor.inkTertiary)
-                        .overlay {
-                            PZRadius.rect(PZRadius.chip).stroke(PZColor.hairline, lineWidth: 1)
-                        }
+                        // Encendido (color del juego, con halo) cuando hay 5 letras; apagado si no.
+                        .pzVolume(current.count == 5 ? PZ.wordle : nil, radius: PZRadius.chip,
+                                  glow: current.count == 5)
+                        .foregroundStyle(current.count == 5 ? Color.white : PZColor.inkTertiary)
                 }
                 .buttonStyle(.plain)
                 .disabled(current.count != 5 || finished)
@@ -408,13 +412,9 @@ struct WordleGame: View {
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity)
                 .frame(height: 46)
-                .background(keyColor(state), in: PZRadius.rect(PZRadius.chip))
+                // Tecla con volumen: apagada sin información; con el color del estado si ya se sabe.
+                .pzVolume(state.map(keyColor), radius: PZRadius.chip)
                 .foregroundStyle(state == nil ? PZColor.ink : .white)
-                .overlay {
-                    if state == nil {
-                        PZRadius.rect(PZRadius.chip).stroke(PZColor.hairline, lineWidth: 1)
-                    }
-                }
                 .strikethrough(state == .absent, color: .white.opacity(0.7))
         }
         .buttonStyle(.plain)
@@ -429,7 +429,7 @@ struct WordleGame: View {
             Image(systemName: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .frame(width: 52, height: 46)
-                .background(PZColor.fill, in: PZRadius.rect(PZRadius.chip))
+                .pzVolume(radius: PZRadius.chip)
                 .foregroundStyle(PZColor.ink)
         }
         .buttonStyle(.plain)
