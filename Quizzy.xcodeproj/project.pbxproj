@@ -23,6 +23,7 @@
 		73BD5E7AA0A0ED3EC834BB64 /* HostDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EC82E59A1B3EDDBF6D295A7 /* HostDesign.swift */; };
 		77502C4EF188CFDF6DE2CED3 /* MazeGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893271D3B3418F6A4853E0DD /* MazeGame.swift */; };
 		81017D8FD382C3BBFD37F001 /* PuzzleDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9087334214533F8FB49EF42 /* PuzzleDesignSystem.swift */; };
+		83F9FC9D517DD0C16C3FF56A /* PZShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 1E7D5FEC94B05B436560DDF6 /* PZShaders.metal */; };
 		94044F0A4E8B4E3E953BBA9B /* PZResultSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B013A502A43F40714E2916C /* PZResultSheet.swift */; };
 		94482512A2B0051B0B732427 /* AnygramDefaultData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F195A13656D1370F855535D5 /* AnygramDefaultData.swift */; };
 		964DE6883D646963FA123F62 /* DecoderGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */; };
@@ -54,6 +55,7 @@
 		0EE4BF8589A9F754CEECFB35 /* answer_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = answer_words.json; sourceTree = "<group>"; };
 		1A59F2E092EB61696DFBDC1F /* WordleGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordleGame.swift; sourceTree = "<group>"; };
 		1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnglishPuzzleLexicon.swift; sourceTree = "<group>"; };
+		1E7D5FEC94B05B436560DDF6 /* PZShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PZShaders.metal; sourceTree = "<group>"; };
 		1E8FEC07AB38BD68118122BA /* natural_clues.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = natural_clues.json; sourceTree = "<group>"; };
 		1EC82E59A1B3EDDBF6D295A7 /* HostDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostDesign.swift; sourceTree = "<group>"; };
 		24073164DBA8A86E8ED68902 /* PZToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PZToast.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				0B7BFD54DB46ED769E4078CF /* PuzzleTiming.swift */,
 				7B013A502A43F40714E2916C /* PZResultSheet.swift */,
 				64F6DBBFBD1C8E201B7652AC /* PZRules.swift */,
+				1E7D5FEC94B05B436560DDF6 /* PZShaders.metal */,
 				24073164DBA8A86E8ED68902 /* PZToast.swift */,
 				575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */,
 				1A59F2E092EB61696DFBDC1F /* WordleGame.swift */,
@@ -274,6 +277,7 @@
 				E8D33A721943D3286505A333 /* MurdokuCaseUI.swift in Sources */,
 				94044F0A4E8B4E3E953BBA9B /* PZResultSheet.swift in Sources */,
 				BD7B861F5E4ABA29AD032AD5 /* PZRules.swift in Sources */,
+				83F9FC9D517DD0C16C3FF56A /* PZShaders.metal in Sources */,
 				C948C3CD25FD4E9CCAA98365 /* PZToast.swift in Sources */,
 				81017D8FD382C3BBFD37F001 /* PuzzleDesignSystem.swift in Sources */,
 				20704AE5E75EE382B0E77E6F /* PuzzleGenerator.swift in Sources */,
@@ -381,7 +385,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -475,7 +479,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

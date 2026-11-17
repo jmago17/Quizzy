@@ -598,3 +598,69 @@ struct PZShake: GeometryEffect {
     }
 }
 #endif
+
+// MARK: - Volumen («carisma», 2026-11-16)
+//
+// Probado primero en Anygram y extendido a toda la app: fondo con resplandor del color de cada juego y
+// casillas/fichas con volumen (degradado vertical, brillo en el borde superior y sombra). Sustituye a la
+// regla "sin sombras" de docs/DISENO.md para el tablero de juego (las tarjetas de la portada siguen planas).
+
+#if os(iOS)
+/// Fondo de juego: el marino de siempre con un resplandor del color del juego arriba y otro más tenue abajo.
+struct PZGameBackdrop: View {
+    var color: Color = PZColor.accent
+
+    var body: some View {
+        ZStack {
+            PZColor.canvas
+            RadialGradient(colors: [color.opacity(0.30), .clear],
+                           center: UnitPoint(x: 0.5, y: 0.0), startRadius: 10, endRadius: 520)
+            RadialGradient(colors: [color.mix(with: Color(light: "4B5BD6", dark: "4B5BD6"), by: 0.55).opacity(0.18), .clear],
+                           center: UnitPoint(x: 0.5, y: 0.88), startRadius: 10, endRadius: 380)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+/// Colores de una ficha "apagada" (casilla vacía / sin resolver) con volumen.
+enum PZVolume {
+    static let idleTop    = Color(light: "2A3350", dark: "2A3350")
+    static let idleBottom = Color(light: "1A2031", dark: "1A2031")
+}
+
+extension View {
+    /// Ficha con volumen. `fill` nil = ficha apagada (marino); con color = ficha encendida, con halo si `glow`.
+    /// Va DETRÁS del contenido (como `.background`), así que no cambia el tamaño ni el layout de la casilla.
+    func pzVolume(_ fill: Color? = nil, radius: CGFloat = PZRadius.tile, glow: Bool = false,
+                  circle: Bool = false) -> some View {
+        modifier(PZVolumeModifier(fill: fill, radius: radius, glow: glow, circle: circle))
+    }
+}
+
+private struct PZVolumeModifier: ViewModifier {
+    let fill: Color?
+    let radius: CGFloat
+    let glow: Bool
+    let circle: Bool
+
+    func body(content: Content) -> some View {
+        let colors: [Color] = fill.map { [$0.mix(with: .white, by: 0.22), $0.mix(with: .black, by: 0.22)] }
+            ?? [PZVolume.idleTop, PZVolume.idleBottom]
+        let gradient = LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
+        let rim = LinearGradient(colors: [.white.opacity(fill == nil ? 0.14 : 0.42), .clear],
+                                 startPoint: .top, endPoint: .bottom)
+        content
+            .background {
+                Group {
+                    if circle {
+                        Circle().fill(gradient).overlay { Circle().stroke(rim, lineWidth: 1) }
+                    } else {
+                        PZRadius.rect(radius).fill(gradient).overlay { PZRadius.rect(radius).stroke(rim, lineWidth: 1) }
+                    }
+                }
+                .shadow(color: glow && fill != nil ? fill!.opacity(0.45) : .black.opacity(0.4),
+                        radius: glow && fill != nil ? 6 : 2, y: glow && fill != nil ? 0 : 2)
+            }
+    }
+}
+#endif

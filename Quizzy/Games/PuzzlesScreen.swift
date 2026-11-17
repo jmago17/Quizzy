@@ -16,7 +16,7 @@ enum PZ {
     static let wordle      = Color(light: "6E7B3F", dark: "9BAA63")
     static let trivia      = Color(light: "B26A1F", dark: "D3913F")
     static let numbers     = Color(light: "1F5F73", dark: "4E93A8")
-    static let anygram     = Color(light: "8B3E72", dark: "D584BD")
+    static let anygram     = Color(light: "17847F", dark: "3FD3C6")
     static let hashtag     = Color(light: "A05A18", dark: "D79950")
     static let murdle      = Color(light: "7A2628", dark: "CB6468")
     static let murdoku     = Color(light: "5E3348", dark: "B77A98")

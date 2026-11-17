@@ -1549,20 +1549,6 @@ private struct AnygramWheel: View {
     }
 }
 
-/// Fondo de Anygram (prueba de "carisma", 2026-11-16): el marino de siempre con resplandores del color del juego.
-private struct AnygramBackdrop: View {
-    var body: some View {
-        ZStack {
-            PZColor.canvas
-            RadialGradient(colors: [PZ.anygram.opacity(0.32), .clear],
-                           center: UnitPoint(x: 0.5, y: 0.0), startRadius: 10, endRadius: 520)
-            RadialGradient(colors: [Color(light: "6B5BD6", dark: "6B5BD6").opacity(0.20), .clear],
-                           center: UnitPoint(x: 0.5, y: 0.85), startRadius: 10, endRadius: 380)
-        }
-        .ignoresSafeArea()
-    }
-}
-
 /// Casilla del tablero con volumen (ficha): degradado vertical, brillo arriba y sombra. Al descubrirse se llena
 /// con el color del juego y la letra entra con un rebote; `delay` hace una ola por filas/columnas.
 private struct AnygramTile: View {
@@ -1767,7 +1753,7 @@ struct AnygramGame: View {
             .frame(maxWidth: 560, maxHeight: .infinity, alignment: .top)
             .frame(maxWidth: .infinity)
         }
-        .background(AnygramBackdrop())
+        .background(PZGameBackdrop(color: PZ.anygram))
         .background {
             PZHardwareKeyCapture { handleCapturedHardwareKey($0) }
                 .frame(width: 1, height: 1)

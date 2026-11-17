@@ -52,6 +52,8 @@ struct PZResultSheet: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
     @State private var showCelebration = false
+    /// Dispara la onda expansiva (shader `pzShockwave`) una vez al aparecer, si se ha ganado.
+    @State private var wave = 0
 
     private var next: PuzzleKind? {
         PuzzleProgress.shared.nextPending(after: result.kind)
@@ -79,6 +81,18 @@ struct PZResultSheet: View {
             .padding(.horizontal, PZSpace.xl)
             .padding(.top, PZSpace.lg)
             .padding(.bottom, PZSpace.xxl)
+            .keyframeAnimator(initialValue: 0.0, trigger: wave) { content, t in
+                let badgeY = PZSpace.lg + 44
+                content.visualEffect { c, proxy in
+                    c.layerEffect(ShaderLibrary.pzShockwave(.float2(proxy.size.width / 2, badgeY), .float(t),
+                                                            .float(650), .float(12)),
+                                  maxSampleOffset: CGSize(width: 16, height: 16),
+                                  isEnabled: t > 0.001 && t < 1.15)
+                }
+            } keyframes: { _ in
+                MoveKeyframe(0.0)
+                LinearKeyframe(1.2, duration: 1.2)
+            }
         }
         .onDisappear { PZPendingNav.flush() }
         .presentationDetents([.medium, .large])
@@ -87,7 +101,7 @@ struct PZResultSheet: View {
         .presentationBackground { LiquidCanvasBackground() }
         .overlay {
             if showCelebration {
-                PZCelebrationView()
+                PZCelebrationView(tint: UIColor(PZ.color(result.kind)))
                     .allowsHitTesting(false)
                     .ignoresSafeArea()
                     .transition(.opacity)
@@ -99,6 +113,7 @@ struct PZResultSheet: View {
             PZHaptics.win()
             guard !reduceMotion else { return }
             showCelebration = true
+            wave += 1
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(2.6))
                 showCelebration = false
@@ -106,11 +121,28 @@ struct PZResultSheet: View {
         }
     }
 
-    private var badge: some View {
-        PZWashBadge(color: result.didWin ? PZ.color(result.kind) : PZColor.inkSecondary,
-                    size: 88) {
-            Image(systemName: result.didWin ? result.kind.symbol : "clock.badge.xmark")
-                .font(.system(size: 38, weight: .bold))
+    @ViewBuilder private var badge: some View {
+        Group {
+            if result.didWin {
+                // Medalla con volumen y brillo metálico (shader `pzShine`) que barre cada 2,4 s.
+                TimelineView(.animation(paused: reduceMotion)) { timeline in
+                    let t = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1000)
+                    Image(systemName: result.kind.symbol)
+                        .font(.system(size: 38, weight: .bold))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.3), radius: 0, y: 1)
+                        .frame(width: 88, height: 88)
+                        .pzVolume(PZ.color(result.kind), glow: true, circle: true)
+                        .compositingGroup()
+                        .colorEffect(ShaderLibrary.pzShine(.float2(88, 88), .float(t), .float(2.4)),
+                                     isEnabled: !reduceMotion)
+                }
+            } else {
+                PZWashBadge(color: PZColor.inkSecondary, size: 88) {
+                    Image(systemName: "clock.badge.xmark")
+                        .font(.system(size: 38, weight: .bold))
+                }
+            }
         }
         .scaleEffect(appeared || reduceMotion ? 1 : 0.6)
         .animation(reduceMotion ? nil : .bouncy(duration: 0.55), value: appeared)
@@ -179,7 +211,11 @@ struct PZResultSheet: View {
     }
 }
 
-// MARK: - Metal celebration (confetti + fireworks)
+// MARK: - Metal celebration (purpurina metálica + chispas)
+//
+// 2026-11-16: antes era confeti multicolor plano. Ahora los colores salen del color del juego (más blanco y
+// oro), la mezcla es aditiva (las chispas brillan y se suman) y los "papelitos" son escamas metálicas que
+// destellan al girar (brillo según el ángulo).
 //
 // Shown once, briefly, over the result sheet whenever a game is won. A tiny
 // GPU particle system rather than a stack of animated SwiftUI views, so a
@@ -230,15 +266,20 @@ fragment float4 pz_particle_fragment(VertexOut in [[stage_in]],
                                       float2 pointCoord [[point_coord]]) {
     float2 c = pointCoord - float2(0.5);
     if (in.kind > 0.5) {
+        // Chispa: núcleo casi blanco y halo del color.
         float d = length(c);
-        float alpha = smoothstep(0.5, 0.05, d);
-        return float4(in.color.rgb, in.color.a * alpha);
+        float alpha = smoothstep(0.5, 0.0, d);
+        float core = smoothstep(0.18, 0.0, d);
+        return float4(mix(in.color.rgb, float3(1.0), core), in.color.a * alpha);
     } else {
+        // Escama metálica: rombo fino que destella cuando su "cara" mira a la luz.
         float s = sin(in.rotation), co = cos(in.rotation);
         float2 r = float2(co * c.x - s * c.y, s * c.x + co * c.y);
-        float edge = max(abs(r.x), abs(r.y));
-        float alpha = 1.0 - smoothstep(0.36, 0.46, edge);
-        return float4(in.color.rgb, in.color.a * alpha);
+        float edge = abs(r.x) * 1.6 + abs(r.y) * 0.9;
+        float alpha = 1.0 - smoothstep(0.38, 0.48, edge);
+        float glint = pow(abs(cos(in.rotation * 1.7)), 6.0);
+        float3 rgb = in.color.rgb * (0.35 + 0.65 * abs(sin(in.rotation))) + glint * 0.9;
+        return float4(rgb, in.color.a * alpha);
     }
 }
 """
@@ -269,28 +310,11 @@ private struct PZSimParticle {
     var alpha: Float = 1
 }
 
-private enum PZCelebrationPalette {
-    static let confetti: [SIMD4<Float>] = [
-        SIMD4(0.85, 0.20, 0.32, 1),
-        SIMD4(0.98, 0.75, 0.18, 1),
-        SIMD4(0.20, 0.55, 0.85, 1),
-        SIMD4(0.32, 0.72, 0.48, 1),
-        SIMD4(0.62, 0.38, 0.85, 1),
-        SIMD4(0.98, 0.55, 0.20, 1),
-    ]
-    static let sparks: [SIMD4<Float>] = [
-        SIMD4(1.0, 0.85, 0.35, 1),
-        SIMD4(1.0, 0.55, 0.35, 1),
-        SIMD4(0.55, 0.85, 1.0, 1),
-        SIMD4(0.95, 0.35, 0.55, 1),
-        SIMD4(0.75, 1.0, 0.55, 1),
-    ]
-}
-
 /// Thin UIViewRepresentable wrapper around an `MTKView`; all simulation and
 /// drawing lives in `PZCelebrationCoordinator`.
 struct PZCelebrationView: UIViewRepresentable {
-    func makeCoordinator() -> PZCelebrationCoordinator { PZCelebrationCoordinator() }
+    var tint: UIColor = .white
+    func makeCoordinator() -> PZCelebrationCoordinator { PZCelebrationCoordinator(tint: tint) }
 
     func makeUIView(context: Context) -> MTKView {
         let view = MTKView()
@@ -323,6 +347,22 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
     private var nextConfettiSpawn: CFTimeInterval = 0
     private var burstsFired = 0
     private let burstTimes: [CFTimeInterval] = [0.0, 0.22, 0.42]
+    private let confettiColors: [SIMD4<Float>]
+    private let sparkColors: [SIMD4<Float>]
+
+    /// Paleta a partir del color del juego: tonos del color, blanco y oro.
+    init(tint: UIColor) {
+        var r: CGFloat = 1, g: CGFloat = 1, b: CGFloat = 1, a: CGFloat = 1
+        tint.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark)).getRed(&r, green: &g, blue: &b, alpha: &a)
+        let base = SIMD3<Float>(Float(r), Float(g), Float(b))
+        func c(_ v: SIMD3<Float>) -> SIMD4<Float> { SIMD4(min(v.x, 1), min(v.y, 1), min(v.z, 1), 1) }
+        let light = base + (SIMD3<Float>(repeating: 1) - base) * 0.45
+        let deep = base * 0.75
+        let gold = SIMD3<Float>(1.0, 0.82, 0.38)
+        confettiColors = [c(base), c(light), c(deep), c(gold), c(SIMD3(0.92, 0.94, 1.0))]
+        sparkColors = [c(light), c(base), c(gold), c(SIMD3(1, 1, 1))]
+        super.init()
+    }
 
     func attach(to view: MTKView) {
         guard let device = view.device ?? MTLCreateSystemDefaultDevice() else { return }
@@ -350,7 +390,7 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
             desc.colorAttachments[0].alphaBlendOperation = .add
             desc.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
             desc.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha
-            desc.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+            desc.colorAttachments[0].destinationRGBBlendFactor = .one   // aditiva: brillo
             desc.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
             pipeline = try device.makeRenderPipelineState(descriptor: desc)
         } catch {
@@ -445,7 +485,7 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
             particles.append(PZSimParticle(
                 position: SIMD2(cx, cy),
                 velocity: SIMD2(cos(angle) * speed, sin(angle) * speed),
-                color: PZCelebrationPalette.sparks.randomElement()!,
+                color: sparkColors.randomElement()!,
                 size: Float.random(in: 6...11),
                 rotation: 0,
                 angularVelocity: 0,
@@ -462,7 +502,7 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
             particles.append(PZSimParticle(
                 position: SIMD2(x, -20),
                 velocity: SIMD2(Double.random(in: -40...40), Double.random(in: 80...200)),
-                color: PZCelebrationPalette.confetti.randomElement()!,
+                color: confettiColors.randomElement()!,
                 size: Float.random(in: 8...14),
                 rotation: Double.random(in: 0..<(2 * .pi)),
                 angularVelocity: Double.random(in: -6...6),
