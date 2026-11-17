@@ -110,7 +110,7 @@ struct QuartilesGame: View {
                 }
             }
         }
-        .background(LiquidCanvasBackground())
+        .background(PZGameBackdrop(color: PZ.quartiles))
         .background {
             PZHardwareKeyCapture { handleCapturedHardwareKey($0) }
                 .frame(width: 1, height: 1)
@@ -194,8 +194,8 @@ struct QuartilesGame: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12).padding(.vertical, 9)
-                        .background(submitFlash?.tint ?? PZ.quartiles,
-                                    in: RoundedRectangle(cornerRadius: 9))
+                        // Fragmento elegido como ficha encendida (verde/rojo durante el aviso de envío).
+                        .pzVolume(submitFlash?.tint ?? PZ.quartiles, radius: 9)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -329,9 +329,12 @@ struct QuartilesGame: View {
                 .strikethrough(exhausted && !sel, color: PZ.quartiles)
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
-                .background(sel ? PZ.quartiles : PZColor.surface,
-                            in: RoundedRectangle(cornerRadius: 11))
+                // Ficha con volumen: apagada, o encendida con halo al seleccionarla.
+                .pzVolume(sel ? PZ.quartiles : nil, radius: 11, glow: sel)
                 .foregroundStyle(sel ? .white : .primary)
+                // Pequeño rebote al seleccionar/soltar (solo visual, el marco no cambia).
+                .scaleEffect(sel ? 1.04 : 1)
+                .animation(.spring(response: 0.25, dampingFraction: 0.6), value: sel)
         }
         .buttonStyle(.plain)
         .opacity(sel ? 1 : (exhausted ? 0.4 : (inQuartile ? 0.62 : 1)))
