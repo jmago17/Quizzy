@@ -160,7 +160,7 @@ struct TriviaGame: View {
         }
         .padding(.horizontal, PZSpace.screenH)
         .padding(.top, PZSpace.sm)
-        .background(LiquidCanvasBackground())
+        .background(PZGameBackdrop(color: PZ.trivia))
         .navigationTitle("10 en 60")
         .navigationBarTitleDisplayMode(.inline)
         .pzRules(.trivia)
@@ -295,13 +295,16 @@ struct TriviaGame: View {
         let position = selectedOrder.firstIndex(of: i)
         let revealedCorrect = lockedChoice != nil && q.correct.contains(i)
         let revealedWrong = lockedChoice == i && wasCorrect == false
+        let fill = volumeFill(picked: picked, correct: revealedCorrect, wrong: revealedWrong)
 
         return Button { choose(i) } label: {
             HStack(spacing: PZSpace.md) {
                 marker(index: i, position: position,
-                       correct: revealedCorrect, wrong: revealedWrong)
+                       correct: revealedCorrect, wrong: revealedWrong, lit: fill != nil)
                 Text(q.options[i])
                     .font(PZFont.chip)
+                    .foregroundStyle(fill != nil ? Color.white : PZColor.ink)
+                    .shadow(color: .black.opacity(fill != nil ? 0.3 : 0), radius: 0, y: 1)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
@@ -309,17 +312,11 @@ struct TriviaGame: View {
             .padding(.horizontal, PZSpace.lg)
             .padding(.vertical, PZSpace.md)
             .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-            .background(background(picked: picked,
-                                   correct: revealedCorrect,
-                                   wrong: revealedWrong),
-                        in: PZRadius.rect(PZRadius.tile))
-            .overlay {
-                PZRadius.rect(PZRadius.tile)
-                    .stroke(strokeColor(picked: picked,
-                                        correct: revealedCorrect,
-                                        wrong: revealedWrong),
-                            lineWidth: 1.5)
-            }
+            // Opción con volumen: apagada en marino; elegida/correcta/fallada se enciende con su color.
+            .pzVolume(fill, glow: fill != nil)
+            // Pequeño rebote al encenderse (escala visual, no cambia el layout).
+            .scaleEffect(fill != nil && !reduceMotion ? 1.02 : 1)
+            .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.6), value: fill != nil)
         }
         .buttonStyle(.plain)
         .disabled(lockedChoice != nil || eliminated.contains(i))
@@ -329,25 +326,23 @@ struct TriviaGame: View {
     }
 
     @ViewBuilder
-    private func marker(index i: Int, position: Int?, correct: Bool, wrong: Bool) -> some View {
+    private func marker(index i: Int, position: Int?, correct: Bool, wrong: Bool, lit: Bool) -> some View {
         ZStack {
+            // Sobre una opción encendida el marcador pasa a blanco translúcido (el color ya lo da la ficha).
             Circle()
-                .fill(correct ? PZColor.success.opacity(0.18)
-                      : wrong ? PZColor.danger.opacity(0.18)
-                      : position != nil ? PZ.trivia.opacity(0.2)
-                      : PZColor.fill)
+                .fill(lit ? Color.white.opacity(0.22) : PZColor.fill)
             if correct {
                 Image(systemName: "checkmark")
                     .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(PZColor.success)
+                    .foregroundStyle(.white)
             } else if wrong {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(PZColor.danger)
+                    .foregroundStyle(.white)
             } else if let position {
                 Text("\(position + 1)")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(PZ.trivia)
+                    .foregroundStyle(.white)
             } else {
                 Text(letter(i))
                     .font(.system(size: 13, weight: .bold))
@@ -361,18 +356,12 @@ struct TriviaGame: View {
         ["A", "B", "C", "D", "E", "F"][min(i, 5)]
     }
 
-    private func background(picked: Bool, correct: Bool, wrong: Bool) -> Color {
-        if correct { return PZColor.success.opacity(0.14) }
-        if wrong { return PZColor.danger.opacity(0.14) }
-        if picked { return PZ.trivia.opacity(0.14) }
-        return PZColor.surface
-    }
-
-    private func strokeColor(picked: Bool, correct: Bool, wrong: Bool) -> Color {
-        if correct { return PZColor.success.opacity(0.55) }
-        if wrong { return PZColor.danger.opacity(0.55) }
-        if picked { return PZ.trivia.opacity(0.5) }
-        return .clear
+    /// Color de la ficha encendida según el estado; nil = ficha apagada.
+    private func volumeFill(picked: Bool, correct: Bool, wrong: Bool) -> Color? {
+        if correct { return PZColor.success }
+        if wrong { return PZColor.danger }
+        if picked { return PZ.trivia }
+        return nil
     }
 
     // MARK: Flow
@@ -601,7 +590,7 @@ struct NumbersGame: View {
                 }
             }
         }
-        .background(LiquidCanvasBackground())
+        .background(PZGameBackdrop(color: PZ.numbers))
         .navigationTitle("Cifras")
         .navigationBarTitleDisplayMode(.inline)
         .pzToast($toast)
@@ -706,7 +695,8 @@ struct NumbersGame: View {
             .monospacedDigit()
             .foregroundStyle(filled ? .white : .secondary)
             .frame(width: width, height: 46)
-            .background(filled ? PZ.numbers : PZColor.fill, in: PZRadius.rect(PZRadius.tile))
+            // Hueco de la ecuación con volumen: apagado hasta que se rellena.
+            .pzVolume(filled ? PZ.numbers : nil)
             .animation(PZAnim.reveal, value: filled)
     }
 
@@ -724,7 +714,6 @@ struct NumbersGame: View {
 
     private func tileButton(_ tile: Tile) -> some View {
         let isSelected = firstID == tile.id
-        let waiting = firstID != nil && op == nil
         return Button { tapTile(tile) } label: {
             VStack(spacing: 2) {
                 Text("\(tile.value)")
@@ -737,16 +726,13 @@ struct NumbersGame: View {
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 64)
-            .background(isSelected ? PZ.numbers : PZColor.surface, in: PZRadius.rect(PZRadius.tile))
+            // Ficha con volumen (el brillo del borde sustituye al antiguo filete); seleccionada se enciende con halo.
+            .pzVolume(isSelected ? PZ.numbers : nil, glow: isSelected)
             .foregroundStyle(isSelected ? .white : .primary)
-            .overlay {
-                PZRadius.rect(PZRadius.tile)
-                    .stroke(isSelected ? Color.clear : PZ.numbers.opacity(waiting ? 0.0 : 0.25), lineWidth: 1.5)
-            }
-            .scaleEffect(isSelected ? 1.04 : 1)
+            .scaleEffect(isSelected ? 1.06 : 1)
         }
         .buttonStyle(.plain)
-        .animation(PZAnim.reveal, value: isSelected)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
         .accessibilityLabel("\(tile.value)")
         .accessibilityValue(isSelected ? "seleccionado" : "disponible")
     }
@@ -762,13 +748,15 @@ struct NumbersGame: View {
                     Text(symbol)
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(isSelected ? PZ.numbers : PZColor.surface, in: PZRadius.rect(PZRadius.tile))
-                        .foregroundStyle(isSelected ? .white : (enabled ? PZ.numbers : Color.secondary))
+                        // Operador como tecla en relieve; el elegido se enciende con halo y rebota.
+                        .pzVolume(isSelected ? PZ.numbers : nil, glow: isSelected)
+                        .foregroundStyle(isSelected ? .white : (enabled ? PZ.numbers.mix(with: .white, by: 0.3) : Color.secondary))
+                        .scaleEffect(isSelected ? 1.06 : 1)
                 }
                 .buttonStyle(.plain)
                 .disabled(!enabled)
                 .opacity(enabled ? 1 : 0.5)
-                .animation(PZAnim.reveal, value: isSelected)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
                 .accessibilityLabel(operatorName(symbol))
             }
         }
@@ -1212,7 +1200,7 @@ struct HashtagGame: View {
         }
         .padding(PZSpace.screenH)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(LiquidCanvasBackground())
+        .background(PZGameBackdrop(color: PZ.hashtag))
         .navigationTitle("Hashtag")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -1366,17 +1354,22 @@ struct HashtagGame: View {
             Text(String(letters[index]))
                 .font(.system(size: min(27, side * 0.45), weight: .heavy, design: .rounded))
                 .foregroundStyle(state == .neutral ? PZColor.ink : .white)
+                .shadow(color: .black.opacity(state == .neutral ? 0 : 0.3), radius: 0, y: 1)
                 .frame(width: side, height: side)
-                .background(feedbackColor(state), in: PZRadius.rect(PZRadius.tile))
+                // Casilla con volumen: neutra apagada; exacta/presente encendida con su color (la exacta con halo).
+                .pzVolume(volumeFill(state), glow: state == .exact)
                 .overlay {
+                    // Solo selección y cursor de teclado: el brillo del volumen sustituye al filete fino.
                     PZRadius.rect(PZRadius.tile)
                         .stroke(isSelected ? PZ.hashtag
                                 : keyboardCursor == puzzle.cells[index] ? PZ.hashtag.opacity(0.55)
-                                : PZColor.hairline,
+                                : Color.clear,
                                 lineWidth: isSelected ? 3
                                 : keyboardCursor == puzzle.cells[index] ? 2 : 1)
                 }
-                .scaleEffect(isSelected ? 1.06 : 1)
+                .scaleEffect(isSelected ? 1.08 : 1)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+                .animation(.spring(response: 0.45, dampingFraction: 0.65), value: state)
         }
         .buttonStyle(.plain)
         .disabled(isLocked)
@@ -1425,11 +1418,12 @@ struct HashtagGame: View {
         return yellow
     }
 
-    private func feedbackColor(_ state: CellFeedback) -> Color {
+    /// Color de la casilla encendida; nil = casilla apagada (neutra).
+    private func volumeFill(_ state: CellFeedback) -> Color? {
         switch state {
         case .exact: return PZColor.success
         case .present: return .yellow
-        case .neutral: return PZColor.surface
+        case .neutral: return nil
         }
     }
 
