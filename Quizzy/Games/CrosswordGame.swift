@@ -27,6 +27,11 @@ struct CrosswordGame: View {
 
     private var entry: CrossEntry { puzzle.entries[current] }
 
+    /// Color del fondo: el del mini crucigrama o el del autodefinido. Solo estético.
+    private var backdropColor: Color {
+        puzzle.id.contains("minicross") ? PZ.minicross : PZ.crossword
+    }
+
     /// True when the selected clue is already filled in correctly.
     private var entryIsSolved: Bool {
         entry.cells.allSatisfy { fill[$0.key] == puzzle.solution[$0.key] }
@@ -65,7 +70,9 @@ struct CrosswordGame: View {
         // Attached to the container, not to one layout branch: otherwise the
         // keyboard only exists in portrait and iPad never shows it.
         .safeAreaInset(edge: .bottom, spacing: 0) { crosswordKeyboard }
-        .background(LiquidCanvasBackground())
+        // Fondo con el resplandor del juego. El mini crucigrama comparte esta vista;
+        // se distingue por su id ("minicross-…" / "en-minicross-…").
+        .background(PZGameBackdrop(color: backdropColor))
         .background {
             PZHardwareKeyCapture { handleCapturedHardwareKey($0) }
                 .frame(width: 1, height: 1)
@@ -135,12 +142,9 @@ struct CrosswordGame: View {
                                 .font(.system(size: 17, weight: .semibold))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 42)
-                                .background(PZColor.surface, in: PZRadius.rect(PZRadius.chip))
+                                // Tecla con volumen (ficha apagada): mismo tamaño, solo fondo.
+                                .pzVolume(radius: PZRadius.chip)
                                 .foregroundStyle(PZColor.ink)
-                                .overlay {
-                                    PZRadius.rect(PZRadius.chip)
-                                        .stroke(PZColor.hairline, lineWidth: 1)
-                                }
                         }
                         .buttonStyle(.plain)
                         .disabled(finished)
@@ -150,7 +154,7 @@ struct CrosswordGame: View {
                             Image(systemName: "delete.left")
                                 .font(.system(size: 16, weight: .semibold))
                                 .frame(width: 50, height: 42)
-                                .background(PZColor.fill, in: PZRadius.rect(PZRadius.chip))
+                                .pzVolume(radius: PZRadius.chip)
                                 .foregroundStyle(PZColor.ink)
                         }
                         .buttonStyle(.plain)
@@ -166,11 +170,9 @@ struct CrosswordGame: View {
                         .font(PZFont.chip)
                         .frame(maxWidth: 220)
                         .frame(height: 40)
-                        .background(PZColor.wash(PZ.crossword), in: PZRadius.rect(PZRadius.chip))
-                        .foregroundStyle(PZ.crossword)
-                        .overlay {
-                            PZRadius.rect(PZRadius.chip).stroke(PZColor.hairline, lineWidth: 1)
-                        }
+                        // Acción principal: ficha encendida con el color del juego.
+                        .pzVolume(PZ.crossword, radius: PZRadius.chip)
+                        .foregroundStyle(.white)
                 }
                 .buttonStyle(.plain)
                 .disabled(finished)
@@ -219,8 +221,21 @@ struct CrosswordGame: View {
         }
         .aspectRatio(CGFloat(puzzle.cols) / CGFloat(puzzle.rows), contentMode: .fit)
         .padding(10)
-        .background(PZColor.surface,
-                    in: RoundedRectangle(cornerRadius: 14))
+        // La cuadrícula sigue siendo tinta sobre papel; el volumen va en el marco:
+        // una sola sombra y un brillo arriba para todo el tablero (no por casilla,
+        // que en 13×13 serían cientos de sombras).
+        .background {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(LinearGradient(colors: [PZColor.surface.mix(with: .white, by: 0.06),
+                                              PZColor.surface.mix(with: .black, by: 0.10)],
+                                     startPoint: .top, endPoint: .bottom))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(LinearGradient(colors: [.white.opacity(0.18), .clear],
+                                               startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(0.40), radius: 10, y: 5)
+        }
     }
 
     private func cellView(_ r: Int, _ c: Int, size: CGFloat) -> some View {
@@ -275,7 +290,7 @@ struct CrosswordGame: View {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 17, weight: .semibold))
                     .frame(width: 36, height: 36)
-                    .background(Color.primary.opacity(0.06), in: Circle())
+                    .pzVolume(circle: true)
             }
             Text("\(numbers["\(entry.row),\(entry.col)"] ?? 0)\(entry.isAcross ? "H" : "V")")
                 .font(.system(size: 15, weight: .bold))
@@ -293,7 +308,7 @@ struct CrosswordGame: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 17, weight: .semibold))
                         .frame(width: 36, height: 36)
-                        .background(Color.primary.opacity(0.06), in: Circle())
+                        .pzVolume(circle: true)
                 }
             }
         }

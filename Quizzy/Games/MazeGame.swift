@@ -81,7 +81,7 @@ struct MazeGame: View {
                     .padding(.bottom, 22)
             }
         }
-        .background(LiquidCanvasBackground()).navigationTitle(AppLanguage.text("Laberinto", "Maze")).navigationBarTitleDisplayMode(.inline)
+        .background(PZGameBackdrop(color: PZ.maze)).navigationTitle(AppLanguage.text("Laberinto", "Maze")).navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(AppLanguage.text("Borrar ruta", "Clear path"), systemImage: "arrow.counterclockwise") {
@@ -123,7 +123,22 @@ struct MazeGame: View {
                 .frame(width:cell*CGFloat(puzzle.cols),height:cell*CGFloat(puzzle.rows))
                 .frame(maxWidth:.infinity,maxHeight:.infinity)
         }
-        .padding(12).background(PZColor.surface,in:RoundedRectangle(cornerRadius:16)).padding(.horizontal,16)
+        .padding(12)
+        // Volumen en el tablero entero (degradado, brillo arriba y una sola sombra),
+        // no en cada tramo de pared: el laberinto tiene que seguir leyéndose limpio.
+        .background {
+            RoundedRectangle(cornerRadius:16)
+                .fill(LinearGradient(colors:[PZColor.surface.mix(with:.white,by:0.06),
+                                             PZColor.surface.mix(with:.black,by:0.10)],
+                                     startPoint:.top,endPoint:.bottom))
+                .overlay {
+                    RoundedRectangle(cornerRadius:16)
+                        .stroke(LinearGradient(colors:[.white.opacity(0.16),.clear],
+                                               startPoint:.top,endPoint:.bottom),lineWidth:1)
+                }
+                .shadow(color:.black.opacity(0.40),radius:10,y:5)
+        }
+        .padding(.horizontal,16)
     }
     private func stat(_ a:String,_ b:String)->some View{VStack(alignment:.leading){Text(a).font(.caption.bold()).foregroundStyle(.secondary);Text(b).font(.title2.bold()).monospacedDigit()}}
 
@@ -226,7 +241,25 @@ struct MazeGame: View {
         var walls=Path();for r in 0..<puzzle.rows{for c in 0..<puzzle.cols{let x=CGFloat(c) * cell,y=CGFloat(r) * cell,w=puzzle.walls[r][c];if w&MazePuzzle.north != 0{walls.move(to:.init(x:x,y:y));walls.addLine(to:.init(x:x+cell,y:y))};if w&MazePuzzle.west != 0{walls.move(to:.init(x:x,y:y));walls.addLine(to:.init(x:x,y:y+cell))};if r==puzzle.rows-1,w&MazePuzzle.south != 0{walls.move(to:.init(x:x,y:y+cell));walls.addLine(to:.init(x:x+cell,y:y+cell))};if c==puzzle.cols-1,w&MazePuzzle.east != 0{walls.move(to:.init(x:x+cell,y:y));walls.addLine(to:.init(x:x+cell,y:y+cell))}}};ctx.stroke(walls,with:.color(.primary),lineWidth:2)
         if path.count>1{var p=Path();for(i,x) in path.enumerated(){let q=CGPoint(x:(CGFloat(x.col)+0.5) * cell,y:(CGFloat(x.row)+0.5) * cell);i==0 ? p.move(to:q):p.addLine(to:q)};ctx.stroke(p,with:.color(PZ.maze),style:StrokeStyle(lineWidth:max(3,cell * 0.22),lineCap:.round,lineJoin:.round))}
         ctx.draw(Text("↓").font(.system(size:cell * 0.8,weight:.bold)).foregroundStyle(PZ.maze),at:CGPoint(x:(CGFloat(puzzle.entranceCol)+0.5) * cell,y:cell * 0.35))
-        ctx.draw(Text("★").font(.system(size:cell * 0.55)).foregroundStyle(PZ.maze),at:CGPoint(x:(CGFloat(puzzle.exitCol)+0.5) * cell,y:(CGFloat(puzzle.rows)-0.5) * cell))
+        // Meta con halo del color del juego (solo esta capa lleva sombra).
+        ctx.drawLayer { layer in
+            layer.addFilter(.shadow(color:PZ.maze.opacity(0.7),radius:cell * 0.25))
+            layer.draw(Text("★").font(.system(size:cell * 0.55)).foregroundStyle(PZ.maze.mix(with:.white,by:0.15)),at:CGPoint(x:(CGFloat(puzzle.exitCol)+0.5) * cell,y:(CGFloat(puzzle.rows)-0.5) * cell))
+        }
+        // Ficha del jugador en la cabeza del camino: bola con volumen (degradado
+        // vertical, brillo arriba y halo). Es solo dibujo; no cambia el movimiento.
+        if let head=path.last {
+            let d=max(6,cell * 0.46)
+            let rect=CGRect(x:(CGFloat(head.col)+0.5) * cell-d/2,y:(CGFloat(head.row)+0.5) * cell-d/2,width:d,height:d)
+            let ball=Path(ellipseIn:rect)
+            ctx.drawLayer { layer in
+                layer.addFilter(.shadow(color:PZ.maze.opacity(0.6),radius:cell * 0.18))
+                layer.fill(ball,with:.linearGradient(Gradient(colors:[PZ.maze.mix(with:.white,by:0.30),PZ.maze.mix(with:.black,by:0.15)]),
+                                                     startPoint:CGPoint(x:rect.midX,y:rect.minY),endPoint:CGPoint(x:rect.midX,y:rect.maxY)))
+            }
+            ctx.stroke(ball,with:.linearGradient(Gradient(colors:[.white.opacity(0.55),.clear]),
+                                                 startPoint:CGPoint(x:rect.midX,y:rect.minY),endPoint:CGPoint(x:rect.midX,y:rect.midY)),lineWidth:1)
+        }
     }
 }
 
@@ -269,12 +302,10 @@ struct PZJoystick: View {
             Circle().fill(.ultraThinMaterial)
             Circle().strokeBorder(tint.opacity(0.28), lineWidth: 1.5)
             arrows
-            Circle()
-                .fill(LinearGradient(colors: [tint, tint.opacity(0.8)],
-                                      startPoint: .top, endPoint: .bottom))
+            // Pomo con la receta común de volumen (ficha encendida con halo).
+            Color.clear
                 .frame(width: knobSize, height: knobSize)
-                .overlay(Circle().strokeBorder(.white.opacity(0.35), lineWidth: 1))
-                .shadow(color: tint.opacity(0.45), radius: 8, y: 3)
+                .pzVolume(tint, glow: true, circle: true)
                 .offset(knobOffset)
                 .animation(activeDirection == nil ? .spring(response: 0.3, dampingFraction: 0.62) : nil,
                            value: knobOffset)
