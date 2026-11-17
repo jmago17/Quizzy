@@ -168,7 +168,7 @@ struct MurdleGame: View {
                 HStack(alignment:.top,spacing:PZSpace.xl) { ScrollView { story.padding() }.frame(width:geo.size.width*0.38); ScrollView { notebook.padding() } }
             } else { ScrollView { VStack(spacing:PZSpace.lg) { story; notebook }.padding(PZSpace.screenH) } }
         }
-        .background(LiquidCanvasBackground()).navigationTitle("Murdle").navigationBarTitleDisplayMode(.inline)
+        .background(PZGameBackdrop(color: PZ.murdle)).navigationTitle("Murdle").navigationBarTitleDisplayMode(.inline)
         .onAppear { elapsed=progress.elapsed(puzzle.id); loadMarks() }
         .onReceive(tick) { _ in elapsed += 1; if elapsed%5==0 { progress.setElapsed(puzzle.id,elapsed) } }
         .sheet(item:$result) { PZResultSheet(result:$0) }.pzToast($toast).pzRules(.murdle)
@@ -193,7 +193,7 @@ struct MurdleGame: View {
 
     private var axes: ([String],[String]) { matrix==0 ? (puzzle.suspects,puzzle.places) : matrix==1 ? (puzzle.suspects,puzzle.weapons) : (puzzle.places,puzzle.weapons) }
     private var logicGrid: some View { let a=axes; return Grid(horizontalSpacing:2,verticalSpacing:2) { GridRow { Color.clear.frame(width:78,height:34); ForEach(a.1,id:\.self) { Text($0).font(.system(size:9,weight:.bold)).lineLimit(2).minimumScaleFactor(0.6).frame(maxWidth:.infinity) } }; ForEach(Array(a.0.enumerated()),id:\.offset) { r,row in GridRow { Text(row).font(PZFont.caption).frame(width:78,alignment:.leading); ForEach(a.1.indices,id:\.self) { c in markButton(key:"\(matrix)-\(r)-\(c)") } } } }.padding(6).background(PZColor.surface,in:PZRadius.rect(PZRadius.card)) }
-    private func markButton(key:String)->some View { let m=marks[key] ?? .unknown; return Button { marks[key] = m == .unknown ? .excluded : m == .excluded ? .confirmed : .unknown; saveMarks(); PZHaptics.tick() } label:{ Text(m == .excluded ? "×" : m == .confirmed ? "●" : "").font(.system(size:19,weight:.bold)).foregroundStyle(m == .confirmed ? PZColor.success : PZ.murdle).frame(maxWidth:.infinity,minHeight:38).background(m == .confirmed ? PZColor.success.opacity(0.13) : m == .excluded ? PZ.murdle.opacity(0.1) : PZColor.fill,in:PZRadius.rect(5)) }.buttonStyle(.plain) }
+    private func markButton(key:String)->some View { let m=marks[key] ?? .unknown; return Button { marks[key] = m == .unknown ? .excluded : m == .excluded ? .confirmed : .unknown; saveMarks(); PZHaptics.tick() } label:{ Text(m == .excluded ? "×" : m == .confirmed ? "●" : "").font(.system(size:19,weight:.bold)).foregroundStyle(m == .confirmed ? PZColor.success : PZ.murdle).frame(maxWidth:.infinity,minHeight:38).pzVolume(m == .confirmed ? PZColor.success.mix(with: .black, by: 0.45) : m == .excluded ? PZ.murdle.mix(with: .black, by: 0.6) : nil, radius: 5) }.buttonStyle(.plain) }
     private func selection(_ label:String,values:[String],value:Binding<String>)->some View { HStack { Text(label).font(PZFont.body);Spacer();Picker(label,selection:value) { Text(t("Elegir…", "Choose…")).tag("");ForEach(values,id:\.self){Text($0).tag($0)} }.labelsHidden() } }
     private func accuse() { let c=puzzle.culprit; guard selectedSuspect==c.suspect,selectedPlace==c.place,selectedWeapon==c.weapon else { toast=PZToast(text:t("Algo no encaja todavía", "Something does not fit yet"),kind:.error);PZHaptics.error();return }; progress.markDone(puzzle.id);progress.setElapsed(puzzle.id,elapsed);progress.recordTime(TimeInterval(elapsed),kind:.murdle,puzzleID:puzzle.id);progress.noteDayIfComplete();result=PZResult(kind:.murdle,didWin:true,headline:puzzle.caseKind == .murder ? t("¡Caso cerrado!", "Case closed!") : t("¡Robo resuelto!", "Theft solved!"),detail:"\(c.suspect) · \(c.place) · \(c.weapon)",metrics:[(t("Nivel", "Level"),puzzle.difficulty.title(language: puzzle.language)),(t("Tiempo", "Time"),PuzzleTiming.clock(TimeInterval(elapsed)))],shareText:t("NewsRaider Murdle · \(puzzle.difficulty.title(language: puzzle.language)) · caso cerrado", "NewsRaider Murdle · \(puzzle.difficulty.title(language: puzzle.language)) · case closed")) }
     private func loadMarks(){ marks=progress.fill(puzzle.id).reduce(into:[:]){$0[$1.key]=MurdleMark(rawValue:Int($1.value) ?? 0) ?? .unknown} }
@@ -838,7 +838,7 @@ struct MurdokuGame: View {
             }
         }
         .environment(\.colorScheme, .dark)
-        .background(MurdokuTheme.background.ignoresSafeArea())
+        .background(PZGameBackdrop(color: PZ.murdoku))   // 2026-11-16: resplandor del color del juego
         .navigationTitle(sizeClass == .compact ? "" : puzzle.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
@@ -995,7 +995,8 @@ struct MurdokuGame: View {
             .padding(.leading, 8)
             .padding(.trailing, 12)
             .frame(minHeight: 56)
-            .background(isSelected ? color : color.opacity(0.10), in: shape)
+            .background(isSelected ? .clear : color.opacity(0.10), in: shape)
+            .pzVolume(isSelected ? color : nil, radius: MurdokuTheme.chipRadius, glow: isSelected)
             .overlay { shape.strokeBorder(color.opacity(isSelected ? 0 : 0.28), lineWidth: 1) }
         }
         .buttonStyle(.plain)
@@ -1219,6 +1220,8 @@ struct MurdokuGame: View {
         .frame(width: side, height: side)
         .clipShape(shape)
         .overlay { shape.strokeBorder(MurdokuTheme.boardBorder, lineWidth: MurdokuTheme.boardBorderWidth) }
+        // Volumen (2026-11-16): el tablero "flota" sobre el fondo; una sola sombra para todo el tablero.
+        .background { shape.fill(MurdokuTheme.boardGap).shadow(color: .black.opacity(0.5), radius: 14, y: 8) }
         .accessibilityElement(children: .contain)
     }
 
@@ -1322,6 +1325,12 @@ struct MurdokuGame: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     .padding(side * 0.07)
             }
+        }
+        .overlay {
+            // Bisel sutil (2026-11-16): brillo en el borde superior de cada casilla.
+            inner.strokeBorder(LinearGradient(colors: [.white.opacity(0.16), .clear], startPoint: .top, endPoint: .center),
+                               lineWidth: 1)
+                .allowsHitTesting(false)
         }
         .clipShape(inner)
         .padding(MurdokuTheme.cellGap / 2)
