@@ -1188,7 +1188,9 @@ struct DecoderGameView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .environment(\.decoderHDREnabled, hdrOn)
-        .background(LiquidCanvasBackground())
+        // Fondo con el resplandor del juego. El aparato ya tiene su propio relieve
+        // (carcasa, teclas, LEDs): no se le añade pzVolume para no duplicarlo.
+        .background(PZGameBackdrop(color: PZ.decoder))
         .navigationTitle("Decoder")
         .navigationBarTitleDisplayMode(.inline)
         // No bar material on this screen: back, title, "?" and options sit
