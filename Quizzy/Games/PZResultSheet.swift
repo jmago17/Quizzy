@@ -342,6 +342,9 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
 
     private var particles: [PZSimParticle] = []
     private var viewSize = CGSize(width: 390, height: 844)
+    /// Píxeles por punto. La simulación trabaja en píxeles del drawable: sin esto, en @3x todo salía a un tercio
+    /// de tamaño y velocidad (el confeti parecía polvo).
+    private var scale: Double = 3
     private var lastTime: CFTimeInterval = CACurrentMediaTime()
     private var elapsed: CFTimeInterval = 0
     private var nextConfettiSpawn: CFTimeInterval = 0
@@ -407,6 +410,7 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
               let drawable = view.currentDrawable,
               let rpd = view.currentRenderPassDescriptor else { return }
 
+        scale = Double(view.contentScaleFactor)
         let now = CACurrentMediaTime()
         let dt = min(now - lastTime, 1.0 / 30.0)
         lastTime = now
@@ -455,13 +459,13 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
             }
         }
 
-        let gravity = 620.0
+        let gravity = 620.0 * scale
         for i in particles.indices {
             particles[i].velocity.y += gravity * dt
             if particles[i].kind > 0.5 {
                 particles[i].velocity *= pow(0.985, dt * 60)
             } else {
-                particles[i].position.x += sin(elapsed * 3 + particles[i].phase) * 26 * dt
+                particles[i].position.x += sin(elapsed * 3 + particles[i].phase) * 26 * scale * dt
                 particles[i].velocity *= pow(0.995, dt * 60)
             }
             particles[i].position += particles[i].velocity * dt
@@ -469,7 +473,7 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
             particles[i].age += dt
         }
 
-        particles.removeAll { $0.age >= $0.maxLife || $0.position.y > viewSize.height + 60 }
+        particles.removeAll { $0.age >= $0.maxLife || $0.position.y > viewSize.height + 60 * scale }
         for i in particles.indices {
             let f = particles[i].age / particles[i].maxLife
             particles[i].alpha = f < 0.75 ? 1 : Float(max(0, 1 - (f - 0.75) / 0.25))
@@ -481,12 +485,12 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
         let cy = Double.random(in: viewSize.height * 0.18...viewSize.height * 0.42)
         for _ in 0..<56 {
             let angle = Double.random(in: 0..<(2 * .pi))
-            let speed = Double.random(in: 220...520)
+            let speed = Double.random(in: 220...520) * scale
             particles.append(PZSimParticle(
                 position: SIMD2(cx, cy),
                 velocity: SIMD2(cos(angle) * speed, sin(angle) * speed),
                 color: sparkColors.randomElement()!,
-                size: Float.random(in: 6...11),
+                size: Float.random(in: 7...14) * Float(scale),
                 rotation: 0,
                 angularVelocity: 0,
                 age: 0,
@@ -500,10 +504,10 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
         for _ in 0..<count {
             let x = Double.random(in: 0...viewSize.width)
             particles.append(PZSimParticle(
-                position: SIMD2(x, -20),
-                velocity: SIMD2(Double.random(in: -40...40), Double.random(in: 80...200)),
+                position: SIMD2(x, -20 * scale),
+                velocity: SIMD2(Double.random(in: -40...40), Double.random(in: 80...200)) * scale,
                 color: confettiColors.randomElement()!,
-                size: Float.random(in: 8...14),
+                size: Float.random(in: 10...18) * Float(scale),
                 rotation: Double.random(in: 0..<(2 * .pi)),
                 angularVelocity: Double.random(in: -6...6),
                 age: 0,

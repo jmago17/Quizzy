@@ -130,6 +130,21 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   si gusta, extender al resto y actualizar la especificación. Capturas en `Quizzy-20261114/shots-anygram/carisma/`
   (fuera del repo). Gancho DEBUG `NR_ANYFOUND=n` (con `NR_GAME=anygram`) descubre n palabras para capturas.
   Sin ver en iPhone real ni comprobar fluidez de las sombras con muchas casillas.
+- 2026-11-17 — Diseño con volumen en toda la app + celebración Metal (versión 0.1.1, para que TestFlight la muestre arriba):
+  - Base en `PuzzleDesignSystem.swift` (sección "Volumen"): `PZGameBackdrop(color:)` (resplandor del color del juego) y
+    `.pzVolume(...)` (ficha con degradado, brillo arriba y sombra). Sustituye a "sin sombras" de `docs/DISENO.md` en los
+    tableros (portada y tarjetas siguen planas). Anygram pasa a TURQUESA (`PZ.anygram` 3FD3C6) a petición de Josu.
+  - Aplicado: Wordle, Quartiles, Sopa (versión ligera: sin sombra por casilla), Autodefinido/Mini (papel claro intacto;
+    volumen en teclado y marco), Laberinto (marco, bola de jugador, meta con halo), Hashtag, Murdle (casillas de la
+    rejilla lógica), Decoder (solo fondo: ya tenía relieve propio). Trivia/Números retocados pero NO se ofrecen.
+  - **Murdoku, con cuidado:** solo fondo, una sombra bajo el tablero, bisel fino en cada casilla y ficha de sospechoso
+    seleccionada con volumen. Sin tocar lógica, tamaños, colores de estancias ni retratos. Revisado en captura.
+  - Celebración (`PZResultSheet.swift` + `PZShaders.metal`, `ShaderLibrary`): insignia con volumen y brillo metálico
+    (`pzShine`), onda expansiva sobre la hoja (`pzShockwave`, no verificable en capturas fijas), partículas del color
+    del juego + oro + blanco, mezcla aditiva y escamas metálicas que destellan. **Bug viejo arreglado:** la simulación
+    iba en píxeles sin escala → en @3x el confeti salía a 1/3 de tamaño y velocidad ("polvo").
+  - Hecho con 3 subagentes en worktrees (ficheros disjuntos) + Murdoku a mano. Verificado: build, UI tests Anygram
+    (Release), capturas de los 11 juegos y de la celebración. Sin ver en iPhone: fluidez de sombras (Hashtag, Sopa).
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,
