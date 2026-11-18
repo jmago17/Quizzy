@@ -157,7 +157,8 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     con AVAssetImageGenerator; las capturas sueltas engañan porque el simulador renderiza lento). Sin ver en iPhone.
   - Mismo motivo (marcas de NYT y de G.T. Karber): Wordle → **Palabro**, Murdle → **Elemental** (solo el nombre
     visible y el texto de compartir; el enum sigue `.wordle`/`.murdle`). Josu descartó antes "Cinco"/"Coartada" (sonaban mal).
-  - Pendiente: nombre nuevo para **Murdoku** (posible marca de unos libros de puzles; sin comprobar).
+  - Murdoku → **Sabueso** (en: Sleuth), por la posible marca de unos libros de puzles (sin comprobar). Tipos y
+    ficheros internos siguen llamándose Murdoku.
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

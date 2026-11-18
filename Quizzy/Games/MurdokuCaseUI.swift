@@ -258,7 +258,7 @@ struct MurdokuClosedSheet: View {
             } label: {
                 VStack(spacing: 2) {
                     Text(t("Siguiente caso", "Next case")).font(.title3.weight(.medium))
-                    Text(t("Nuevo Murdoku", "New Murdoku")).font(.footnote)
+                    Text(t("Nuevo Sabueso", "New Sleuth")).font(.footnote)
                 }
                 .foregroundStyle(MurdokuTheme.onAccent)
                 .frame(maxWidth: .infinity, minHeight: 64)

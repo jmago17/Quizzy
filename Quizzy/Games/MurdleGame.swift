@@ -1624,7 +1624,7 @@ struct MurdokuGame: View {
                       ("chart.bar", comparison.prefix(1).uppercased() + comparison.dropFirst()),
                       ("person.2", t("\(puzzle.suspects.count) sospechosos colocados", "\(puzzle.suspects.count) suspects placed")),
                       ("checklist", t("\(checkedClues.count) de \(puzzle.clues.count) pistas marcadas", "\(checkedClues.count) of \(puzzle.clues.count) clues checked"))],
-            shareText: t("NewsRaider Murdoku · \(puzzle.size)×\(puzzle.size) · caso resuelto en \(clock)", "NewsRaider Murdoku · \(puzzle.size)×\(puzzle.size) · case solved in \(clock)")
+            shareText: t("Kuizzy Sabueso · \(puzzle.size)×\(puzzle.size) · caso resuelto en \(clock)", "Kuizzy Sleuth · \(puzzle.size)×\(puzzle.size) · case solved in \(clock)")
         )
     }
 

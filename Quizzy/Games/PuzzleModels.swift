@@ -41,7 +41,7 @@ enum PuzzleKind: String, CaseIterable, Identifiable, Sendable {
         case .anygram:    return "Anygram"
         case .hashtag:    return "Hashtag"
         case .murdle:     return "Elemental"
-        case .murdoku:    return "Murdoku"
+        case .murdoku:    return AppLanguage.text("Sabueso", "Sleuth")
         case .minicross:  return AppLanguage.text("Mini crucigrama", "Mini Crossword")
         case .ladder:     return "Escalera de palabras"
         case .decoder:    return "Decoder"
