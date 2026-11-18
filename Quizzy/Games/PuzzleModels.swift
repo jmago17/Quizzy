@@ -35,12 +35,12 @@ enum PuzzleKind: String, CaseIterable, Identifiable, Sendable {
         case .wordsearch: return AppLanguage.text("Sopa de letras", "Word Search")
         case .crossword:  return AppLanguage.text("Autodefinido", "Crossword")
         case .maze:       return AppLanguage.text("Laberinto", "Maze")
-        case .wordle:     return "Wordle"
+        case .wordle:     return "Palabro"
         case .trivia:     return "10 en 60"
         case .numbers:    return "Cifras"
         case .anygram:    return "Anygram"
         case .hashtag:    return "Hashtag"
-        case .murdle:     return "Murdle"
+        case .murdle:     return "Elemental"
         case .murdoku:    return "Murdoku"
         case .minicross:  return AppLanguage.text("Mini crucigrama", "Mini Crossword")
         case .ladder:     return "Escalera de palabras"

@@ -127,7 +127,7 @@ struct WordleGame: View {
             handleHardwareKey(press)
         }
         .simultaneousGesture(TapGesture().onEnded { claimHardwareKeyboardFocus() })
-        .navigationTitle("Wordle")
+        .navigationTitle(PuzzleKind.wordle.title)
         .navigationBarTitleDisplayMode(.inline)
         .pzRules(.wordle)
         .pzToast($toast)
@@ -664,7 +664,7 @@ struct WordleGame: View {
 
     /// Emoji grid — never leaks the answer.
     private func shareGrid(won: Bool) -> String {
-        let header = "NewsRaider Wordle · \(won ? "\(guesses.count)/6" : "X/6")"
+        let header = "Kuizzy Palabro · \(won ? "\(guesses.count)/6" : "X/6")"
         let grid = guesses.map { g in
             evaluate(g).map { r in
                 switch r {
