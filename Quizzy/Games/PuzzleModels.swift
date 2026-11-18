@@ -31,7 +31,7 @@ enum PuzzleKind: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .quartiles:  return "Quartiles"
+        case .quartiles:  return AppLanguage.text("Trocitos", "Snippets")
         case .wordsearch: return AppLanguage.text("Sopa de letras", "Word Search")
         case .crossword:  return AppLanguage.text("Autodefinido", "Crossword")
         case .maze:       return AppLanguage.text("Laberinto", "Maze")
@@ -141,6 +141,8 @@ struct QuartilePuzzle: Codable, Identifiable, Sendable {
 
     /// Fixed, reachable goal — the puzzle is complete once you cross it.
     var targetScore: Int { 100 }
+    /// Meta efectiva: 100, salvo que el tablero no dé para tanto (nunca se pide algo imposible).
+    var goalScore: Int { maxScore > 0 ? min(targetScore, maxScore) : targetScore }
     func isQuartile(_ word: String) -> Bool {
         solutions["4"]?.contains(word) == true
     }

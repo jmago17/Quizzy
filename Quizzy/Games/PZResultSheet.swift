@@ -51,7 +51,6 @@ struct PZResultSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
-    @State private var showCelebration = false
     /// Dispara la onda expansiva (shader `pzShockwave`) una vez al aparecer, si se ha ganado.
     @State private var wave = 0
 
@@ -99,25 +98,13 @@ struct PZResultSheet: View {
         .presentationCornerRadius(PZRadius.sheet)
         .presentationDragIndicator(.visible)
         .presentationBackground { LiquidCanvasBackground() }
-        .overlay {
-            if showCelebration {
-                PZCelebrationView(tint: UIColor(PZ.color(result.kind)))
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-            }
-        }
         .onAppear {
             appeared = true
             guard result.didWin else { return }
             PZHaptics.win()
             guard !reduceMotion else { return }
-            showCelebration = true
+            PZFireworks.launch(tint: UIColor(PZ.color(result.kind)))
             wave += 1
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(2.6))
-                showCelebration = false
-            }
         }
     }
 
@@ -301,35 +288,82 @@ private struct PZSimParticle {
     var velocity: SIMD2<Double>
     var color: SIMD4<Float>
     var size: Float
-    var rotation: Double
-    var angularVelocity: Double
-    var age: Double
+    var baseSize: Float
+    var age: Double = 0
     var maxLife: Double
-    var kind: Float
-    var phase: Double
+    /// Freno por fotograma a 60 fps (1 = sin rozamiento).
+    var drag: Double
+    /// Multiplicador de gravedad (el sauce cae más).
+    var gravity: Double
+    var role: Role
+    /// Probabilidad por fotograma de soltar una brasa detrás (estela).
+    var emberRate: Double = 0
+    var crackle = false
     var alpha: Float = 1
+    /// Para cohetes: altura (y en píxeles) a la que estallan, y el patrón.
+    var burstY: Double = 0
+    var pattern: PZShell = .peony
+
+    enum Role { case rocket, spark, ember, flash }
 }
 
-/// Thin UIViewRepresentable wrapper around an `MTKView`; all simulation and
-/// drawing lives in `PZCelebrationCoordinator`.
-struct PZCelebrationView: UIViewRepresentable {
-    var tint: UIColor = .white
-    func makeCoordinator() -> PZCelebrationCoordinator { PZCelebrationCoordinator(tint: tint) }
+enum PZShell: CaseIterable { case peony, ring, willow }
 
-    func makeUIView(context: Context) -> MTKView {
-        let view = MTKView()
+// MARK: - Fuegos artificiales a pantalla completa (2026-11-18)
+//
+// Antes: confeti dentro de la hoja de resultado (solo se veía en la carta). Ahora una UIWindow propia,
+// transparente y sin toques (pasan a la app), por encima de todo — hoja incluida — con un MTKView:
+// cohetes que suben con estela y estallan en esfera, anillo o sauce dorado, con el color del juego.
+
+@MainActor enum PZFireworks {
+    private static var window: UIWindow?
+    private static var coordinator: PZCelebrationCoordinator?
+
+    static func launch(tint: UIColor, duration: TimeInterval = 4.6) {
+        guard window == nil,
+              let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive }) else { return }
+        let w = PZPassthroughWindow(windowScene: scene)
+        w.frame = scene.coordinateSpace.bounds
+        w.windowLevel = .alert + 1
+        w.backgroundColor = .clear
+        w.isUserInteractionEnabled = false
+
+        let view = MTKView(frame: w.bounds)
         view.isOpaque = false
         view.backgroundColor = .clear
         (view.layer as? CAMetalLayer)?.isOpaque = false
         view.enableSetNeedsDisplay = false
-        view.isPaused = false
         view.preferredFramesPerSecond = 60
-        context.coordinator.attach(to: view)
-        view.delegate = context.coordinator
-        return view
-    }
+        view.isUserInteractionEnabled = false
+        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        let c = PZCelebrationCoordinator(tint: tint)
+        c.attach(to: view)
+        view.delegate = c
 
-    func updateUIView(_ uiView: MTKView, context: Context) {}
+        let vc = UIViewController()
+        vc.view = view
+        w.rootViewController = vc
+        w.isHidden = false
+        window = w
+        coordinator = c
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(duration))
+            UIView.animate(withDuration: 0.35, animations: { w.alpha = 0 }) { _ in
+                (w.rootViewController?.view as? MTKView)?.isPaused = true
+                w.isHidden = true
+                window = nil
+                coordinator = nil
+            }
+        }
+    }
+}
+
+/// Ventana que nunca se queda con un toque: todo cae a la app de debajo.
+private final class PZPassthroughWindow: UIWindow {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? { nil }
 }
 
 final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
@@ -338,32 +372,31 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
     private var pipeline: MTLRenderPipelineState?
     private var particleBuffer: MTLBuffer!
     private var uniformBuffer: MTLBuffer!
-    private let maxParticles = 480
+    private let maxParticles = 2400
 
     private var particles: [PZSimParticle] = []
-    private var viewSize = CGSize(width: 390, height: 844)
-    /// Píxeles por punto. La simulación trabaja en píxeles del drawable: sin esto, en @3x todo salía a un tercio
-    /// de tamaño y velocidad (el confeti parecía polvo).
+    private var viewSize = CGSize(width: 1170, height: 2532)
+    /// Píxeles por punto: la simulación trabaja en píxeles del drawable.
     private var scale: Double = 3
     private var lastTime: CFTimeInterval = CACurrentMediaTime()
     private var elapsed: CFTimeInterval = 0
-    private var nextConfettiSpawn: CFTimeInterval = 0
-    private var burstsFired = 0
-    private let burstTimes: [CFTimeInterval] = [0.0, 0.22, 0.42]
-    private let confettiColors: [SIMD4<Float>]
-    private let sparkColors: [SIMD4<Float>]
+    private var launched = 0
+    /// Cuándo sale cada cohete (s). Primero una salva de tres, luego goteo y un final doble.
+    private let launchTimes: [CFTimeInterval] = [0.0, 0.12, 0.28, 0.75, 1.1, 1.45, 1.8, 2.15, 2.5, 2.55]
+    private let shellColors: [SIMD4<Float>]
+    private let gold = SIMD4<Float>(1.0, 0.78, 0.36, 1)
+    private let white = SIMD4<Float>(1, 0.97, 0.92, 1)
 
-    /// Paleta a partir del color del juego: tonos del color, blanco y oro.
+    /// Paleta a partir del color del juego: el color, una versión clara, oro y blanco.
     init(tint: UIColor) {
         var r: CGFloat = 1, g: CGFloat = 1, b: CGFloat = 1, a: CGFloat = 1
         tint.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark)).getRed(&r, green: &g, blue: &b, alpha: &a)
         let base = SIMD3<Float>(Float(r), Float(g), Float(b))
         func c(_ v: SIMD3<Float>) -> SIMD4<Float> { SIMD4(min(v.x, 1), min(v.y, 1), min(v.z, 1), 1) }
         let light = base + (SIMD3<Float>(repeating: 1) - base) * 0.45
-        let deep = base * 0.75
-        let gold = SIMD3<Float>(1.0, 0.82, 0.38)
-        confettiColors = [c(base), c(light), c(deep), c(gold), c(SIMD3(0.92, 0.94, 1.0))]
-        sparkColors = [c(light), c(base), c(gold), c(SIMD3(1, 1, 1))]
+        // Complementario suave para que no todo sea del mismo tono.
+        let accent = SIMD3<Float>(1, 1, 1) - base * 0.6
+        shellColors = [c(base), c(light), c(base), c(accent), c(SIMD3(1.0, 0.82, 0.38))]
         super.init()
     }
 
@@ -378,6 +411,10 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
                                             options: .storageModeShared)
         uniformBuffer = device.makeBuffer(length: MemoryLayout<PZUniforms>.stride,
                                            options: .storageModeShared)
+        let s = view.contentScaleFactor > 0 ? view.contentScaleFactor : UIScreen.main.scale
+        if view.bounds.width > 0 {
+            viewSize = CGSize(width: view.bounds.width * s, height: view.bounds.height * s)
+        }
     }
 
     private func buildPipeline(colorFormat: MTLPixelFormat) {
@@ -428,9 +465,9 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
             ptr[i] = PZGPUParticle(
                 color: SIMD4<Float>(p.color.x, p.color.y, p.color.z, p.color.w * p.alpha),
                 position: SIMD2<Float>(Float(p.position.x), Float(p.position.y)),
-                rotation: Float(p.rotation),
+                rotation: 0,
                 size: p.size,
-                kind: p.kind)
+                kind: 1)
         }
 
         guard let commandBuffer = queue.makeCommandBuffer(),
@@ -446,75 +483,144 @@ final class PZCelebrationCoordinator: NSObject, MTKViewDelegate {
         commandBuffer.commit()
     }
 
+    // MARK: Simulación
+
     private func update(dt: CFTimeInterval) {
-        while burstsFired < burstTimes.count, elapsed >= burstTimes[burstsFired] {
-            spawnBurst()
-            burstsFired += 1
-        }
-        if elapsed < 1.3, particles.count < maxParticles {
-            nextConfettiSpawn -= dt
-            if nextConfettiSpawn <= 0 {
-                spawnConfetti(count: 5)
-                nextConfettiSpawn = 0.05
-            }
+        while launched < launchTimes.count, elapsed >= launchTimes[launched] {
+            launchRocket(index: launched)
+            launched += 1
         }
 
-        let gravity = 620.0 * scale
+        let g = 240.0 * scale
+        var spawned: [PZSimParticle] = []
         for i in particles.indices {
-            particles[i].velocity.y += gravity * dt
-            if particles[i].kind > 0.5 {
-                particles[i].velocity *= pow(0.985, dt * 60)
-            } else {
-                particles[i].position.x += sin(elapsed * 3 + particles[i].phase) * 26 * scale * dt
-                particles[i].velocity *= pow(0.995, dt * 60)
+            var p = particles[i]
+            p.velocity.y += g * p.gravity * dt
+            p.velocity *= pow(p.drag, dt * 60)
+            p.position += p.velocity * dt
+            p.age += dt
+            let f = p.age / p.maxLife
+
+            switch p.role {
+            case .rocket:
+                // Estela: brasas cortas que se quedan atrás.
+                for _ in 0..<2 {
+                    spawned.append(ember(at: p.position, color: gold, life: 0.35, size: 3.5))
+                }
+                // Estalla al llegar a su altura o cuando deja de subir.
+                if p.position.y <= p.burstY || p.velocity.y > -30 * scale {
+                    spawned.append(contentsOf: explode(at: p.position, pattern: p.pattern, color: p.color))
+                    p.age = p.maxLife
+                }
+            case .spark:
+                if p.emberRate > 0, Double.random(in: 0..<1) < p.emberRate {
+                    spawned.append(ember(at: p.position, color: p.color, life: 0.45, size: Float(p.size) / Float(scale) * 0.45))
+                }
+                p.size = p.baseSize * Float(1 - 0.55 * f)
+                var a: Float = f < 0.55 ? 1 : Float(max(0, 1 - (f - 0.55) / 0.45))
+                if p.crackle, f > 0.5 { a *= Float.random(in: 0.15...1) }   // centelleo final
+                p.alpha = a
+            case .ember:
+                p.size = p.baseSize * Float(1 - 0.7 * f)
+                p.alpha = Float(max(0, 1 - f)) * 0.8
+            case .flash:
+                p.size = p.baseSize * Float(1 + f)
+                p.alpha = Float(max(0, 1 - f))
             }
-            particles[i].position += particles[i].velocity * dt
-            particles[i].rotation += particles[i].angularVelocity * dt
-            particles[i].age += dt
+            particles[i] = p
         }
 
-        particles.removeAll { $0.age >= $0.maxLife || $0.position.y > viewSize.height + 60 * scale }
-        for i in particles.indices {
-            let f = particles[i].age / particles[i].maxLife
-            particles[i].alpha = f < 0.75 ? 1 : Float(max(0, 1 - (f - 0.75) / 0.25))
-        }
+        particles.removeAll { $0.age >= $0.maxLife || $0.position.y > viewSize.height + 40 * scale }
+        let room = maxParticles - particles.count
+        if room > 0 { particles.append(contentsOf: spawned.prefix(room)) }
     }
 
-    private func spawnBurst() {
-        let cx = Double.random(in: viewSize.width * 0.25...viewSize.width * 0.75)
-        let cy = Double.random(in: viewSize.height * 0.18...viewSize.height * 0.42)
-        for _ in 0..<56 {
-            let angle = Double.random(in: 0..<(2 * .pi))
-            let speed = Double.random(in: 220...520) * scale
-            particles.append(PZSimParticle(
-                position: SIMD2(cx, cy),
-                velocity: SIMD2(cos(angle) * speed, sin(angle) * speed),
-                color: sparkColors.randomElement()!,
-                size: Float.random(in: 7...14) * Float(scale),
-                rotation: 0,
-                angularVelocity: 0,
-                age: 0,
-                maxLife: Double.random(in: 0.9...1.35),
-                kind: 1,
-                phase: 0))
-        }
+    private func launchRocket(index: Int) {
+        let w = viewSize.width, h = viewSize.height
+        // Repartidos de lado a lado; el final doble sale de los dos extremos.
+        let lanes: [Double] = [0.5, 0.2, 0.8, 0.35, 0.68, 0.15, 0.55, 0.85, 0.3, 0.72]
+        let x = w * (lanes[index % lanes.count] + Double.random(in: -0.05...0.05))
+        let burstY = h * Double.random(in: 0.14...0.42)
+        let rise = h + 20 * scale - burstY
+        let g = 240.0 * scale * 0.35
+        // Velocidad para llegar a la altura de estallido en ~0,7 s (antes subían ~2 s: demasiada espera).
+        let t = Double.random(in: 0.55...0.8)
+        let vy = -(rise / t + 0.5 * g * t)
+        let pattern: PZShell = index == 0 ? .peony : (index >= launchTimes.count - 2 ? .willow : PZShell.allCases.randomElement()!)
+        particles.append(PZSimParticle(
+            position: SIMD2(x, h + 20 * scale),
+            velocity: SIMD2(Double.random(in: -30...30) * scale, vy),
+            color: shellColors[index % shellColors.count],
+            size: Float(6 * scale), baseSize: Float(6 * scale),
+            maxLife: 3, drag: 1, gravity: 0.35, role: .rocket,
+            burstY: burstY, pattern: pattern))
     }
 
-    private func spawnConfetti(count: Int) {
-        for _ in 0..<count {
-            let x = Double.random(in: 0...viewSize.width)
-            particles.append(PZSimParticle(
-                position: SIMD2(x, -20 * scale),
-                velocity: SIMD2(Double.random(in: -40...40), Double.random(in: 80...200)) * scale,
-                color: confettiColors.randomElement()!,
-                size: Float.random(in: 10...18) * Float(scale),
-                rotation: Double.random(in: 0..<(2 * .pi)),
-                angularVelocity: Double.random(in: -6...6),
-                age: 0,
-                maxLife: Double.random(in: 2.0...2.8),
-                kind: 0,
-                phase: Double.random(in: 0..<(2 * .pi))))
+    private func explode(at center: SIMD2<Double>, pattern: PZShell, color: SIMD4<Float>) -> [PZSimParticle] {
+        var out: [PZSimParticle] = []
+        // Destello del estallido.
+        out.append(PZSimParticle(position: center, velocity: .zero, color: white,
+                                 size: Float(70 * scale), baseSize: Float(70 * scale),
+                                 maxLife: 0.18, drag: 1, gravity: 0, role: .flash))
+        let crackle = Bool.random()
+        switch pattern {
+        case .peony:
+            let n = 110
+            for _ in 0..<n {
+                let a = Double.random(in: 0..<(2 * .pi))
+                let v = Double.random(in: 0.75...1.0) * 330 * scale
+                let col = Double.random(in: 0..<1) < 0.15 ? white : color
+                out.append(spark(center, a, v, col, life: Double.random(in: 1.1...1.6), drag: 0.955,
+                                 gravity: 0.5, size: Double.random(in: 7...11), emberRate: 0.12, crackle: crackle))
+            }
+        case .ring:
+            let n = 72
+            let tilt = Double.random(in: 0.45...0.8)          // anillo visto en perspectiva
+            let spin = Double.random(in: 0..<(.pi))
+            for k in 0..<n {
+                let a = Double(k) / Double(n) * 2 * .pi
+                var d = SIMD2(cos(a), sin(a) * tilt)
+                d = SIMD2(d.x * cos(spin) - d.y * sin(spin), d.x * sin(spin) + d.y * cos(spin))
+                let v = 300 * scale
+                out.append(spark(center, 0, v, color, dir: d, life: 1.3, drag: 0.955, gravity: 0.45,
+                                 size: 9, emberRate: 0.08, crackle: false))
+            }
+            // Núcleo blanco pequeño en el centro del anillo.
+            for _ in 0..<24 {
+                let a = Double.random(in: 0..<(2 * .pi))
+                out.append(spark(center, a, Double.random(in: 40...110) * scale, white, life: 0.9, drag: 0.94,
+                                 gravity: 0.4, size: 6, emberRate: 0, crackle: true))
+            }
+        case .willow:
+            // Sauce dorado: chispas lentas, largas, que caen como lluvia dejando rastro.
+            for _ in 0..<90 {
+                let a = Double.random(in: 0..<(2 * .pi))
+                let v = Double.random(in: 0.6...1.0) * 260 * scale
+                out.append(spark(center, a, v, gold, life: Double.random(in: 1.8...2.4), drag: 0.94,
+                                 gravity: 1.0, size: Double.random(in: 6...9), emberRate: 0.35, crackle: true))
+            }
         }
+        return out
+    }
+
+    private func spark(_ c: SIMD2<Double>, _ angle: Double, _ speed: Double, _ color: SIMD4<Float>,
+                       dir: SIMD2<Double>? = nil, life: Double, drag: Double, gravity: Double,
+                       size: Double, emberRate: Double, crackle: Bool) -> PZSimParticle {
+        let d = dir ?? SIMD2(cos(angle), sin(angle))
+        let s = Float(size * scale)
+        var p = PZSimParticle(position: c, velocity: d * speed, color: color, size: s, baseSize: s,
+                              maxLife: life, drag: drag, gravity: gravity, role: .spark)
+        p.emberRate = emberRate
+        p.crackle = crackle
+        return p
+    }
+
+    private func ember(at pos: SIMD2<Double>, color: SIMD4<Float>, life: Double, size: Float) -> PZSimParticle {
+        let s = size * Float(scale)
+        return PZSimParticle(position: pos,
+                             velocity: SIMD2(Double.random(in: -12...12), Double.random(in: -6...18)) * scale,
+                             color: color, size: s, baseSize: s,
+                             maxLife: life * Double.random(in: 0.7...1.1), drag: 0.9, gravity: 0.25, role: .ember)
     }
 }
 #endif

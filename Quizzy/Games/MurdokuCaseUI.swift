@@ -144,7 +144,6 @@ struct MurdokuClosedSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var stamped = false
-    @State private var showCelebration = false
 
     private func t(_ es: String, _ en: String) -> String { model.english ? en : es }
     private var next: PuzzleKind? { PuzzleProgress.shared.nextPending(after: .murdoku) }
@@ -159,14 +158,6 @@ struct MurdokuClosedSheet: View {
         .presentationSizing(.form.fitted(horizontal: false, vertical: true))
         .presentationBackground(MurdokuTheme.background)
         .presentationCornerRadius(32)
-        .overlay {
-            if showCelebration {
-                PZCelebrationView()
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-            }
-        }
         .onAppear {
             PZHaptics.win()
             if reduceMotion {
@@ -174,11 +165,7 @@ struct MurdokuClosedSheet: View {
                 return
             }
             withAnimation(.spring(duration: 0.45, bounce: 0.35).delay(0.2)) { stamped = true }
-            showCelebration = true
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(2.6))
-                showCelebration = false
-            }
+            PZFireworks.launch(tint: UIColor(PZ.murdoku))
         }
     }
 

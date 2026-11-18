@@ -145,6 +145,17 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     iba en píxeles sin escala → en @3x el confeti salía a 1/3 de tamaño y velocidad ("polvo").
   - Hecho con 3 subagentes en worktrees (ficheros disjuntos) + Murdoku a mano. Verificado: build, UI tests Anygram
     (Release), capturas de los 11 juegos y de la celebración. Sin ver en iPhone: fluidez de sombras (Hashtag, Sopa).
+- 2026-11-18 — Quartiles → **Trocitos** (es) / Snippets (en); las palabras de 4 fichas son "joyas". Motivo: nombre y
+  juego venían de Apple News+. El enum interno sigue siendo `.quartiles` (ids, progreso y semillas no cambian).
+  - **Bug de victoria arreglado:** ganaba al encontrar las 5 joyas sin mirar puntos (5 × 18 = 90 → "conseguido con 98"
+    fue suerte). Ahora `isComplete` = 5 joyas Y `score >= goalScore`; `goalScore = min(100, maxScore)` para no pedir
+    algo imposible si un tablero no da 100. Tras la 5ª joya sin llegar, aviso "te faltan X puntos". Sin test unitario.
+  - Celebración: el confeti dentro de la hoja pasa a **fuegos artificiales a pantalla completa** (`PZFireworks.launch`):
+    UIWindow propia transparente, sin toques (`hitTest` → nil), nivel `.alert + 1`, con MTKView; ~10 cohetes con estela
+    que estallan en esfera, anillo o sauce dorado; se quita sola a los 4,6 s. También en Murdoku (`MurdokuClosedSheet`).
+    `PZCelebrationView` eliminado. Verificado grabando vídeo del simulador (`simctl io recordVideo` + extraer fotogramas
+    con AVAssetImageGenerator; las capturas sueltas engañan porque el simulador renderiza lento). Sin ver en iPhone.
+  - Riesgo de nombres que queda: "Wordle" (marca de NYT) y "Murdle" (marca de G.T. Karber) siguen con su nombre.
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

@@ -47,6 +47,16 @@ struct QuartilesGame: View {
 
     private var score: Int { found.reduce(0) { $0 + puzzle.points(for: $1) } }
     private var quartilesFound: Int { found.filter { puzzle.isQuartile($0) }.count }
+    /// Victoria = las 5 joyas Y la meta de puntos. Antes bastaban las joyas (5 × 18 = 90), y se ganaba con 98.
+    private var isComplete: Bool { quartilesFound == puzzle.targets.count && score >= puzzle.goalScore }
+    /// Tras la última joya, avisa de lo que falta si aún no llega a la meta.
+    private func checkCompletion() {
+        if isComplete { finishGame(); return }
+        if quartilesFound == puzzle.targets.count {
+            flash(AppLanguage.text("¡5 joyas! Te faltan \(puzzle.goalScore - score) puntos",
+                                   "5 gems! \(puzzle.goalScore - score) points to go"), .info)
+        }
+    }
 
     private let cols = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
 
@@ -127,7 +137,7 @@ struct QuartilesGame: View {
         // key presses, and nothing gave it back — so the hardware keyboard went
         // dead as soon as you tapped a tile. Re-claim it on any touch.
         .simultaneousGesture(TapGesture().onEnded { claimHardwareKeyboardFocus() })
-        .navigationTitle("Quartiles")
+        .navigationTitle(PuzzleKind.quartiles.title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             found = progress.found(puzzle.id)
@@ -161,11 +171,11 @@ struct QuartilesGame: View {
 
     private var scoreBar: some View {
         HStack(alignment: .firstTextBaseline) {
-            stat(AppLanguage.text("PUNTOS", "POINTS"), "\(score)/\(puzzle.targetScore)")
+            stat(AppLanguage.text("PUNTOS", "POINTS"), "\(score)/\(puzzle.goalScore)")
             Spacer()
             stat(AppLanguage.text("TIEMPO", "TIME"), PuzzleTiming.clock(TimeInterval(elapsed)))
             Spacer()
-            stat("QUARTILES", "\(quartilesFound)/5", trailing: true)
+            stat(AppLanguage.text("JOYAS", "GEMS"), "\(quartilesFound)/5", trailing: true)
         }
         .padding(.vertical, 14)
     }
@@ -340,7 +350,7 @@ struct QuartilesGame: View {
         .opacity(sel ? 1 : (exhausted ? 0.4 : (inQuartile ? 0.62 : 1)))
         .accessibilityLabel(text)
         .accessibilityValue(exhausted ? AppLanguage.text("sin combinaciones restantes", "no combinations remaining")
-                            : inQuartile ? AppLanguage.text("usada en un quartile", "used in a quartile") : AppLanguage.text("disponible", "available"))
+                            : inQuartile ? AppLanguage.text("usada en una joya", "used in a gem") : AppLanguage.text("disponible", "available"))
         .accessibilityHint(AppLanguage.text("Toca para añadir a la palabra", "Tap to add to the word"))
     }
 
@@ -499,7 +509,7 @@ struct QuartilesGame: View {
         }
         refreshDerivedState()
         flash("\(word.lowercased()) · +2 min", .info)
-        if quartilesFound == puzzle.targets.count { finishGame() }
+        checkCompletion()
     }
 
 
@@ -516,7 +526,7 @@ struct QuartilesGame: View {
             result = PZResult(
                 kind: .quartiles,
                 didWin: true,
-                headline: AppLanguage.text("¡Los 5 Quartiles!", "All 5 Quartiles!"),
+                headline: AppLanguage.text("¡Las 5 joyas y \(score) puntos!", "All 5 gems and \(score) points!"),
                 detail: PuzzleTiming.comparison(elapsed: TimeInterval(finalElapsed),
                                                 average: avg.seconds,
                                                 personal: avg.personal,
@@ -526,7 +536,7 @@ struct QuartilesGame: View {
                     (AppLanguage.text("Tiempo", "Time"), PuzzleTiming.clock(TimeInterval(finalElapsed))),
                     (AppLanguage.text("Palabras", "Words"), "\(found.count)")
                 ],
-                shareText: "NewsRaider Quartiles · \(score) pts · \(quartilesFound)/5 Quartiles · \(PuzzleTiming.clock(TimeInterval(finalElapsed)))")
+                shareText: "Kuizzy \(PuzzleKind.quartiles.title) · \(score) pts · \(quartilesFound)/5 💎 · \(PuzzleTiming.clock(TimeInterval(finalElapsed)))")
 
     }
 
@@ -629,7 +639,7 @@ struct QuartilesGame: View {
             PZHaptics.success()
             flashInput(.accepted)
             flash("¡\(word.lowercased())! +\(puzzle.points(for: word))", .success)
-            if quartilesFound == puzzle.targets.count { finishGame() }
+            checkCompletion()
         } else {
             PZHaptics.error()
             flashInput(.rejected)
