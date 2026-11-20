@@ -184,6 +184,12 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     (el simulador es headless), Corona real, tiempos de generación de Anygram en un reloj de verdad (en el simulador
     corre con la CPU del Mac), y la firma/archive en Xcode Cloud con el App ID nuevo del reloj (puede pedir
     registrarlo en el portal la primera vez).
+  - TestFlight: la 1.ª archive con el reloj (run 16) falló al exportar: `Automatic signing cannot register bundle
+    identifier "com.maromeapps.quizzies.watchkitapp"` (Xcode Cloud no da de alta App IDs). Registrado por API con la clave
+    `AW7HJ2N6AV` (`asc bundle-ids create`, id `7P838AFK7A`; esa clave SÍ puede crear bundle IDs aunque no certificados).
+    Run 17 → **build 17 VALID en TestFlight** (2026-11-20). Recordatorio: el workflow de TestFlight es manual; el push
+    solo lanza "Default" (compila, no sube). Lanzar con `asc xcode-cloud run --app 6835185679 --workflow "Internal
+    TestFlight Build" --branch main`.
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,
