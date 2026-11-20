@@ -1660,6 +1660,12 @@ private struct AnygramFoundStrip: View, Equatable {
                 Text(AppLanguage.text("TABLERO  \(targets.count)/\(total)", "BOARD  \(targets.count)/\(total)")).pzLabelStyle()
                 Spacer()
                 Text(AppLanguage.text("OTRAS  \(extras.count)", "EXTRAS  \(extras.count)")).pzLabelStyle()
+                // Cada `AnygramGame.extrasPerFreeLetter` extras regalan una letra: muestra cuánto falta.
+                Text("· \(extras.count % AnygramGame.extrasPerFreeLetter)/\(AnygramGame.extrasPerFreeLetter)")
+                    .pzLabelStyle()
+                    .accessibilityLabel(AppLanguage.text(
+                        "\(AnygramGame.extrasPerFreeLetter - extras.count % AnygramGame.extrasPerFreeLetter) palabras extra para la próxima letra gratis",
+                        "\(AnygramGame.extrasPerFreeLetter - extras.count % AnygramGame.extrasPerFreeLetter) extra words to the next free letter"))
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
@@ -1697,6 +1703,8 @@ private struct AnygramFoundStrip: View, Equatable {
 }
 
 struct AnygramGame: View {
+    /// Cada tantas palabras extra (válidas, fuera del tablero) se revela gratis una letra.
+    static let extrasPerFreeLetter = 3
     let puzzle: AnygramPuzzle
     /// Calculado una vez: `puzzle.boardCells` reconstruye el diccionario entero en cada acceso.
     private let boardCells: [GridCell: Character]
@@ -1937,14 +1945,22 @@ struct AnygramGame: View {
         }
     }
 
-    private func revealLetter() {
-        guard let cell = nextHiddenCell else { return }
+    /// Revela la siguiente casilla oculta y la guarda (en `fill`, como las pistas pagadas).
+    /// Devuelve false si ya no queda ninguna.
+    @discardableResult
+    private func revealNextCell() -> Bool {
+        guard let cell = nextHiddenCell else { return false }
         withAnimation(PZAnim.reveal) { _ = hintedCells.insert(cell) }
-        elapsed += 30
-        progress.setElapsed(puzzle.id, elapsed)
         progress.setFill(puzzle.id, Dictionary(uniqueKeysWithValues: hintedCells.map {
             ("\($0.row),\($0.col)", String(boardCells[$0] ?? " "))
         }))
+        return true
+    }
+
+    private func revealLetter() {
+        guard revealNextCell() else { return }
+        elapsed += 30
+        progress.setElapsed(puzzle.id, elapsed)
         toast = PZToast(text: AppLanguage.text("Letra revelada · +30 s", "Letter revealed · +30 s"), kind: .info)
         PZHaptics.warning()
     }
@@ -1998,7 +2014,13 @@ struct AnygramGame: View {
         }
         extraWords.insert(candidate)
         persistWords()
-        toast = PZToast(text: AppLanguage.text("Palabra extra: \(candidate)", "Extra word: \(candidate)"), kind: .success)
+        // Solo se regala en el momento de llegar a 3, 6, 9… extras: al reabrir la partida no se repite,
+        // porque la casilla ya quedó guardada en `fill`.
+        if extraWords.count % Self.extrasPerFreeLetter == 0, revealNextCell() {
+            toast = PZToast(text: AppLanguage.text("Palabra extra: \(candidate) · ¡letra gratis!", "Extra word: \(candidate) · free letter!"), kind: .success)
+        } else {
+            toast = PZToast(text: AppLanguage.text("Palabra extra: \(candidate)", "Extra word: \(candidate)"), kind: .success)
+        }
         PZHaptics.success()
     }
 

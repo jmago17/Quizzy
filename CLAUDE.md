@@ -159,6 +159,10 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     visible y el texto de compartir; el enum sigue `.wordle`/`.murdle`). Josu descartó antes "Cinco"/"Coartada" (sonaban mal).
   - Murdoku → **Sabueso** (en: Sleuth), por la posible marca de unos libros de puzles (sin comprobar). Tipos y
     ficheros internos siguen llamándose Murdoku.
+- 2026-11-20 — Anygram: **cada 3 palabras extra se revela gratis una letra** (sin penalización; `AnygramGame.extrasPerFreeLetter`).
+  Se concede solo al llegar a 3, 6, 9… extras en `submit()`; la casilla se guarda en `fill` como las pistas pagadas, así que
+  al reabrir no se regala otra vez. Contador `· n/3` junto a OTRAS y línea nueva en las reglas. Verificado: build iOS. Sin
+  probar jugando (ni simulador ni iPhone).
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

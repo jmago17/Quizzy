@@ -43,6 +43,7 @@ extension PuzzleKind {
                 AppLanguage.text("No necesitas usar todas las letras, pero debes respetar sus multiplicidades: una ficha solo puede usarse una vez en cada palabra.", "You do not have to use every letter, but each tile may only be used once in a word."),
                 AppLanguage.text("Desliza el dedo de una letra a otra para formar una palabra. El trazo muestra el recorrido y las letras seleccionadas.", "Slide from letter to letter to form a word. The trace shows your path and selected letters."),
                 AppLanguage.text("Al soltar, una respuesta del tablero se revela completa. Las palabras válidas que no estén en el tablero se guardan en Otras palabras.", "Release to reveal a matching board answer. Other valid words are saved under Other words."),
+                AppLanguage.text("Cada 3 palabras extra se revela gratis una letra del tablero.", "Every 3 extra words reveal a free letter on the board."),
                 AppLanguage.text("Puedes revelar una letra con 30 segundos de penalización o una palabra completa con 90 segundos.", "Reveal a letter for a 30-second penalty or a whole word for 90 seconds."),
                 AppLanguage.text("Encuentra todas las palabras cruzadas para completar el puzzle.", "Find every crossing word to complete the puzzle.")
             ]
