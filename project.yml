@@ -5,6 +5,7 @@ options:
   bundleIdPrefix: smargon.com
   deploymentTarget:
     iOS: "26.1"
+    watchOS: "26.0"
   developmentLanguage: es
   createIntermediateGroups: true
   groupSortPosition: top
@@ -22,6 +23,9 @@ targets:
     platform: iOS
     sources:
       - path: Quizzy
+    dependencies:
+      # App del reloj, dentro de la de iOS (mismo TestFlight). Desde 2026-11-20.
+      - target: QuizzyWatch
     settings:
       base:
         PRODUCT_NAME: Quizzy
@@ -45,7 +49,57 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+  QuizzyWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: QuizzyWatch
+      # Modelos y reglas compartidos con iOS (Foundation pura; guardas `os(iOS) || os(watchOS)`).
+      - path: Quizzy/Support/AppLanguage.swift
+      - path: Quizzy/Games/PuzzleModels.swift
+      - path: Quizzy/Games/PuzzleGenerator.swift
+      - path: Quizzy/Games/PuzzleTiming.swift
+      - path: Quizzy/Games/PuzzleStats.swift
+      - path: Quizzy/Games/PuzzleSnapshotStore.swift
+      - path: Quizzy/Games/AnygramPrefetch.swift
+      - path: Quizzy/Games/AnygramDefaultData.swift
+      - path: Quizzy/Games/EnglishPuzzleLexicon.swift
+      - path: Quizzy/Games/DecoderCore.swift
+      - path: Quizzy/Games/WordleModel.swift
+      - path: Quizzy/Games/MazeModel.swift
+      # Solo las listas que usan Palabro, Anygram y Trocitos.
+      - path: Quizzy/Games/Data/puzzle_words.json
+        buildPhase: resources
+      - path: Quizzy/Games/Data/common_words.json
+        buildPhase: resources
+      - path: Quizzy/Games/Data/answer_words.json
+        buildPhase: resources
+      - path: Quizzy/Games/Data/playable_words.json
+        buildPhase: resources
+      - path: Quizzy/Games/Data/wordle_answers.json
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: QuizzyWatch
+        PRODUCT_BUNDLE_IDENTIFIER: com.maromeapps.quizzies.watchkitapp
+        WATCHOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "4"
+        SDKROOT: watchos
+        SKIP_INSTALL: YES
+        GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_CFBundleDisplayName: Quizzy
+        INFOPLIST_KEY_WKApplication: YES
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.maromeapps.quizzies
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        ENABLE_PREVIEWS: YES
 schemes:
+  QuizzyWatch:
+    build:
+      targets:
+        QuizzyWatch: all
+    run:
+      config: Debug
   Quizzy:
     build:
       targets:

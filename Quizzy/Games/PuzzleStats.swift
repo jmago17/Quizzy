@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 //
 //  PuzzleStats.swift — News Raider
 //  Read-only aggregates over the existing PuzzleProgress store.

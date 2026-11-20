@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 //
 //  PuzzleGenerator.swift — News Raider
 //  Offline, deterministic procedural generators. A seed reproduces a game.

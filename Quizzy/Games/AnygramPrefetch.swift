@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 import Foundation
 
 // Anygram (español) tardaba ~10 s en generarse porque recalculaba el léxico entero en cada

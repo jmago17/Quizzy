@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 // Puzzle por defecto (semilla 20261115·131+191, español). Generado con AnygramPuzzle.generate y volcado a JSON.
 extension AnygramDefault {
     static let json = #"""

@@ -163,6 +163,27 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   Se concede solo al llegar a 3, 6, 9… extras en `submit()`; la casilla se guarda en `fill` como las pistas pagadas, así que
   al reabrir no se regala otra vez. Contador `· n/3` junto a OTRAS y línea nueva en las reglas. Verificado: build iOS. Sin
   probar jugando (ni simulador ni iPhone).
+- 2026-11-20 — **App de Apple Watch** (target `QuizzyWatch`, bundle `com.maromeapps.quizzies.watchkitapp`, watchOS 26.0,
+  embebida en la de iOS → llega por el mismo TestFlight). Juegos: Palabro, Anygram, Trocitos, Laberinto y Decoder.
+  - **Modelos compartidos, no copiados:** los ficheros Foundation puros pasan a `#if os(iOS) || os(watchOS)` y entran en
+    el target del reloj por ruta (lista en `project.yml`). `WordlePuzzle`/`LetterResult`/`WordleOutcome` y `MazePuzzle` se
+    movieron TAL CUAL a `WordleModel.swift` y `MazeModel.swift` (estaban en ficheros de vista con UIKit); se añade
+    `WordlePuzzle.evaluate`. Solo 5 JSON van al reloj (sin `puzzles`, `trivia_questions`, `natural_clues`).
+  - Vistas en `QuizzyWatch/` (todas nuevas). Diarios con las MISMAS semillas que el iPhone (`PuzzleSeed`); Anygram y
+    Trocitos se generan en segundo plano y se congelan en `PuzzleSnapshotStore`, como en iOS. Laberinto del reloj 8×10
+    con id `w-m-gen-…` (el del iPhone es 12×16). **Progreso local al reloj: NO se sincroniza con el iPhone.**
+  - Palabro: entrada de texto del sistema (teclado/garabato/dictado), normaliza tildes y conserva la Ñ. Anygram: rueda
+    para deslizar + tablero en Canvas (tocar = tablero grande con palabras); misma letra gratis cada 3 extras
+    (`AnygramRules.extrasPerFreeLetter`, duplicado del valor iOS). Laberinto: deslizar = corre hasta el cruce.
+  - **Decoder:** juego de Kaffa (`DecoderCore.swift`, idéntico al de Siftly). La vista de Kaffa (`Watch/WatchDecoderView.swift`,
+    un "aparato" con antenas, 7 segmentos y pomo) NO se trajo: Josu pidió quitar el diseño de trasto físico. Vista nueva:
+    7 filas limpias, la Corona elige color, tocar casilla/muestra = colocar, ✓ = probar, bombilla = pista de la última fila.
+  - Gancho DEBUG: `QW_GAME=wordle|anygram|quartiles|maze|decoder` abre ese juego al lanzar (capturas sin tocar).
+  - Verificado: build iOS con el Watch embebido y build watchOS (simulador); capturas en un Watch Series 12 42 mm temporal
+    (ya borrado) de portada y los 5 juegos, con 3 ajustes de maquetación tras verlas. **NO verificado:** jugar tocando
+    (el simulador es headless), Corona real, tiempos de generación de Anygram en un reloj de verdad (en el simulador
+    corre con la CPU del Mac), y la firma/archive en Xcode Cloud con el App ID nuevo del reloj (puede pedir
+    registrarlo en el portal la primera vez).
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

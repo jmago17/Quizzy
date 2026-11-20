@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 import Foundation
 
 /// Freeze generated word grids, rather than reconstructing them over saved fills.

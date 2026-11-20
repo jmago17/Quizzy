@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 import Foundation
 
 /// Authored offline English vocabulary. Deliberately curated rather than a full dictionary.

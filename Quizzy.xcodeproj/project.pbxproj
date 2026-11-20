@@ -8,27 +8,44 @@
 
 /* Begin PBXBuildFile section */
 		033C8E579CE1FC9636D4662D /* trivia_questions.json in Resources */ = {isa = PBXBuildFile; fileRef = 56C2A8E64C77272714245B9B /* trivia_questions.json */; };
+		05BF236F83224DBED4FD6A8C /* WordleModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6364423E6526E66FC5EBBE /* WordleModel.swift */; };
 		06185A10EE913F5B05F493E9 /* MurdleGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A86C5D85E163FE524111E8 /* MurdleGame.swift */; };
+		0784C968444A972E8C1EEE02 /* MazeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE02A968205CD9E3E54855B /* MazeModel.swift */; };
 		07B749F2C296B2F24DB3B640 /* puzzles.json in Resources */ = {isa = PBXBuildFile; fileRef = 862F97087A8F53AD1D9A1BF9 /* puzzles.json */; };
 		13A4E112239E8943C6BB4B20 /* QuartilesGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */; };
 		1449DF4EA9965E16311375BD /* CasualPuzzleGames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7CACAF629504F91DDB88D7 /* CasualPuzzleGames.swift */; };
 		1DD1F4EECE4F07CAB14AD49C /* CrosswordGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F424B57393C61142DFAA39 /* CrosswordGame.swift */; };
 		20704AE5E75EE382B0E77E6F /* PuzzleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85429906C99A8786AE5176E8 /* PuzzleGenerator.swift */; };
 		244A975F5ED585BF6A93B526 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 78F811762FB29E84E49EC8E4 /* Assets.xcassets */; };
+		25DF446E4F8E473C3A4A3A38 /* answer_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 0EE4BF8589A9F754CEECFB35 /* answer_words.json */; };
 		2B38C2574B1E3A3A44857BBD /* QuizzyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050F89CE51471C557796D851 /* QuizzyApp.swift */; };
 		2C48035F25025D399307BB7F /* wordle_answers.json in Resources */ = {isa = PBXBuildFile; fileRef = A96F6EDE07429F0E81BCD717 /* wordle_answers.json */; };
+		3C7C658554527E028692D434 /* WatchAnygramView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63081AD8C16B813C0B4C6FFF /* WatchAnygramView.swift */; };
+		3DC4C512C08302D4A308FEF1 /* WatchDecoderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB43149F4D80847867CC2C70 /* WatchDecoderView.swift */; };
+		3DD66C7B37935D1BBA03B435 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C7EC5988413AA240EC37D58F /* Assets.xcassets */; };
+		40CDA323C4D98135C1A6FF8B /* PuzzleSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59266AE81579624E2701C025 /* PuzzleSnapshotStore.swift */; };
 		4518E2ABE228ADC261E52B78 /* PuzzleSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59266AE81579624E2701C025 /* PuzzleSnapshotStore.swift */; };
 		4ACA15F21028DF4206492ADD /* natural_clues.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E8FEC07AB38BD68118122BA /* natural_clues.json */; };
+		4CF05F1CD61FDE16631E321D /* PuzzleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85429906C99A8786AE5176E8 /* PuzzleGenerator.swift */; };
+		5049F3205F4883BEA061B5DD /* QuizzyWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614E2BAC7BB07B9FF83017D1 /* QuizzyWatchApp.swift */; };
+		61F3BCE14802B9CDBD819C22 /* WatchMazeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E592FF157C263DA6705FAD60 /* WatchMazeView.swift */; };
+		63F66DDE61BDBD2E5EEC3F7C /* MazeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE02A968205CD9E3E54855B /* MazeModel.swift */; };
+		6D3288D7A366B7A8A6D5D580 /* AnygramDefaultData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F195A13656D1370F855535D5 /* AnygramDefaultData.swift */; };
 		6F22252E8258778FE371B338 /* PuzzleModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C3BE70B74BCDE639A2B7668 /* PuzzleModels.swift */; };
 		73BD5E7AA0A0ED3EC834BB64 /* HostDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EC82E59A1B3EDDBF6D295A7 /* HostDesign.swift */; };
 		77502C4EF188CFDF6DE2CED3 /* MazeGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 893271D3B3418F6A4853E0DD /* MazeGame.swift */; };
 		81017D8FD382C3BBFD37F001 /* PuzzleDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9087334214533F8FB49EF42 /* PuzzleDesignSystem.swift */; };
 		83F9FC9D517DD0C16C3FF56A /* PZShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 1E7D5FEC94B05B436560DDF6 /* PZShaders.metal */; };
+		93A01DDACB0D58CBCE5A891D /* DecoderCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37399FC8DB8DA46D8FC1A6C /* DecoderCore.swift */; };
 		94044F0A4E8B4E3E953BBA9B /* PZResultSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B013A502A43F40714E2916C /* PZResultSheet.swift */; };
 		94482512A2B0051B0B732427 /* AnygramDefaultData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F195A13656D1370F855535D5 /* AnygramDefaultData.swift */; };
 		964DE6883D646963FA123F62 /* DecoderGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */; };
+		A156722CA6A981E7F3D46CCE /* WatchTrocitosView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CF789539E3305C51297F3F /* WatchTrocitosView.swift */; };
+		A37DF38433A3F678AA4960E6 /* QuizzyWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A2BB51A686D1E68A5DAE73CB /* QuizzyWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A4474DF9F0F2445B18B0AE4D /* EnglishPuzzleLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */; };
 		AB0BF3C160A5CC027D4500FF /* answer_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 0EE4BF8589A9F754CEECFB35 /* answer_words.json */; };
+		ADA87DACD0BDB59D9AEF9FFB /* AnygramPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */; };
+		B05458AF340072F147D35681 /* playable_words.json in Resources */ = {isa = PBXBuildFile; fileRef = DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */; };
 		B9C0B8092C74F7D56F207B12 /* playable_words.json in Resources */ = {isa = PBXBuildFile; fileRef = DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */; };
 		BD7B861F5E4ABA29AD032AD5 /* PZRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F6DBBFBD1C8E201B7652AC /* PZRules.swift */; };
 		BF7DC090510D9F69C60E0D60 /* common_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 89E237A3EC0534F1CDDC4BCD /* common_words.json */; };
@@ -36,16 +53,51 @@
 		C7B6E7C9C4691B3E7759E9A8 /* AnygramPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */; };
 		C948C3CD25FD4E9CCAA98365 /* PZToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24073164DBA8A86E8ED68902 /* PZToast.swift */; };
 		D2A96727B33022D1E8EDEFC0 /* WordleGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A59F2E092EB61696DFBDC1F /* WordleGame.swift */; };
+		D8DE22DA889E06F693946538 /* PuzzleStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C691B1260601D1CC96717CC /* PuzzleStats.swift */; };
+		D8F34A6D21C4CD2BF70DDE87 /* PuzzleModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C3BE70B74BCDE639A2B7668 /* PuzzleModels.swift */; };
+		D94E4DECCCD96ADCA71D021E /* EnglishPuzzleLexicon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */; };
+		D9585F8C582B388D88467FA9 /* common_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 89E237A3EC0534F1CDDC4BCD /* common_words.json */; };
 		DCBB460522681D9AE3D58B7C /* PuzzleStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C691B1260601D1CC96717CC /* PuzzleStats.swift */; };
 		E2A68C672F290342881E462A /* PuzzleTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7BFD54DB46ED769E4078CF /* PuzzleTiming.swift */; };
 		E70FE42A3119D4F9D42B69D0 /* QuizzySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF5D7D49A17E60BE64E4A06F /* QuizzySettingsView.swift */; };
 		E7DAFA0BFEB1FA0FA33D52C5 /* PuzzlesScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29369D91159633C83208076F /* PuzzlesScreen.swift */; };
+		E7F075032DDBD08E792A55CF /* wordle_answers.json in Resources */ = {isa = PBXBuildFile; fileRef = A96F6EDE07429F0E81BCD717 /* wordle_answers.json */; };
+		E89F93B87858111565E1BCCF /* WatchPalabroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F74A3321B0347E04FF9D270 /* WatchPalabroView.swift */; };
 		E8D33A721943D3286505A333 /* MurdokuCaseUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D21E1B6E28C976777E523C /* MurdokuCaseUI.swift */; };
+		EAA2D490E04A1A4951BF917C /* puzzle_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 2DA093B0DA86354AA54180F2 /* puzzle_words.json */; };
 		EB152D9CAB609C3214EF387A /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D74277D3E897057B23C7421 /* AppLanguage.swift */; };
+		EF70FFD3E88D3564556FB730 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D74277D3E897057B23C7421 /* AppLanguage.swift */; };
+		F39DC3FF3A249CF40C157AE6 /* WordleModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6364423E6526E66FC5EBBE /* WordleModel.swift */; };
 		F4482699C4162CED22EEE53F /* WordSearchGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467423C8BE999C32D45CD0D2 /* WordSearchGame.swift */; };
 		F7CEEABA9EB1751777CAE7A7 /* MiniCrossword.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65CAADAE5288AD289B5CB2ED /* MiniCrossword.swift */; };
 		F94279E7FD156D5053BC84BA /* DecoderCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37399FC8DB8DA46D8FC1A6C /* DecoderCore.swift */; };
+		FA145F37D7C693810739E429 /* WatchSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4400D6FD9F8D9D13B2A54D27 /* WatchSupport.swift */; };
+		FC2E431F46974C83F2284CAC /* PuzzleTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7BFD54DB46ED769E4078CF /* PuzzleTiming.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CC8827EC2CE9AAD2CBD6A56D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8E5259144F86FA4CDC39FDBC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B86ED4CEA61A4EDB65EEA1A1;
+			remoteInfo = QuizzyWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		ECEF61BA9526138C2FBFAD67 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				A37DF38433A3F678AA4960E6 /* QuizzyWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		050F89CE51471C557796D851 /* QuizzyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizzyApp.swift; sourceTree = "<group>"; };
@@ -62,12 +114,18 @@
 		29369D91159633C83208076F /* PuzzlesScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzlesScreen.swift; sourceTree = "<group>"; };
 		2DA093B0DA86354AA54180F2 /* puzzle_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = puzzle_words.json; sourceTree = "<group>"; };
 		2E7CACAF629504F91DDB88D7 /* CasualPuzzleGames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CasualPuzzleGames.swift; sourceTree = "<group>"; };
+		2EE02A968205CD9E3E54855B /* MazeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MazeModel.swift; sourceTree = "<group>"; };
+		3F74A3321B0347E04FF9D270 /* WatchPalabroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPalabroView.swift; sourceTree = "<group>"; };
+		4400D6FD9F8D9D13B2A54D27 /* WatchSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSupport.swift; sourceTree = "<group>"; };
 		467423C8BE999C32D45CD0D2 /* WordSearchGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchGame.swift; sourceTree = "<group>"; };
 		4C691B1260601D1CC96717CC /* PuzzleStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleStats.swift; sourceTree = "<group>"; };
+		4D6364423E6526E66FC5EBBE /* WordleModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordleModel.swift; sourceTree = "<group>"; };
 		56C2A8E64C77272714245B9B /* trivia_questions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = trivia_questions.json; sourceTree = "<group>"; };
 		575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuartilesGame.swift; sourceTree = "<group>"; };
 		59266AE81579624E2701C025 /* PuzzleSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleSnapshotStore.swift; sourceTree = "<group>"; };
 		595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnygramPrefetch.swift; sourceTree = "<group>"; };
+		614E2BAC7BB07B9FF83017D1 /* QuizzyWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizzyWatchApp.swift; sourceTree = "<group>"; };
+		63081AD8C16B813C0B4C6FFF /* WatchAnygramView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAnygramView.swift; sourceTree = "<group>"; };
 		64F6DBBFBD1C8E201B7652AC /* PZRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PZRules.swift; sourceTree = "<group>"; };
 		65CAADAE5288AD289B5CB2ED /* MiniCrossword.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniCrossword.swift; sourceTree = "<group>"; };
 		77F424B57393C61142DFAA39 /* CrosswordGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrosswordGame.swift; sourceTree = "<group>"; };
@@ -79,12 +137,17 @@
 		893271D3B3418F6A4853E0DD /* MazeGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MazeGame.swift; sourceTree = "<group>"; };
 		89E237A3EC0534F1CDDC4BCD /* common_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = common_words.json; sourceTree = "<group>"; };
 		9C3BE70B74BCDE639A2B7668 /* PuzzleModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleModels.swift; sourceTree = "<group>"; };
+		A2BB51A686D1E68A5DAE73CB /* QuizzyWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuizzyWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A96F6EDE07429F0E81BCD717 /* wordle_answers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = wordle_answers.json; sourceTree = "<group>"; };
+		AB43149F4D80847867CC2C70 /* WatchDecoderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchDecoderView.swift; sourceTree = "<group>"; };
 		B37399FC8DB8DA46D8FC1A6C /* DecoderCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecoderCore.swift; sourceTree = "<group>"; };
+		C7EC5988413AA240EC37D58F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D5D21E1B6E28C976777E523C /* MurdokuCaseUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MurdokuCaseUI.swift; sourceTree = "<group>"; };
+		D7CF789539E3305C51297F3F /* WatchTrocitosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTrocitosView.swift; sourceTree = "<group>"; };
 		D9087334214533F8FB49EF42 /* PuzzleDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleDesignSystem.swift; sourceTree = "<group>"; };
 		DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecoderGameView.swift; sourceTree = "<group>"; };
 		DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = playable_words.json; sourceTree = "<group>"; };
+		E592FF157C263DA6705FAD60 /* WatchMazeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMazeView.swift; sourceTree = "<group>"; };
 		F195A13656D1370F855535D5 /* AnygramDefaultData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnygramDefaultData.swift; sourceTree = "<group>"; };
 		FF5D7D49A17E60BE64E4A06F /* QuizzySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizzySettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -111,6 +174,7 @@
 				DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */,
 				1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */,
 				893271D3B3418F6A4853E0DD /* MazeGame.swift */,
+				2EE02A968205CD9E3E54855B /* MazeModel.swift */,
 				65CAADAE5288AD289B5CB2ED /* MiniCrossword.swift */,
 				07A86C5D85E163FE524111E8 /* MurdleGame.swift */,
 				D5D21E1B6E28C976777E523C /* MurdokuCaseUI.swift */,
@@ -127,6 +191,7 @@
 				24073164DBA8A86E8ED68902 /* PZToast.swift */,
 				575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */,
 				1A59F2E092EB61696DFBDC1F /* WordleGame.swift */,
+				4D6364423E6526E66FC5EBBE /* WordleModel.swift */,
 				467423C8BE999C32D45CD0D2 /* WordSearchGame.swift */,
 			);
 			path = Games;
@@ -145,6 +210,7 @@
 			isa = PBXGroup;
 			children = (
 				83A8D209ACCC5BB1E2FA0492 /* Quizzy */,
+				AC86FF1503A021D6823C068E /* QuizzyWatch */,
 				F7E64E0205913183F98FAEFC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -160,10 +226,26 @@
 			path = Quizzy;
 			sourceTree = "<group>";
 		};
+		AC86FF1503A021D6823C068E /* QuizzyWatch */ = {
+			isa = PBXGroup;
+			children = (
+				C7EC5988413AA240EC37D58F /* Assets.xcassets */,
+				614E2BAC7BB07B9FF83017D1 /* QuizzyWatchApp.swift */,
+				63081AD8C16B813C0B4C6FFF /* WatchAnygramView.swift */,
+				AB43149F4D80847867CC2C70 /* WatchDecoderView.swift */,
+				E592FF157C263DA6705FAD60 /* WatchMazeView.swift */,
+				3F74A3321B0347E04FF9D270 /* WatchPalabroView.swift */,
+				4400D6FD9F8D9D13B2A54D27 /* WatchSupport.swift */,
+				D7CF789539E3305C51297F3F /* WatchTrocitosView.swift */,
+			);
+			path = QuizzyWatch;
+			sourceTree = "<group>";
+		};
 		F7E64E0205913183F98FAEFC /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				0C43E2413306A16EC42B1228 /* Quizzy.app */,
+				A2BB51A686D1E68A5DAE73CB /* QuizzyWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -192,16 +274,36 @@
 			buildPhases = (
 				7CB44F28B916352C0F271B62 /* Sources */,
 				2D551D2B48DDB1D739E74A67 /* Resources */,
+				ECEF61BA9526138C2FBFAD67 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2DFAC55E781B9D7A18DA84A1 /* PBXTargetDependency */,
 			);
 			name = Quizzy;
 			packageProductDependencies = (
 			);
 			productName = Quizzy;
 			productReference = 0C43E2413306A16EC42B1228 /* Quizzy.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B86ED4CEA61A4EDB65EEA1A1 /* QuizzyWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 92FCB61D64C4B3960512F14E /* Build configuration list for PBXNativeTarget "QuizzyWatch" */;
+			buildPhases = (
+				D7CA9FF97BB88D5DA1470CEA /* Sources */,
+				51BC8C6EA2CC7D86B46BFB5F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QuizzyWatch;
+			packageProductDependencies = (
+			);
+			productName = QuizzyWatch;
+			productReference = A2BB51A686D1E68A5DAE73CB /* QuizzyWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -214,6 +316,10 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					0CCF8CBC9AC5B1DD6AE826C0 = {
+						DevelopmentTeam = ES2766ARHJ;
+						ProvisioningStyle = Automatic;
+					};
+					B86ED4CEA61A4EDB65EEA1A1 = {
 						DevelopmentTeam = ES2766ARHJ;
 						ProvisioningStyle = Automatic;
 					};
@@ -234,6 +340,7 @@
 			projectRoot = "";
 			targets = (
 				0CCF8CBC9AC5B1DD6AE826C0 /* Quizzy */,
+				B86ED4CEA61A4EDB65EEA1A1 /* QuizzyWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -255,6 +362,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		51BC8C6EA2CC7D86B46BFB5F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3DD66C7B37935D1BBA03B435 /* Assets.xcassets in Resources */,
+				25DF446E4F8E473C3A4A3A38 /* answer_words.json in Resources */,
+				D9585F8C582B388D88467FA9 /* common_words.json in Resources */,
+				B05458AF340072F147D35681 /* playable_words.json in Resources */,
+				EAA2D490E04A1A4951BF917C /* puzzle_words.json in Resources */,
+				E7F075032DDBD08E792A55CF /* wordle_answers.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -272,6 +392,7 @@
 				A4474DF9F0F2445B18B0AE4D /* EnglishPuzzleLexicon.swift in Sources */,
 				73BD5E7AA0A0ED3EC834BB64 /* HostDesign.swift in Sources */,
 				77502C4EF188CFDF6DE2CED3 /* MazeGame.swift in Sources */,
+				63F66DDE61BDBD2E5EEC3F7C /* MazeModel.swift in Sources */,
 				F7CEEABA9EB1751777CAE7A7 /* MiniCrossword.swift in Sources */,
 				06185A10EE913F5B05F493E9 /* MurdleGame.swift in Sources */,
 				E8D33A721943D3286505A333 /* MurdokuCaseUI.swift in Sources */,
@@ -291,10 +412,45 @@
 				E70FE42A3119D4F9D42B69D0 /* QuizzySettingsView.swift in Sources */,
 				F4482699C4162CED22EEE53F /* WordSearchGame.swift in Sources */,
 				D2A96727B33022D1E8EDEFC0 /* WordleGame.swift in Sources */,
+				05BF236F83224DBED4FD6A8C /* WordleModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D7CA9FF97BB88D5DA1470CEA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6D3288D7A366B7A8A6D5D580 /* AnygramDefaultData.swift in Sources */,
+				ADA87DACD0BDB59D9AEF9FFB /* AnygramPrefetch.swift in Sources */,
+				EF70FFD3E88D3564556FB730 /* AppLanguage.swift in Sources */,
+				93A01DDACB0D58CBCE5A891D /* DecoderCore.swift in Sources */,
+				D94E4DECCCD96ADCA71D021E /* EnglishPuzzleLexicon.swift in Sources */,
+				0784C968444A972E8C1EEE02 /* MazeModel.swift in Sources */,
+				4CF05F1CD61FDE16631E321D /* PuzzleGenerator.swift in Sources */,
+				D8F34A6D21C4CD2BF70DDE87 /* PuzzleModels.swift in Sources */,
+				40CDA323C4D98135C1A6FF8B /* PuzzleSnapshotStore.swift in Sources */,
+				D8DE22DA889E06F693946538 /* PuzzleStats.swift in Sources */,
+				FC2E431F46974C83F2284CAC /* PuzzleTiming.swift in Sources */,
+				5049F3205F4883BEA061B5DD /* QuizzyWatchApp.swift in Sources */,
+				3C7C658554527E028692D434 /* WatchAnygramView.swift in Sources */,
+				3DC4C512C08302D4A308FEF1 /* WatchDecoderView.swift in Sources */,
+				61F3BCE14802B9CDBD819C22 /* WatchMazeView.swift in Sources */,
+				E89F93B87858111565E1BCCF /* WatchPalabroView.swift in Sources */,
+				FA145F37D7C693810739E429 /* WatchSupport.swift in Sources */,
+				A156722CA6A981E7F3D46CCE /* WatchTrocitosView.swift in Sources */,
+				F39DC3FF3A249CF40C157AE6 /* WordleModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2DFAC55E781B9D7A18DA84A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B86ED4CEA61A4EDB65EEA1A1 /* QuizzyWatch */;
+			targetProxy = CC8827EC2CE9AAD2CBD6A56D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		33EFF8B74BA295CFE176CFF4 /* Debug */ = {
@@ -327,6 +483,44 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5E5E4315338FEA3960D2B96C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Quizzy;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.maromeapps.quizzies;
+				PRODUCT_BUNDLE_IDENTIFIER = com.maromeapps.quizzies.watchkitapp;
+				PRODUCT_NAME = QuizzyWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		60689E47D2BFF4F07FDDC1B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Quizzy;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.maromeapps.quizzies;
+				PRODUCT_BUNDLE_IDENTIFIER = com.maromeapps.quizzies.watchkitapp;
+				PRODUCT_NAME = QuizzyWatch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
 		};
@@ -390,10 +584,10 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
 		};
@@ -483,10 +677,10 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
 		};
@@ -507,6 +701,15 @@
 			buildConfigurations = (
 				8B0FB95D4E3A09C1520A8492 /* Debug */,
 				EB6629CC29507B70E9E0B6BB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		92FCB61D64C4B3960512F14E /* Build configuration list for PBXNativeTarget "QuizzyWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				60689E47D2BFF4F07FDDC1B3 /* Debug */,
+				5E5E4315338FEA3960D2B96C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

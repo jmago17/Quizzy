@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) || os(watchOS)
 //
 //  PuzzleTiming.swift — News Raider
 //  Completion benchmarks and human-readable comparison copy.

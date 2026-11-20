@@ -7,60 +7,6 @@ import SwiftUI
 import Combine
 import UIKit
 
-struct WordlePuzzle: Identifiable, Sendable, Hashable {
-    let id: String
-    let answer: String
-
-    /// Curated answers, with a stable fallback that never reaches into the
-    /// broad validation dictionary — that fallback is what produced FRANI.
-    private static func bank(language: PuzzleLanguage) -> [String] {
-        if language == .english { return EnglishPuzzleLexicon.answers }
-        return PuzzleLexicon.wordleAnswers.isEmpty
-            ? PuzzleLexicon.commonWords.filter { $0.count == 5 && $0.allSatisfy(\.isLetter) }
-            : PuzzleLexicon.wordleAnswers
-    }
-
-    /// Daily answers walk a fixed permutation of the whole bank instead of
-    /// picking at random, so every word is used exactly once before any
-    /// repeats — with ~1,070 answers that's about three years of dailies.
-    static func daily(dayIndex: Int, language: PuzzleLanguage = .spanish) -> WordlePuzzle {
-        let words = bank(language: language)
-        guard !words.isEmpty else { return .init(id: "\(language == .english ? "en-" : "")d-day-\(dayIndex)", answer: "RADIO") }
-        let cycle = dayIndex / words.count            // reshuffle each full pass
-        let position = ((dayIndex % words.count) + words.count) % words.count
-        var rng = SeededGenerator(seed: 0x5EED &+ UInt64(bitPattern: Int64(cycle)))
-        let order = rng.shuffled(words)
-        return .init(id: "\(language == .english ? "en-" : "")d-day-\(dayIndex)", answer: order[position])
-    }
-
-    static func generate(seed: UInt64, excluding excluded: Set<String> = [], language: PuzzleLanguage = .spanish) -> WordlePuzzle {
-        var rng = SeededGenerator(seed: seed)
-        let allWords = bank(language: language)
-        let freshWords = allWords.filter { !excluded.contains($0) }
-        let words = freshWords.isEmpty ? allWords : freshWords
-        let answer = words.isEmpty ? "RADIO" : words[rng.int(words.count)]
-        return .init(id: "\(language == .english ? "en-" : "")d-gen-\(seed)", answer: answer)
-    }
-}
-
-enum LetterResult: Int, Comparable {
-    case absent = 0, present = 1, correct = 2
-    static func < (a: Self, b: Self) -> Bool { a.rawValue < b.rawValue }
-}
-
-enum WordleOutcome: Identifiable, Equatable {
-    case won(attempts: Int)
-    case lost(answer: String)
-    var id: String {
-        switch self {
-        case .won(let a):  return "won-\(a)"
-        case .lost(let w): return "lost-\(w)"
-        }
-    }
-    var isWin: Bool { if case .won = self { return true }; return false }
-    var attempts: Int { if case .won(let a) = self { return a }; return 6 }
-}
-
 struct WordleGame: View {
     let puzzle: WordlePuzzle
     @ObservedObject private var progress = PuzzleProgress.shared
