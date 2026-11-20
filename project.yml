@@ -67,7 +67,7 @@ targets:
       - path: Quizzy/Games/DecoderCore.swift
       - path: Quizzy/Games/WordleModel.swift
       - path: Quizzy/Games/MazeModel.swift
-      # Solo las listas que usan Palabro, Anygram y Trocitos.
+      # Listas de palabras (Palabro, Anygram y el léxico común).
       - path: Quizzy/Games/Data/puzzle_words.json
         buildPhase: resources
       - path: Quizzy/Games/Data/common_words.json

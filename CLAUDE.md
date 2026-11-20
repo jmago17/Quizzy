@@ -190,6 +190,24 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     Run 17 → **build 17 VALID en TestFlight** (2026-11-20). Recordatorio: el workflow de TestFlight es manual; el push
     solo lanza "Default" (compila, no sube). Lanzar con `asc xcode-cloud run --app 6835185679 --workflow "Internal
     TestFlight Build" --branch main`.
+- 2026-11-20 (tarde) — Reloj, tras probarlo Josu en la muñeca (build 17):
+  - **Trocitos fuera del reloj** ("no es viable": 20 fichas no caben). Borrada `WatchTrocitosView.swift`; en iOS sigue igual.
+  - **Anygram:** rueda ~25 % mayor (radio 0,36; antes 0,33 y con una línea de estado encima). La palabra en curso/aviso va
+    en el CENTRO de la rueda y los contadores en sus esquinas; tablero al 27 % de alto. **Decoder:** fichas = barras
+    redondeadas que llenan el ancho (antes círculos de ~14 pt con huecos). En ambos, mientras se juega no hay título y el
+    contenido sube 18 pt (`.padding(.top, -18)`) para usar la franja vacía bajo la hora; quitar solo el título NO libera
+    ese espacio (comprobado en captura).
+  - **Brinco** (en: Hop), juego nuevo SOLO del reloj (`WatchJumpView.swift`): saltador vertical sin fin con un quokka
+    dibujado con formas (`Quokka.draw`, también es el icono de la portada). No es `PuzzleKind` (el iPhone no lo conoce):
+    ruta `WatchArcade.jump`, por eso la portada usa `NavigationPath`. Control: la Corona fija la posición horizontal
+    (`digitalCrownRotation` 0…1 continuo = da la vuelta por los bordes); alternativa, arrastrar el dedo. Ramas: hoja,
+    azul (se mueve), seca (un salto) y flor (rebote largo); hueco vertical siempre < 70 pt (altura del salto). Récord en
+    `watch.jump.best`. Física en `JumpWorld` (clase fuera de SwiftUI) + `TimelineView` + Canvas.
+    Ganchos DEBUG: `QW_GAME=jump` y `QW_JUMP_DEMO=1` (piloto automático para capturas).
+  - Verificado: builds watchOS e iOS (Watch embebido) y capturas en un Watch 42 mm temporal (borrado) de portada,
+    Anygram, Decoder y Brinco (reposo, en marcha con piloto automático, fin de partida). **NO verificado:** la Corona
+    (el simulador headless no la mueve): la sensibilidad de Brinco (`.medium`, una vuelta ↔ cuánto recorrido) está SIN
+    probar y es lo primero a ajustar en el reloj; tampoco el arrastre ni la fluidez real a 60 fps.
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

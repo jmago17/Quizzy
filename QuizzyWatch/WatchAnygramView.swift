@@ -51,30 +51,43 @@ struct WatchAnygramView: View {
                 }
             } else {
                 VStack(spacing: 2) {
-                    board(height: geo.size.height * 0.30)
+                    board(height: geo.size.height * 0.27)
                         .onTapGesture { showBoard = true }
                         .accessibilityAddTraits(.isButton)
                         .accessibilityHint(AppLanguage.text("Abre el tablero grande", "Opens the large board"))
-                    HStack {
-                        Text("\(found.count)/\(puzzle.answers.count)").foregroundStyle(color)
-                        Spacer()
-                        if let notice { Text(notice.text).foregroundStyle(notice.color).lineLimit(1).minimumScaleFactor(0.6) }
-                        else { Text(candidate.isEmpty ? " " : candidate).foregroundStyle(WTheme.ink) }
-                        Spacer()
-                        Text("+\(extras.count % AnygramRules.extrasPerFreeLetter)/\(AnygramRules.extrasPerFreeLetter)")
-                            .foregroundStyle(WTheme.inkSecondary)
-                            .accessibilityLabel(AppLanguage.text("Palabras extra hacia la próxima letra gratis", "Extra words towards the next free letter"))
-                    }
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .padding(.horizontal, 10)
+                    // La rueda ocupa todo lo demás: la palabra en curso va en su centro y los
+                    // contadores en las esquinas que el círculo deja libres.
                     WatchAnygramWheel(letters: puzzle.letters, color: color, selected: $selected, onSubmit: submit)
+                        .overlay {
+                            Group {
+                                if let notice { Text(notice.text).foregroundStyle(notice.color) }
+                                else { Text(candidate).foregroundStyle(WTheme.ink) }
+                            }
+                            .font(.system(size: 13, weight: .heavy, design: .rounded))
+                            .lineLimit(2).multilineTextAlignment(.center).minimumScaleFactor(0.5)
+                            .frame(width: 54)
+                            .allowsHitTesting(false)
+                        }
+                        .overlay(alignment: .topLeading) {
+                            Text("\(found.count)/\(puzzle.answers.count)").foregroundStyle(color)
+                                .padding(.leading, 6).allowsHitTesting(false)
+                        }
+                        .overlay(alignment: .topTrailing) {
+                            Text("+\(extras.count % AnygramRules.extrasPerFreeLetter)/\(AnygramRules.extrasPerFreeLetter)")
+                                .foregroundStyle(WTheme.inkSecondary)
+                                .padding(.trailing, 6).allowsHitTesting(false)
+                                .accessibilityLabel(AppLanguage.text("Palabras extra hacia la próxima letra gratis", "Extra words towards the next free letter"))
+                        }
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(.bottom, 4)
                 }
                 .ignoresSafeArea(edges: .bottom)
             }
         }
-        .navigationTitle("Anygram")
+        // Sin título mientras se juega: su franja bajo la hora (≈18 pt) es para el tablero.
+        .padding(.top, finished ? 0 : -18)
+        .navigationTitle(finished ? "Anygram" : "")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { revealLetter() } label: { Image(systemName: "lightbulb") }
@@ -252,8 +265,8 @@ struct WatchAnygramWheel: View {
         GeometryReader { geo in
             let side = min(geo.size.width, geo.size.height)
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-            let radius = side * 0.33
-            let letterSize = min(side * 0.30, 2 * .pi * radius / CGFloat(max(letters.count, 1)) * 0.82)
+            let radius = side * 0.36
+            let letterSize = min(side * 0.27, 2 * .pi * radius / CGFloat(max(letters.count, 1)) * 0.82)
             let points = letters.indices.map { i -> CGPoint in
                 let a = -Double.pi / 2 + 2 * Double.pi * Double(i) / Double(letters.count)
                 return CGPoint(x: center.x + radius * cos(a), y: center.y + radius * sin(a))

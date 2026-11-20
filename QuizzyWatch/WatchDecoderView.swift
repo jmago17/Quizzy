@@ -52,12 +52,15 @@ struct WatchDecoderView: View {
                 ScrollView { result }
             } else {
                 VStack(spacing: 4) {
-                    boardView(height: geo.size.height - 40)
-                    controls
+                    boardView(height: geo.size.height - 38)
+                    controls.padding(.horizontal, 12)
                 }
+                .ignoresSafeArea(edges: .bottom)
             }
         }
-        .navigationTitle("Decoder")
+        // Sin título mientras se juega: su franja bajo la hora (≈18 pt) se la queda el tablero.
+        .padding(.top, game.isFinished ? 0 : -18)
+        .navigationTitle(game.isFinished ? "Decoder" : "")
         .focusable(!game.isFinished)
         .focused($crownFocus)
         .digitalCrownRotation($crown, from: 0, through: Double(game.colorCount - 1), by: 1,
@@ -93,11 +96,12 @@ struct WatchDecoderView: View {
             }
             feedback(row: row, size: size)
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 3)
         .padding(.vertical, 1)
         .background {
             if current {
-                Capsule().fill(accent.opacity(0.16)).overlay(Capsule().stroke(accent.opacity(0.5), lineWidth: 1))
+                RoundedRectangle(cornerRadius: size * 0.45, style: .continuous).fill(accent.opacity(0.16))
+                    .overlay(RoundedRectangle(cornerRadius: size * 0.45, style: .continuous).stroke(accent.opacity(0.5), lineWidth: 1))
             }
         }
         .opacity(usable ? 1 : 0.25)
@@ -105,52 +109,54 @@ struct WatchDecoderView: View {
         .accessibilityLabel(rowLabel(row))
     }
 
+    /// Ficha = barra redondeada que llena el ancho (antes eran círculos pequeños con mucho hueco).
     @ViewBuilder private func peg(row: Int, slot: Int, size: CGFloat, current: Bool) -> some View {
-        let d = size * 0.86
+        let h = size * 0.9
+        let shape = RoundedRectangle(cornerRadius: h * 0.4, style: .continuous)
+        let shine = LinearGradient(colors: [.white.opacity(0.35), .clear], startPoint: .top, endPoint: .center)
         if row < game.guesses.count {
             let color = DecoderColor(rawValue: game.guesses[row][slot])?.color ?? WTheme.fill
             let hint = game.visibleSlotHints(row: row)?[slot]
             ZStack {
-                Circle().fill(color).shadow(color: .black.opacity(0.35), radius: 1, y: 1)
-                Circle().fill(LinearGradient(colors: [.white.opacity(0.35), .clear], startPoint: .top, endPoint: .center))
+                shape.fill(color).shadow(color: .black.opacity(0.35), radius: 1, y: 1)
+                shape.fill(shine)
                 if let hint {
-                    Circle().stroke(hint == .exact ? WTheme.success : (hint == .present ? .white : .clear), lineWidth: 2)
-                        .padding(-2)
+                    shape.strokeBorder(hint == .exact ? WTheme.success : (hint == .present ? .white : .clear), lineWidth: 2)
                 }
             }
-            .frame(width: d, height: d)
+            .frame(maxWidth: .infinity).frame(height: h)
         } else if current {
             let placed = draft.slots[slot].flatMap(DecoderColor.init(rawValue:))
             let isSelected = draft.selected == slot
             let preview = palette[crownIndex]
             ZStack {
                 if let placed {
-                    Circle().fill(placed.color)
-                    Circle().fill(LinearGradient(colors: [.white.opacity(0.35), .clear], startPoint: .top, endPoint: .center))
+                    shape.fill(placed.color)
+                    shape.fill(shine)
                 } else {
-                    Circle().fill(WTheme.fill)
+                    shape.fill(WTheme.fill)
                 }
                 if isSelected {
                     // Vista previa de la Corona: discontinua; tachada si ese color ya está en otra casilla.
-                    Circle().strokeBorder(preview.color, style: StrokeStyle(lineWidth: 2.5, dash: [3, 2]))
+                    shape.strokeBorder(preview.color, style: StrokeStyle(lineWidth: 2.5, dash: [3, 2]))
                     if !draft.canPlace(preview.rawValue) {
-                        Rectangle().fill(WTheme.ink.opacity(0.8)).frame(width: d * 0.9, height: 1.5).rotationEffect(.degrees(-45))
+                        Rectangle().fill(WTheme.ink.opacity(0.8)).frame(width: h, height: 1.5).rotationEffect(.degrees(-45))
                     }
                 }
             }
-            .frame(width: d, height: d)
-            .contentShape(Circle())
+            .frame(maxWidth: .infinity).frame(height: h)
+            .contentShape(Rectangle())
             .onTapGesture {
                 if isSelected { place() } else { draft.select(slot); WHaptics.tick() }
             }
         } else {
-            Circle().fill(WTheme.fill.opacity(0.6)).frame(width: d * 0.5, height: d * 0.5).frame(width: d, height: d)
+            shape.fill(WTheme.fill.opacity(0.4)).frame(maxWidth: .infinity).frame(height: h)
         }
     }
 
     /// Resultado agregado: puntos verdes = color en su sitio; blancos = color en otro sitio.
     @ViewBuilder private func feedback(row: Int, size: CGFloat) -> some View {
-        let dot = max(4, size * 0.28)
+        let dot = max(5, size * 0.36)
         let fb = row < game.feedbacks.count ? game.feedbacks[row] : nil
         let marks: [Color] = (0..<DecoderRules.slots).map { i in
             guard let fb else { return WTheme.fill.opacity(0.5) }
@@ -162,7 +168,7 @@ struct WatchDecoderView: View {
             GridRow { Circle().fill(marks[0]).frame(width: dot, height: dot); Circle().fill(marks[1]).frame(width: dot, height: dot) }
             GridRow { Circle().fill(marks[2]).frame(width: dot, height: dot); Circle().fill(marks[3]).frame(width: dot, height: dot) }
         }
-        .frame(width: size, height: size)
+        .frame(width: max(size, dot * 2 + 4), height: size)
     }
 
     // MARK: Controls

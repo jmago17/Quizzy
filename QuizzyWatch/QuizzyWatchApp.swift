@@ -1,6 +1,7 @@
 //
 //  QuizzyWatchApp.swift — Quizzy Watch
-//  Portada del reloj: cinco juegos (Palabro, Anygram, Trocitos, Laberinto, Decoder).
+//  Portada del reloj: Palabro, Anygram, Laberinto, Decoder y Brinco (este último solo existe aquí).
+//  Trocitos se quitó del reloj el 2026-11-20 (20 fichas no caben: no era viable).
 //  Los diarios usan las MISMAS semillas que el iPhone (`PuzzleSeed`), así que el reto del día es
 //  el mismo; el progreso es local al reloj (no se sincroniza con el iPhone).
 //
@@ -17,11 +18,13 @@ struct QuizzyWatchApp: App {
     }
 }
 
+/// Juegos que solo existen en el reloj (no son `PuzzleKind`: el iPhone no los conoce).
+enum WatchArcade: Hashable { case jump }
+
 /// Partida en juego de cada tipo.
 enum WatchPuzzle: Identifiable {
     case wordle(WordlePuzzle)
     case anygram(AnygramPuzzle)
-    case quartiles(QuartilePuzzle)
     case maze(MazePuzzle)
     case decoder(DecoderGame)
 
@@ -29,7 +32,6 @@ enum WatchPuzzle: Identifiable {
         switch self {
         case .wordle(let p): return p.id
         case .anygram(let p): return p.id
-        case .quartiles(let p): return p.id
         case .maze(let p): return p.id
         case .decoder(let g): return g.id
         }
@@ -38,7 +40,7 @@ enum WatchPuzzle: Identifiable {
 
 @MainActor
 final class WatchHub: ObservableObject {
-    static let kinds: [PuzzleKind] = [.wordle, .anygram, .quartiles, .maze, .decoder]
+    static let kinds: [PuzzleKind] = [.wordle, .anygram, .maze, .decoder]
 
     @Published private(set) var puzzles: [PuzzleKind: WatchPuzzle] = [:]
     @Published private(set) var preparing: Set<PuzzleKind> = []
@@ -47,7 +49,7 @@ final class WatchHub: ObservableObject {
 
     var offered: [PuzzleKind] { Self.kinds.filter { PuzzleKind.offered(in: language).contains($0) } }
 
-    /// Carga (o recarga si cambió el día/idioma) los diarios. Lo lento (Anygram, Trocitos) va en segundo plano.
+    /// Carga (o recarga si cambió el día/idioma) los diarios. Lo lento (Anygram) va en segundo plano.
     func refreshIfNeeded() {
         let day = PuzzleSeed.dayIndex()
         let lang = AppLanguage.current
@@ -70,24 +72,15 @@ final class WatchHub: ObservableObject {
             puzzles[kind] = .maze(Self.watchMaze(seed: seed))
         case .decoder:
             puzzles[kind] = .decoder(DecoderGame.make(seed: seed, spanish: lang == .spanish))
-        case .anygram, .quartiles:
-            if let saved = PuzzleSnapshotStore.load(kind: kind, language: lang, day: day, defaults: defaults) {
-                switch saved {
-                case .anygram(let p): puzzles[kind] = .anygram(p)
-                case .quartiles(let p): puzzles[kind] = .quartiles(p)
-                default: break
-                }
+        case .anygram:
+            if case .anygram(let p)? = PuzzleSnapshotStore.load(kind: kind, language: lang, day: day, defaults: defaults) {
+                puzzles[kind] = .anygram(p)
                 return
             }
-            generate(kind) { kind == .anygram
-                ? AnygramPuzzle.generate(seed: seed, language: lang).map(WatchPuzzle.anygram)
-                : ProceduralPuzzleGenerator.quartiles(seed: seed, language: lang).map(WatchPuzzle.quartiles)
-            } store: { puzzle in
+            generate(kind) { AnygramPuzzle.generate(seed: seed, language: lang).map(WatchPuzzle.anygram) } store: { puzzle in
                 // Igual que el iPhone: el diario se congela para que un cambio de listas no lo altere.
-                switch puzzle {
-                case .anygram(let p): PuzzleSnapshotStore.save(.anygram(p), kind: kind, language: lang, day: day, defaults: defaults)
-                case .quartiles(let p): PuzzleSnapshotStore.save(.quartiles(p), kind: kind, language: lang, day: day, defaults: defaults)
-                default: break
+                if case .anygram(let p) = puzzle {
+                    PuzzleSnapshotStore.save(.anygram(p), kind: kind, language: lang, day: day, defaults: defaults)
                 }
             }
         default:
@@ -116,8 +109,6 @@ final class WatchHub: ObservableObject {
             } else {
                 generate(kind) { AnygramPuzzle.generate(seed: seed, language: lang).map(WatchPuzzle.anygram) }
             }
-        case .quartiles:
-            generate(kind) { ProceduralPuzzleGenerator.quartiles(seed: seed, language: lang).map(WatchPuzzle.quartiles) }
         default:
             break
         }
@@ -155,7 +146,8 @@ struct WatchHomeView: View {
     @EnvironmentObject private var hub: WatchHub
     @ObservedObject private var progress = PuzzleProgress.shared
     @Environment(\.scenePhase) private var phase
-    @State private var path: [PuzzleKind] = []
+    @State private var path = NavigationPath()
+    @AppStorage(WatchJump.bestKey, store: PuzzleProgress.shared.defaults) private var jumpBest = 0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -164,18 +156,24 @@ struct WatchHomeView: View {
                     NavigationLink(value: kind) { row(kind) }
                         .listRowBackground(WTheme.surface.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous)))
                 }
+                NavigationLink(value: WatchArcade.jump) { jumpRow }
+                    .listRowBackground(WTheme.surface.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous)))
             }
             .navigationTitle("Quizzy")
             .navigationDestination(for: PuzzleKind.self) { kind in
                 WatchGameScreen(kind: kind)
             }
+            .navigationDestination(for: WatchArcade.self) { _ in
+                WatchJumpView().containerBackground(WatchJump.color.gradient.opacity(0.35), for: .navigation)
+            }
         }
         .onAppear {
             hub.refreshIfNeeded()
             #if DEBUG
-            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|quartiles|maze|decoder abre ese juego.
-            if path.isEmpty, let raw = ProcessInfo.processInfo.environment["QW_GAME"], let kind = PuzzleKind(rawValue: raw) {
-                path = [kind]
+            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump abre ese juego.
+            if path.isEmpty, let raw = ProcessInfo.processInfo.environment["QW_GAME"] {
+                if raw == "jump" { path.append(WatchArcade.jump) }
+                else if let kind = PuzzleKind(rawValue: raw), hub.offered.contains(kind) { path.append(kind) }
             }
             #endif
         }
@@ -198,6 +196,24 @@ struct WatchHomeView: View {
             }
             Spacer(minLength: 0)
             if done { Image(systemName: "checkmark.circle.fill").foregroundStyle(WTheme.success) }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private var jumpRow: some View {
+        HStack(spacing: 8) {
+            Canvas { ctx, size in
+                Quokka.draw(in: &ctx, feet: CGPoint(x: size.width / 2, y: size.height - 1), size: size.height * 0.84)
+            }
+            .frame(width: 24, height: 24)
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(WatchJump.title).font(.system(.body, design: .rounded).weight(.semibold))
+                Text(jumpBest > 0 ? AppLanguage.text("Récord: \(jumpBest)", "Best: \(jumpBest)")
+                                  : AppLanguage.text("Salta con la Corona", "Jump with the Crown"))
+                    .font(.caption2).foregroundStyle(WTheme.inkSecondary)
+            }
+            Spacer(minLength: 0)
         }
         .padding(.vertical, 2)
     }
@@ -235,7 +251,6 @@ struct WatchGameScreen: View {
         switch puzzle {
         case .wordle(let p): WatchPalabroView(puzzle: p, onAnother: another)
         case .anygram(let p): WatchAnygramView(puzzle: p, onAnother: another)
-        case .quartiles(let p): WatchTrocitosView(puzzle: p, onAnother: another)
         case .maze(let p): WatchMazeView(puzzle: p, onAnother: another)
         case .decoder(let g): WatchDecoderView(seedGame: g, onAnother: another)
         }
