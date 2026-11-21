@@ -289,3 +289,13 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
 - 2026-11-21 — **Reloj: Brinco también sube a la franja del título.** Mismo arreglo que `WatchArcadeStage` (que ya cubría
   Marcianitos y Escuadrón): jugando, sin título, lienzo 20 pt más arriba (`ArcadeHUD.titleBand`, ahora compartido) y
   marcador pintado en el lienzo bajo la hora. Verificado: build watchOS y captura en Watch 42 mm temporal (borrado).
+- 2026-11-21 — **Reloj, Escuadrón: jefe cada 60 s de vuelo.** (Build 30 en TestFlight ANTES de esto: Trocitos dosificado,
+  Corona `.low`, pulpo con cangrejos y franja del título en los tres juegos.)
+  - `SkyWorld.bossEvery = 60` s sin contar el combate. Aviso «¡JEFE!» 2 s, deja de llegar tráfico, entra un cuatrimotor
+    (`drawPlane(engines: 4)`) que se queda arriba (`bossY`) cruzando de lado a lado. Alterna abanico de 3 apuntado y
+    ráfaga recta desde los motores de fuera. Vida `60 + 30·n`, cadencia más rápida con cada jefe. Derribarlo: +300 y
+    premio seguro (corazón si faltan vidas, si no «P»). Barra de vida encima de él. Gancho DEBUG `QW_BOSS=1` (jefe a los 2 s).
+  - De paso: la barra del triple disparo estaba donde ahora va el marcador; baja a debajo de él.
+  - Verificado en Watch 42 mm temporal (borrado) con `QW_BOSS=1 QW_DEMO=1`: aviso, combate y derribo en capturas, 61
+    dibujados/s. Tras las capturas subí la vida (40+20·n caía en ~7 s con el piloto) y bajé el jefe 8 pt (su barra pisaba
+    el marcador): eso último solo está compilado, no capturado. **Sin verificar:** dificultad real del jefe y si 60 s es buen ritmo.

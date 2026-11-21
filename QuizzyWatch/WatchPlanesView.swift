@@ -4,6 +4,9 @@
 //  Corona lo mueve de lado a lado. Enemigos: cazas (rectos), acróbatas (en zigzag) y bombarderos
 //  (lentos, 4 impactos, disparan apuntando). Los bombarderos pueden soltar una «P» (triple
 //  disparo durante 10 s) o un corazón (vida). 3 vidas; la dificultad sube cada 20 s.
+//  Jefe: cada `bossEvery` segundos de vuelo deja de llegar tráfico y entra un cuatrimotor que
+//  se queda arriba cruzando de lado a lado; alterna abanico apuntado y ráfaga recta. Cada jefe
+//  aguanta más y dispara más seguido. Derribarlo: 300 puntos y un premio seguro.
 //  Dibujos propios (formas en Canvas), sin insignias. Bucle y pantallas: `WatchArcadeStage`.
 //
 
@@ -15,7 +18,7 @@ enum WatchPlanes {
                    hint: AppLanguage.text("Gira la Corona", "Turn the Crown"), color: Color(hex: 0xF2C14E))
     }
 
-    /// Avión visto desde arriba. `down` = morro hacia abajo (enemigos). `engines` = 2 para el bombardero.
+    /// Avión visto desde arriba. `down` = morro hacia abajo (enemigos). `engines` = 2 para el bombardero, 4 para el jefe.
     static func drawPlane(in ctx: inout GraphicsContext, at c: CGPoint, size s: CGFloat, body: Color, wing: Color,
                           down: Bool = false, engines: Int = 1, spin: CGFloat = 0) {
         var g = ctx
@@ -26,17 +29,14 @@ enum WatchPlanes {
         }
         rect(0, 0.42, 0.42, 0.14, 0.06, wing)                     // cola
         rect(0, -0.04, 1.0, 0.24, 0.1, wing)                      // ala
-        if engines == 2 {
-            rect(-0.3, -0.12, 0.13, 0.3, 0.05, body)              // motores
-            rect(0.3, -0.12, 0.13, 0.3, 0.05, body)
-        }
+        let motors: [CGFloat] = engines == 4 ? [-0.4, -0.2, 0.2, 0.4] : (engines == 2 ? [-0.3, 0.3] : [])
+        for m in motors { rect(m, -0.12, engines == 4 ? 0.10 : 0.13, 0.3, 0.05, body) }   // motores
         rect(0, 0, 0.2, 1.0, 0.1, body)                           // fuselaje
         rect(0, -0.14, 0.11, 0.2, 0.05, Color(hex: 0x1B2233))     // cabina
         // Hélices: disco fino que «gira» cambiando de ancho.
         let blade = 0.16 + 0.1 * abs(sin(spin))
-        if engines == 2 {
-            rect(-0.3, -0.29, blade, 0.035, 0.01, .white.opacity(0.7))
-            rect(0.3, -0.29, blade, 0.035, 0.01, .white.opacity(0.7))
+        if !motors.isEmpty {
+            for m in motors { rect(m, -0.29, blade * (engines == 4 ? 0.8 : 1), 0.035, 0.01, .white.opacity(0.7)) }
         } else {
             rect(0, -0.52, blade * 1.5, 0.04, 0.01, .white.opacity(0.7))
         }
@@ -56,6 +56,19 @@ final class SkyWorld: ArcadeWorld {
     struct Bullet { var p: CGPoint; var v: CGVector }
     enum PickupKind { case power, life }
     struct Pickup { var p: CGPoint; var kind: PickupKind }
+    struct Boss {
+        var p: CGPoint
+        var hp: Int, maxHp: Int
+        var t: CGFloat = 0
+        var fireT: CGFloat = 1.6
+        var volley = 0
+        var flash: CGFloat = 0
+    }
+    /// Segundos de vuelo (sin contar los combates) entre un jefe y el siguiente.
+    static let bossEvery: CGFloat = 60
+    static let bossSize: CGFloat = 54
+    private static let bossY: CGFloat = 60   // su barra de vida queda bajo el marcador
+
     struct Island { var x: CGFloat; var y: CGFloat; var w: CGFloat; var h: CGFloat }
 
     private var size: CGSize = .zero
@@ -71,6 +84,10 @@ final class SkyWorld: ArcadeWorld {
     private var fireT: CGFloat = 0, spawnT: CGFloat = 1, islandT: CGFloat = 2
     private var power: CGFloat = 0     // segundos de triple disparo
     private var invuln: CGFloat = 0
+    private var boss: Boss?
+    private var bossT: CGFloat = SkyWorld.bossEvery   // cuenta atrás hasta el aviso
+    private var bossWarn: CGFloat = 0                  // aviso «¡JEFE!» antes de que entre
+    private var bossCount = 0
     private(set) var score = 0
 
     private var level: CGFloat { 1 + floor(time / 20) }
@@ -82,6 +99,10 @@ final class SkyWorld: ArcadeWorld {
         px = size.width / 2; py = size.height - 20
         lives = 3; time = 0; scroll = 0; score = 0
         fireT = 0.2; spawnT = 1; islandT = 3; power = 0; invuln = 0
+        boss = nil; bossWarn = 0; bossCount = 0; bossT = Self.bossEvery
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["QW_BOSS"] == "1" { bossT = 2 }   // capturas: jefe enseguida
+        #endif
     }
 
     func resize(_ size: CGSize) { self.size = size }
@@ -121,9 +142,51 @@ final class SkyWorld: ArcadeWorld {
         for i in shots.indices { shots[i].p.x += shots[i].v.dx * dt; shots[i].p.y += shots[i].v.dy * dt }
         shots.removeAll { $0.p.y < -8 || $0.p.x < -8 || $0.p.x > size.width + 8 }
 
+        // Jefe: aviso, entrada y combate. Mientras tanto no llega tráfico nuevo.
+        if boss == nil, bossWarn <= 0 {
+            bossT -= dt
+            if bossT <= 0 { bossWarn = 2; event = .hit }
+        } else if boss == nil {
+            bossWarn -= dt
+            if bossWarn <= 0 {
+                bossCount += 1
+                let hp = 60 + 30 * bossCount   // con puntería perfecta caen ~9 impactos/s
+                boss = Boss(p: CGPoint(x: size.width / 2, y: -Self.bossSize), hp: hp, maxHp: hp)
+            }
+        }
+        if var b = boss {
+            b.t += dt
+            b.flash = max(0, b.flash - dt)
+            if b.p.y < Self.bossY {
+                b.p.y = min(Self.bossY, b.p.y + 50 * dt)
+                if b.p.y >= Self.bossY { b.t = 0 }   // el vaivén arranca centrado, sin salto
+            } else {
+                b.p.x = size.width / 2 + sin(b.t * 0.9) * (size.width / 2 - Self.bossSize / 2 - 2)
+                b.fireT -= dt
+                if b.fireT <= 0 {
+                    b.fireT = max(0.85, 1.7 - CGFloat(bossCount) * 0.15)
+                    b.volley += 1
+                    let from = CGPoint(x: b.p.x, y: b.p.y + 20)
+                    if b.volley % 2 == 1 {
+                        // Abanico de 3, el central apuntado al jugador.
+                        let aim = atan2(py - from.y, px - from.x)
+                        for da in [-0.32, 0, 0.32] as [CGFloat] {
+                            bullets.append(Bullet(p: from, v: CGVector(dx: cos(aim + da) * 92, dy: sin(aim + da) * 92)))
+                        }
+                    } else {
+                        // Ráfaga recta desde los motores de fuera: deja hueco en el centro.
+                        for dx in [-0.4, 0.4] as [CGFloat] {
+                            bullets.append(Bullet(p: CGPoint(x: b.p.x + dx * Self.bossSize, y: b.p.y + 10), v: CGVector(dx: 0, dy: 105)))
+                        }
+                    }
+                }
+            }
+            boss = b
+        }
+
         // Enemigos nuevos.
         spawnT -= dt
-        if spawnT <= 0 {
+        if spawnT <= 0, boss == nil, bossWarn <= 0 {
             spawnT = max(0.55, 1.45 - level * 0.09) * CGFloat.random(in: 0.75...1.25)
             let x = CGFloat.random(in: 16...(size.width - 16))
             let roll = CGFloat.random(in: 0..<1)
@@ -170,6 +233,27 @@ final class SkyWorld: ArcadeWorld {
         // Disparos contra enemigos.
         for i in shots.indices.reversed() {
             let s = shots[i].p
+            // Jefe: cuenta el ala (ancha y baja) o el fuselaje (estrecho y largo).
+            if let b = boss, (abs(b.p.x - s.x) < Self.bossSize * 0.5 && abs(b.p.y - s.y) < 14)
+                || (abs(b.p.x - s.x) < 7 && abs(b.p.y - s.y) < Self.bossSize * 0.5) {
+                shots.remove(at: i)
+                boss!.hp -= 1
+                boss!.flash = 0.08
+                Spark.burst(&sparks, at: s, color: .white, count: 2)
+                if boss!.hp <= 0 {
+                    let at = boss!.p
+                    for d in [(-18.0, -6.0), (0.0, 0.0), (18.0, -6.0), (0.0, 16.0)] as [(CGFloat, CGFloat)] {
+                        Spark.burst(&sparks, at: CGPoint(x: at.x + d.0, y: at.y + d.1), color: Color(hex: 0xF2B95C), count: 14)
+                    }
+                    score += 300
+                    pickups.append(Pickup(p: at, kind: lives < 3 ? .life : .power))
+                    bullets.removeAll()
+                    boss = nil
+                    bossT = Self.bossEvery
+                    event = .bonus
+                }
+                continue
+            }
             guard let j = enemies.firstIndex(where: {
                 let r: CGFloat = $0.kind == .bomber ? 13 : 9
                 return abs($0.p.x - s.x) < r && abs($0.p.y - s.y) < r
@@ -261,6 +345,17 @@ final class SkyWorld: ArcadeWorld {
                 WatchPlanes.drawPlane(in: &ctx, at: e.p, size: 30, body: Color(hex: 0x7C8F86), wing: Color(hex: 0x5E7068), down: true, engines: 2, spin: time * 40)
             }
         }
+        if let b = boss {
+            let body = b.flash > 0 ? Color.white : Color(hex: 0x3F5A4C)
+            ctx.fill(Path(ellipseIn: CGRect(x: b.p.x - 14, y: b.p.y + 14, width: 44, height: 14)), with: .color(.black.opacity(0.16)))
+            WatchPlanes.drawPlane(in: &ctx, at: b.p, size: Self.bossSize, body: body, wing: b.flash > 0 ? .white : Color(hex: 0x2C4237),
+                                  down: true, engines: 4, spin: time * 40)
+            // Vida del jefe, encima de él.
+            let w: CGFloat = 40, y = b.p.y - Self.bossSize * 0.5 - 7
+            ctx.fill(Path(roundedRect: CGRect(x: b.p.x - w / 2, y: y, width: w, height: 3.5), cornerRadius: 1.75), with: .color(.black.opacity(0.45)))
+            ctx.fill(Path(roundedRect: CGRect(x: b.p.x - w / 2, y: y, width: w * CGFloat(max(0, b.hp)) / CGFloat(b.maxHp), height: 3.5), cornerRadius: 1.75),
+                     with: .color(Color(hex: 0xF0766B)))
+        }
         for s in shots {
             ctx.fill(Path(roundedRect: CGRect(x: s.p.x - 1.1, y: s.p.y - 4, width: 2.2, height: 8), cornerRadius: 1.1), with: .color(Color(hex: 0xFFF2B0)))
         }
@@ -277,7 +372,12 @@ final class SkyWorld: ArcadeWorld {
         drawLives(lives, in: &ctx, width: size.width)
         if power > 0 {
             // Barra de lo que queda de triple disparo.
-            ctx.fill(Path(roundedRect: CGRect(x: size.width - 44, y: 6, width: 38 * power / 10, height: 4), cornerRadius: 2), with: .color(Color(hex: 0xF2C14E)))
+            // (Bajo el marcador, que ahora ocupa la esquina.)
+            ctx.fill(Path(roundedRect: CGRect(x: size.width - 46, y: 17, width: 38 * power / 10, height: 3.5), cornerRadius: 1.75), with: .color(Color(hex: 0xF2C14E)))
+        }
+        if bossWarn > 0, Int(time * 6) % 2 == 0 {
+            ctx.draw(Text(AppLanguage.text("¡JEFE!", "BOSS!")).font(.system(size: 20, weight: .black, design: .rounded))
+                .foregroundColor(Color(hex: 0xF0766B)), at: CGPoint(x: size.width / 2, y: size.height * 0.4))
         }
     }
 
@@ -288,7 +388,9 @@ final class SkyWorld: ArcadeWorld {
         }
         if let p = pickups.first { return (p.p.x - 13) / span }
         // Se pone bajo el enemigo más cercano, salvo que esté a punto de chocar: entonces se aparta.
-        guard let e = enemies.filter({ $0.p.y < py }).max(by: { $0.p.y < $1.p.y }) else { return 0.5 }
+        guard let e = enemies.filter({ $0.p.y < py }).max(by: { $0.p.y < $1.p.y }) else {
+            return boss.map { ($0.p.x - 13) / span } ?? 0.5
+        }
         if py - e.p.y < 34 { return (e.p.x + (e.p.x >= px ? -36 : 36) - 13) / span }
         return (e.p.x - 13) / span
     }
