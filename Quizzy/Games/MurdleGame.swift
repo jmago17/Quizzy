@@ -1495,9 +1495,28 @@ struct MurdokuGame: View {
     }
 
     private func toggleCandidate(_ cell: GridCell) {
-        pushUndo()
         conflictCell = nil
         let key = candidateKey(person: selected, cell: cell)
+        // Un «quizá» solo cabe donde se podría colocar al sospechoso: mismas reglas que
+        // `attemptConfirm` (2026-11-21). Quitar uno que ya estaba se permite siempre.
+        if !candidates.contains(key) {
+            let blockingFurniture = puzzle.objects.first { $0.cell == cell }?.kind.blocksPerson ?? false
+            var refusal: String?
+            if cell == puzzle.victim || blockingFurniture {
+                refusal = t("Esa casilla ya está ocupada en el plano", "That cell is already occupied on the floor plan")
+            } else if confirmedOccupant(at: cell) != nil {
+                refusal = t("Ya hay una persona en esa casilla", "There is already someone in that cell")
+            } else if !canConfirm(cell) {
+                refusal = t("Ya hay una persona en esa fila o columna", "There is already someone in that row or column")
+                conflictCell = cell
+            }
+            if let refusal {
+                toast = PZToast(text: refusal, kind: .error)
+                PZHaptics.error()
+                return
+            }
+        }
+        pushUndo()
         if candidates.contains(key) { candidates.remove(key) } else { candidates.insert(key) }
         saveMarks()
         PZHaptics.tick()

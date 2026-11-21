@@ -330,3 +330,10 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     sin máscara la captura es rectangular y el corte no se aprecia): bidones enteros. 61 dibujados/s.
   - **Sin verificar (el simulador no tiene Corona ni háptica):** que 2,5× sea la sensibilidad buena, que los clics hápticos
     se noten/no molesten, y que el tonel salga con comodidad. Pompas/Marcianitos/Escuadrón no se revisaron con máscara.
+- 2026-11-21 — **Sabueso: no deja poner «Quizá» donde el sospechoso no puede ir.** (Build 36 en TestFlight ANTES de esto.)
+  - `MurdokuGame.toggleCandidate` aplica las mismas reglas que `attemptConfirm`: víctima o mueble que bloquea, casilla ya
+    ocupada por alguien colocado, o fila/columna de OTRO sospechoso colocado → aviso + háptica de error, sin anotar (y sin
+    gastar un deshacer). Quitar un «quizá» que ya estaba se permite siempre.
+  - A propósito NO se tocó: una casilla con × manual sigue admitiendo «quizá» (igual que admite colocar), y los «quizá»
+    ya puestos no se borran solos cuando luego se coloca a alguien en esa fila/columna.
+  - Verificado: solo build iOS. **Sin verificar:** tocándolo en la app.
