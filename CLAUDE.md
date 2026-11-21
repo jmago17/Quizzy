@@ -255,3 +255,15 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   GamesLanguage PASS. Capturas de portada (iPhone/iPad) y de seis juegos revisadas. Arreglo tras verlas:
   el resalte de cursor/palabra del Autodefinido va sobre el papel claro (antes dejaba la casilla oscura).
   Sin probar tocando; sin mirar ajustes, hojas de resultado, Decoder, Anygram, Hashtag ni Murdle.
+- 2026-11-21 — **Trocitos (iPhone): ayuda de color dosificada (2.ª versión).** Josu: «así es demasiado fácil».
+  - Medido sobre los 12 puzles de `puzzles.json`: entre 93 y 240 palabras cortas por tablero (mediana 132). Con la 1.ª
+    versión (una ficha cada 3 palabras, sin tope) bastaban 9 para colorear una joya entera y 45 para las cinco: la ayuda
+    acababa resolviendo el tablero. Además coloreaba en orden de palabra (las dos primeras fichas = el arranque de la joya).
+  - Ahora: una ayuda = una PAREJA de fichas de una joya pendiente, y como mucho una ayuda por joya (nunca más de 2 de 4).
+    La pareja no es contigua en la palabra (1.ª+3.ª en joyas pares, 2.ª+4.ª en impares). Coste creciente
+    `TrocitosHints.costs = [3, 4, 5, 6, 7]` → ayudas a las 3, 7, 12, 18 y 25 palabras cortas; tope 10 fichas coloreadas.
+    El contador «🎨 n/coste» desaparece cuando ya no queda ayuda útil. Sigue sin estado guardado y la ayuda sigue pasando a
+    la siguiente joya si el jugador encuentra la que tenía pareja. Desaparece `wordsPerHint`. Regla de PZRules actualizada.
+  - Verificado: `python3 Tests/Trocitos/run.py` (20 checks), build iOS, capturas en simulador con 7 y 40 palabras.
+    **Sin verificar:** que esta dosis sea la buena jugando (es un criterio mío, no medido con jugadores); se ajusta en `costs`.
+    Alternativas no hechas: que la ayuda cueste puntos, o que haya que pedirla en vez de salir sola.

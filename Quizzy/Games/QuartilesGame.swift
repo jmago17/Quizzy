@@ -69,11 +69,9 @@ struct QuartilesGame: View {
         Self.gemColors[gem % Self.gemColors.count].mix(with: .black, by: 0.30)
     }
     private func gemIndex(of word: String) -> Int? { puzzle.targets.firstIndex(of: word) }
-    /// Palabras cortas hacia la próxima ayuda de color («n/3»); nil si ya no queda nada por colorear.
+    /// Palabras cortas hacia la próxima ayuda de color («n/coste»); nil si ya no queda ninguna útil.
     private var hintProgress: String? {
-        guard tileGroup.count < puzzle.tiles.count else { return nil }
-        let n = TrocitosHints.shortWords(found: found, targets: puzzle.targets) % TrocitosHints.wordsPerHint
-        return "\(n)/\(TrocitosHints.wordsPerHint)"
+        TrocitosHints.progress(found: found, targets: puzzle.targets).map { "\($0.have)/\($0.need)" }
     }
 
     /// Widest the board is allowed to get. Beyond this the tiles stop growing
@@ -478,7 +476,7 @@ struct QuartilesGame: View {
         .padding(.bottom, 12)
     }
 
-    /// «🎨 n/3»: palabras cortas hacia la próxima ficha coloreada.
+    /// «🎨 n/coste»: palabras cortas hacia la próxima pareja coloreada.
     @ViewBuilder private var hintCounter: some View {
         if let hintProgress {
             Label(hintProgress, systemImage: "paintpalette.fill")

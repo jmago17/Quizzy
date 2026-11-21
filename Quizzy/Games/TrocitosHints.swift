@@ -2,20 +2,43 @@
 //  TrocitosHints.swift — Quizzy
 //  Ayuda de color de Trocitos (2026-11-21). Foundation pura: la comprueba `Tests/Trocitos/run.py`.
 //
-//  Cada joya (palabra de 4 fichas) tiene un color. Las fichas empiezan sin color. Cada
-//  `wordsPerHint` palabras que NO son joya se colorea una ficha de la primera joya pendiente;
-//  la primera ayuda de cada joya colorea DOS (una sola ficha de un color no dice nada).
-//  Así, completar el color de una joya cuesta 3 ayudas = 9 palabras cortas.
+//  Cada joya (palabra de 4 fichas) tiene un color. Las fichas empiezan sin color. Una ayuda
+//  colorea DOS fichas de la primera joya pendiente que aún no tenga pareja, y ahí se queda:
+//  una joya pendiente nunca enseña más de 2 de sus 4 fichas, y esas dos no son contiguas en la
+//  palabra (1.ª+3.ª o 2.ª+4.ª). La ayuda dice «estas dos van juntas», no resuelve la joya.
+//
+//  Dosificación (2026-11-21, 2.ª versión). La 1.ª daba una ficha cada 3 palabras sin tope y era
+//  demasiado fácil: medido sobre los 12 puzles, hay entre 93 y 240 palabras cortas por tablero,
+//  así que con 9 se regalaba una joya entera y con 45 las cinco. Ahora cada ayuda cuesta más que
+//  la anterior (`costs`: 3, 4, 5, 6, 7 → acumulado 3, 7, 12, 18, 25) y como mucho hay una por joya.
 //
 //  No se guarda nada: se deriva de las palabras encontradas. Consecuencia buscada: si el jugador
-//  encuentra por su cuenta la joya que se estaba coloreando, esas ayudas pasan a la siguiente
-//  (no se pierden), y al reabrir la partida sale exactamente lo mismo.
+//  encuentra por su cuenta la joya que tenía pareja, esa ayuda pasa a la siguiente pendiente
+//  (no se pierde), y al reabrir la partida sale exactamente lo mismo.
 //
 
 import Foundation
 
 enum TrocitosHints {
-    static let wordsPerHint = 3
+    /// Palabras cortas que cuesta cada ayuda, en orden. Su número es el máximo de ayudas.
+    static let costs = [3, 4, 5, 6, 7]
+
+    /// Ayudas ganadas con `words` palabras cortas, y avance hacia la siguiente (nil si no hay más).
+    static func earned(words: Int) -> (hints: Int, next: (have: Int, need: Int)?) {
+        var left = words
+        for (i, cost) in costs.enumerated() {
+            if left < cost { return (i, (left, cost)) }
+            left -= cost
+        }
+        return (costs.count, nil)
+    }
+
+    /// Avance hacia la próxima ayuda ÚTIL: nil si ya no queda joya pendiente sin pareja.
+    static func progress(found: [String], targets: [String]) -> (have: Int, need: Int)? {
+        let state = earned(words: shortWords(found: found, targets: targets))
+        let pending = targets.filter { !found.contains($0) }.count
+        return state.hints < pending ? state.next : nil
+    }
 
     /// Palabras encontradas que cuentan para la ayuda (todas menos las joyas).
     static func shortWords(found: [String], targets: [String]) -> Int {
@@ -37,7 +60,7 @@ enum TrocitosHints {
     }
 
     /// Ficha → índice de joya (= color) que se muestra ahora mismo.
-    /// Joyas encontradas: sus 4 fichas. Joyas pendientes: las que hayan ganado las ayudas, en orden de palabra.
+    /// Joyas encontradas: sus 4 fichas. Joyas pendientes: una pareja por ayuda ganada, en orden de joya.
     static func colorGroups(tiles: [String], targets: [String], found: [String]) -> [Int: Int] {
         // Reparto de fichas entre joyas sin repetir ficha (cada joya usa 4 distintas).
         var owner: [[Int]] = []
@@ -48,14 +71,16 @@ enum TrocitosHints {
             taken.formUnion(mine)
         }
         var groups: [Int: Int] = [:]
-        var hints = shortWords(found: found, targets: targets) / wordsPerHint
+        var hints = earned(words: shortWords(found: found, targets: targets)).hints
         for (gem, target) in targets.enumerated() {
             if found.contains(target) {
                 for tile in owner[gem] { groups[tile] = gem }
             } else if hints > 0 {
-                let shown = min(owner[gem].count, hints + 1)   // 1 ayuda → 2 fichas, 2 → 3, 3 → 4
-                for tile in owner[gem].prefix(shown) { groups[tile] = gem }
-                hints -= max(1, shown - 1)
+                hints -= 1
+                let mine = owner[gem]
+                // Pareja no contigua, alternando por joya para que no sea siempre «la 1.ª y la 3.ª».
+                let pair = mine.count >= 4 ? (gem % 2 == 0 ? [mine[0], mine[2]] : [mine[1], mine[3]]) : Array(mine.prefix(2))
+                for tile in pair { groups[tile] = gem }
             }
         }
         return groups
