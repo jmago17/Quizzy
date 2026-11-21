@@ -168,7 +168,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         .navigationTitle(phase == .ready ? info.title : "\(score)")
         .focusable()
         .focused($crownFocus)
-        .digitalCrownRotation($crown, from: 0, through: 1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: false)
+        .digitalCrownRotation($crown, from: 0, through: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: false)
         .onChange(of: scene) { _, new in if new != .active { clock.last = nil } }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(info.title)

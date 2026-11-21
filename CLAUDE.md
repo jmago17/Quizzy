@@ -267,3 +267,8 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado: `python3 Tests/Trocitos/run.py` (20 checks), build iOS, capturas en simulador con 7 y 40 palabras.
     **Sin verificar:** que esta dosis sea la buena jugando (es un criterio mío, no medido con jugadores); se ajusta en `costs`.
     Alternativas no hechas: que la ayuda cueste puntos, o que haya que pedirla en vez de salir sola.
+- 2026-11-21 — **Reloj: Corona menos sensible en Brinco, Marcianitos y Escuadrón.** Josu lo pidió tras probar el build 24.
+  `digitalCrownRotation(... sensitivity: .medium)` → `.low` en `WatchArcade.swift` y `WatchJumpView.swift` (Decoder ya
+  estaba en `.low` y no se toca). Solo verificado que compila: el simulador headless no mueve la Corona. Si en el reloj
+  sigue nerviosa, `.low` es el mínimo de la API: el siguiente paso es ampliar el rango (p. ej. `through: 2` y dividir
+  el valor entre 2), que sí permite ajustar la proporción a voluntad.
