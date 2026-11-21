@@ -194,8 +194,15 @@ struct WatchJumpView: View {
     var body: some View {
         GeometryReader { geo in
             TimelineView(.animation(paused: phase != .playing || scene != .active)) { timeline in
+                // El Canvas TIENE que capturar la fecha: SwiftUI compara lo que captura el cierre y, si es
+                // idéntico al del fotograma anterior, no repinta. Sin esto la física corría a 60 pasos/s
+                // y la pantalla solo se actualizaba al cambiar el marcador (medido: 0 dibujados/s).
+                let frame = timeline.date
                 Canvas { ctx, size in
-                    _ = redraw
+                    _ = (redraw, frame)
+                    #if DEBUG
+                    Self.probe.draws += 1
+                    #endif
                     draw(&ctx, size: size)
                 }
                 .onChange(of: timeline.date) { _, now in tick(now, width: geo.size.width) }
@@ -264,6 +271,9 @@ struct WatchJumpView: View {
 
     private func tick(_ now: Date, width: CGFloat) {
         guard phase == .playing else { return }
+        #if DEBUG
+        Self.probe.tick(now)
+        #endif
         defer { world.lastDate = now }
         guard let last = world.lastDate else { return }
         let dt = CGFloat(min(1.0 / 20, max(0, now.timeIntervalSince(last))))
@@ -291,9 +301,23 @@ struct WatchJumpView: View {
     #if DEBUG
     private static let demo = ProcessInfo.processInfo.environment["QW_JUMP_DEMO"] == "1"
     #endif
+    #if DEBUG
+    /// Medidor (QW_JUMP_FPS=1): imprime cada segundo cuántos pasos de física y cuántos dibujados hubo.
+    final class Probe {
+        var ticks = 0, draws = 0, mark: Date?
+        let on = ProcessInfo.processInfo.environment["QW_JUMP_FPS"] == "1"
+        func tick(_ now: Date) {
+            guard on else { return }
+            ticks += 1
+            if mark == nil { mark = now }
+            if now.timeIntervalSince(mark!) >= 1 { print("QWFPS ticks=\(ticks) draws=\(draws)"); ticks = 0; draws = 0; mark = now }
+        }
+    }
+    static let probe = Probe()
+    #endif
     private func demoStart() {
         #if DEBUG
-        if Self.demo, phase == .ready { begin() }
+        if (Self.demo || Self.probe.on), phase == .ready { begin() }
         #endif
     }
 

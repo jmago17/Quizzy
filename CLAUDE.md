@@ -220,6 +220,16 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     Gancho DEBUG: `NR_TROFOUND=n` (n palabras cortas, sin guardar) y `NR_TROGEM=1` (añade una joya), con `NR_GAME=quartiles`.
   - Verificado: test PASS, build iOS, capturas en simulador con 7 y 13 palabras. Sin probar jugando ni en iPhone; sin
     valorar si 3 palabras por ayuda es mucho o poco (constante `TrocitosHints.wordsPerHint`).
+- 2026-11-21 — **Brinco iba a "un fotograma cada 3 s" en el reloj (build 18/21). Arreglado.**
+  - Causa (MEDIDA en simulador con `QW_JUMP_FPS=1`): la física daba 61 pasos/s pero el Canvas se dibujaba 0 veces/s.
+    SwiftUI no repinta un `Canvas` si lo que captura su cierre es idéntico al del fotograma anterior, aunque esté dentro de
+    un `TimelineView(.animation)`; solo se repintaba al cambiar un `@State` (el marcador). Arreglo: el cierre captura
+    `timeline.date`. Tras el arreglo: 61 pasos/s y 61 dibujados/s.
+  - **Por qué no lo vi antes:** solo lo había probado con el piloto automático (`QW_JUMP_DEMO`), que sube sin parar y
+    cambia el marcador a menudo, y en capturas fijas. Lección: un juego en tiempo real se verifica midiendo dibujados/s
+    (`QW_JUMP_FPS=1` arranca sin piloto y lo imprime por consola: `simctl launch --console-pty`), no con capturas.
+  - Descartado: rendimiento del reloj y `TimelineView` limitado por watchOS (el fallo sale igual en el simulador).
+  - Sin comprobar en el reloj real: que ahora vaya fluido allí, y la sensibilidad de la Corona (sigue sin poder probarse).
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,
