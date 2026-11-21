@@ -317,3 +317,16 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado en Watch 42 mm temporal (borrado): captura a medio giro; el piloto automático no lo dispara nunca en 20 s
     (no hay disparos accidentales con movimiento normal) y sigue a 61 dibujados/s. **Sin verificar:** que el umbral sea
     alcanzable y cómodo con la Corona real en `.low`; es lo primero a ajustar (`rollSwing`).
+- 2026-11-21 — **Reloj: Corona 2,5× menos sensible y con háptica; Goteras ya no se corta en las esquinas.** (Tras probar el build 33 en el reloj.)
+  - Josu: con `.low` la Corona «sigue siendo demasiado sensible». `.low` es el mínimo del sistema, así que se alarga el
+    recorrido: la Corona va de 0 a `ArcadeHUD.crownSpan` (2,5) y el juego sigue usando 0…1 (`ArcadeHUD.crown(_:)`, un
+    `Binding` que escala). Vale para los cinco juegos (`WatchArcadeStage` y Brinco). El 2,5 es a ojo: es LA constante a tocar.
+  - Háptica de la Corona: `isHapticFeedbackEnabled: true` en ambos (los clics del sistema al girar). No se añadieron
+    toques propios por distancia: `WKInterfaceDevice.play` a ese ritmo se satura.
+  - Tonel: `rollSwing` 0,28 → 0,14 para que el gesto físico quede parecido (ahora 1,25× más amplio que antes). Efecto
+    secundario: el piloto automático (QW_DEMO) y un arrastre rápido con el dedo sí lo disparan.
+  - Goteras: el lienzo llega al borde inferior y los bidones estaban justo en las esquinas redondas. Suelo de 6 a 24 pt del
+    fondo y bidones a 15 pt del borde (`barrelInset`). Captura con `simctl io screenshot --mask=black` (así se ve la curva;
+    sin máscara la captura es rectangular y el corte no se aprecia): bidones enteros. 61 dibujados/s.
+  - **Sin verificar (el simulador no tiene Corona ni háptica):** que 2,5× sea la sensibilidad buena, que los clics hápticos
+    se noten/no molesten, y que el tonel salga con comodidad. Pompas/Marcianitos/Escuadrón no se revisaron con máscara.

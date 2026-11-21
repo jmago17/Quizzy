@@ -350,7 +350,7 @@ struct WatchJumpView: View {
         .navigationTitle(phase == .playing ? "" : (phase == .ready ? WatchJump.title : "\(score)"))
         .focusable()
         .focused($crownFocus)
-        .digitalCrownRotation($crown, from: 0, through: 1, sensitivity: .low, isContinuous: true, isHapticFeedbackEnabled: false)
+        .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: true, isHapticFeedbackEnabled: true)
         .onChange(of: scene) { _, new in if new != .active { world.lastDate = nil } }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(WatchJump.title)

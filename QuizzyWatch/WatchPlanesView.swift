@@ -88,8 +88,9 @@ final class SkyWorld: ArcadeWorld {
     private var invuln: CGFloat = 0
     /// Tonel. Se dispara cuando el recorrido reciente de la Corona en un mismo sentido supera
     /// `rollSwing` (fracción del ancho). El recorrido «se olvida» con constante `rollMemory`, así
-    /// que equivale a pedir una velocidad sostenida de rollSwing / rollMemory ≈ 1,4 anchos/s.
-    static let rollSwing: CGFloat = 0.28
+    /// que equivale a pedir una velocidad sostenida de rollSwing / rollMemory ≈ 0,7 anchos/s (bajado de 0,28 al
+    /// reducir la Corona 2,5×: el gesto físico queda parecido, algo más amplio).
+    static let rollSwing: CGFloat = 0.14
     static let rollMemory: CGFloat = 0.2
     static let rollTime: CGFloat = 0.55
     static let rollCooldown: CGFloat = 2.5

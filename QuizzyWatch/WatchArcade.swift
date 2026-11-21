@@ -89,6 +89,13 @@ enum ArcadeHUD {
     static let titleBand: CGFloat = 20
     /// Ancho reservado al marcador (hasta 5 cifras) desde el borde derecho.
     static let scoreBand: CGFloat = 46
+    /// Vueltas de Corona por pantalla, respecto a `.low` (que ya es el mínimo del sistema y seguía
+    /// siendo demasiado sensible, 2026-11-21): la Corona recorre 0…crownSpan y el juego usa 0…1.
+    static let crownSpan: Double = 2.5
+
+    static func crown(_ position: Binding<Double>) -> Binding<Double> {
+        Binding(get: { position.wrappedValue * crownSpan }, set: { position.wrappedValue = $0 / crownSpan })
+    }
 }
 
 // MARK: - Medidor (DEBUG)
@@ -186,7 +193,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         .navigationTitle(phase == .playing ? "" : (phase == .ready ? info.title : "\(score)"))
         .focusable()
         .focused($crownFocus)
-        .digitalCrownRotation($crown, from: 0, through: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: false)
+        .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
         .onChange(of: scene) { _, new in if new != .active { clock.last = nil } }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(info.title)

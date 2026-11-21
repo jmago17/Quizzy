@@ -74,10 +74,13 @@ final class LeakWorld: ArcadeWorld {
     private var pour: CGFloat = 0, pourLeft = true
     private(set) var score = 0
 
-    private var floorY: CGFloat { size.height - 6 }
+    // El lienzo llega hasta el borde inferior y las esquinas de la pantalla son redondas: con el
+    // suelo a 6 pt del fondo, los bidones (que están justo en las esquinas) salían cortados.
+    private var floorY: CGFloat { size.height - 24 }
+    private static let barrelInset: CGFloat = 15
     private var bucketTop: CGFloat { floorY - 33 }
     private func x(_ col: Int) -> CGFloat { size.width * Self.columns[col] }
-    private var atBarrel: Bool { px < 19 || px > size.width - 19 }
+    private var atBarrel: Bool { px < Self.barrelInset + 9 || px > size.width - Self.barrelInset - 9 }
 
     func reset(size: CGSize) {
         self.size = size
@@ -91,7 +94,7 @@ final class LeakWorld: ArcadeWorld {
         guard size.width > 0, lives > 0 else { return .none }
         var event = ArcadeEvent.none
         time += dt
-        px = 12 + input * (size.width - 24)
+        px = Self.barrelInset + 2 + input * (size.width - 2 * Self.barrelInset - 4)
         pour = max(0, pour - dt)
         Spark.step(&sparks, dt: dt)
         for i in puddles.indices { puddles[i].life -= dt }
@@ -160,7 +163,7 @@ final class LeakWorld: ArcadeWorld {
             ctx.fill(Path(roundedRect: CGRect(x: x(c) - 4, y: Self.pipeY - 5.5, width: 8, height: 10), cornerRadius: 2), with: .color(Color(hex: 0x5E687A)))
         }
         // Bidones en los extremos.
-        for (bx, left) in [(10.0, true), (size.width - 10, false)] as [(CGFloat, Bool)] {
+        for (bx, left) in [(Self.barrelInset, true), (size.width - Self.barrelInset, false)] as [(CGFloat, Bool)] {
             let rect = CGRect(x: bx - 8, y: floorY - 20, width: 16, height: 20)
             ctx.fill(Path(roundedRect: rect, cornerRadius: 3), with: .color(Color(hex: 0xB9773E)))
             ctx.fill(Path(CGRect(x: rect.minX, y: rect.minY + 5, width: 16, height: 1.6)), with: .color(Color(hex: 0x6E4322)))
@@ -192,7 +195,7 @@ final class LeakWorld: ArcadeWorld {
         // Lleno: a vaciar. Con algo y sin gotas en el aire: también.
         if fill >= Self.capacity || (fill > 0 && falling == nil) { return px < size.width / 2 ? 0 : 1 }
         guard let d = falling ?? drops.first else { return 0.5 }
-        return (x(d.col) - 12) / max(1, size.width - 24)
+        return (x(d.col) - Self.barrelInset - 2) / max(1, size.width - 2 * Self.barrelInset - 4)
     }
 }
 
