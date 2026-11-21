@@ -48,10 +48,12 @@
 		ADA87DACD0BDB59D9AEF9FFB /* AnygramPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */; };
 		B05458AF340072F147D35681 /* playable_words.json in Resources */ = {isa = PBXBuildFile; fileRef = DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */; };
 		B1820563F1EA74E4BA8A57F6 /* WatchArcade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9B76F02B9429334B349DD1 /* WatchArcade.swift */; };
+		B63522342F69C0197862D664 /* WatchBubblesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B558CF6D454B9EDC2CC05B /* WatchBubblesView.swift */; };
 		B9C0B8092C74F7D56F207B12 /* playable_words.json in Resources */ = {isa = PBXBuildFile; fileRef = DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */; };
 		BD7B861F5E4ABA29AD032AD5 /* PZRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F6DBBFBD1C8E201B7652AC /* PZRules.swift */; };
 		BF7DC090510D9F69C60E0D60 /* common_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 89E237A3EC0534F1CDDC4BCD /* common_words.json */; };
 		C3CBEC174A84C9BFB96EF3A1 /* puzzle_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 2DA093B0DA86354AA54180F2 /* puzzle_words.json */; };
+		C62093928FD12052F631FDAB /* WatchLeaksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5791D7A4939B0936590EFC /* WatchLeaksView.swift */; };
 		C7B6E7C9C4691B3E7759E9A8 /* AnygramPrefetch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */; };
 		C948C3CD25FD4E9CCAA98365 /* PZToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24073164DBA8A86E8ED68902 /* PZToast.swift */; };
 		D2A96727B33022D1E8EDEFC0 /* WordleGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A59F2E092EB61696DFBDC1F /* WordleGame.swift */; };
@@ -155,7 +157,9 @@
 		D9087334214533F8FB49EF42 /* PuzzleDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleDesignSystem.swift; sourceTree = "<group>"; };
 		DDE54F1A9F4DA9C61BDA08E8 /* DecoderGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecoderGameView.swift; sourceTree = "<group>"; };
 		DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = playable_words.json; sourceTree = "<group>"; };
+		DF5791D7A4939B0936590EFC /* WatchLeaksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchLeaksView.swift; sourceTree = "<group>"; };
 		E592FF157C263DA6705FAD60 /* WatchMazeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMazeView.swift; sourceTree = "<group>"; };
+		F0B558CF6D454B9EDC2CC05B /* WatchBubblesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBubblesView.swift; sourceTree = "<group>"; };
 		F195A13656D1370F855535D5 /* AnygramDefaultData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnygramDefaultData.swift; sourceTree = "<group>"; };
 		FF5D7D49A17E60BE64E4A06F /* QuizzySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizzySettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -243,8 +247,10 @@
 				BC8611FB9A08130DCBB636CB /* WatchAliensView.swift */,
 				63081AD8C16B813C0B4C6FFF /* WatchAnygramView.swift */,
 				1E9B76F02B9429334B349DD1 /* WatchArcade.swift */,
+				F0B558CF6D454B9EDC2CC05B /* WatchBubblesView.swift */,
 				AB43149F4D80847867CC2C70 /* WatchDecoderView.swift */,
 				BDAF4C54C48B9918C50CB4C4 /* WatchJumpView.swift */,
+				DF5791D7A4939B0936590EFC /* WatchLeaksView.swift */,
 				E592FF157C263DA6705FAD60 /* WatchMazeView.swift */,
 				3F74A3321B0347E04FF9D270 /* WatchPalabroView.swift */,
 				49F051ABB495E2CD5EA5BF69 /* WatchPlanesView.swift */,
@@ -448,8 +454,10 @@
 				152765EAE3A16FDFA7FB2B61 /* WatchAliensView.swift in Sources */,
 				3C7C658554527E028692D434 /* WatchAnygramView.swift in Sources */,
 				B1820563F1EA74E4BA8A57F6 /* WatchArcade.swift in Sources */,
+				B63522342F69C0197862D664 /* WatchBubblesView.swift in Sources */,
 				3DC4C512C08302D4A308FEF1 /* WatchDecoderView.swift in Sources */,
 				EBBD667F539DCC057E83ED2B /* WatchJumpView.swift in Sources */,
+				C62093928FD12052F631FDAB /* WatchLeaksView.swift in Sources */,
 				61F3BCE14802B9CDBD819C22 /* WatchMazeView.swift in Sources */,
 				E89F93B87858111565E1BCCF /* WatchPalabroView.swift in Sources */,
 				A77C6C9CC7D0234C70C94CBB /* WatchPlanesView.swift in Sources */,

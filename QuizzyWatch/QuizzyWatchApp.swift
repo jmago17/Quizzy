@@ -21,13 +21,15 @@ struct QuizzyWatchApp: App {
 
 /// Juegos que solo existen en el reloj (no son `PuzzleKind`: el iPhone no los conoce).
 enum WatchArcade: String, Hashable, CaseIterable {
-    case jump, aliens, planes
+    case jump, aliens, planes, bubbles, leaks
 
     var title: String {
         switch self {
         case .jump: return WatchJump.title
         case .aliens: return WatchAliens.info.title
         case .planes: return WatchPlanes.info.title
+        case .bubbles: return WatchBubbles.info.title
+        case .leaks: return WatchLeaks.info.title
         }
     }
     var color: Color {
@@ -35,6 +37,8 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .jump: return WatchJump.color
         case .aliens: return WatchAliens.info.color
         case .planes: return WatchPlanes.info.color
+        case .bubbles: return WatchBubbles.info.color
+        case .leaks: return WatchLeaks.info.color
         }
     }
     var bestKey: String {
@@ -42,6 +46,8 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .jump: return WatchJump.bestKey
         case .aliens: return WatchAliens.info.bestKey
         case .planes: return WatchPlanes.info.bestKey
+        case .bubbles: return WatchBubbles.info.bestKey
+        case .leaks: return WatchLeaks.info.bestKey
         }
     }
     var blurb: String {
@@ -49,6 +55,8 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .jump: return AppLanguage.text("Salta con la Corona", "Jump with the Crown")
         case .aliens: return AppLanguage.text("Defiende con la Corona", "Defend with the Crown")
         case .planes: return AppLanguage.text("Pilota con la Corona", "Fly with the Crown")
+        case .bubbles: return AppLanguage.text("Explota pompas con la Corona", "Pop bubbles with the Crown")
+        case .leaks: return AppLanguage.text("Recoge gotas con la Corona", "Catch drops with the Crown")
         }
     }
     /// Fondo de la pantalla del juego. En Escuadrón y Brinco es un color liso de mar, para que la
@@ -57,7 +65,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         switch self {
         case .planes: return AnyShapeStyle(Color(hex: 0x14355A))
         case .jump: return AnyShapeStyle(Color(hex: 0x0E3A4F))    // fondo del mar: el pulpo rosa destaca
-        case .aliens: return AnyShapeStyle(color.gradient.opacity(0.35))
+        case .aliens, .bubbles, .leaks: return AnyShapeStyle(color.gradient.opacity(0.35))
         }
     }
     /// Icono de la portada: el protagonista de cada juego, dibujado.
@@ -67,6 +75,8 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .jump: Octopus.draw(in: &ctx, feet: CGPoint(x: c.x, y: size.height - 1), size: size.height * 0.84)
         case .aliens: WatchAliens.drawAlien(in: &ctx, at: CGPoint(x: c.x, y: c.y + 2), size: size.height * 0.8, kind: 3, phase: 0)
         case .planes: WatchPlanes.drawPlane(in: &ctx, at: c, size: size.height * 0.9, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B))
+        case .bubbles: WatchBubbles.drawBubble(in: &ctx, at: c, radius: size.height * 0.42, tier: 0)
+        case .leaks: WatchLeaks.drawDrop(in: &ctx, at: CGPoint(x: c.x, y: c.y + 2), size: size.height * 0.42)
         }
     }
 }
@@ -200,6 +210,8 @@ struct WatchHomeView: View {
     @AppStorage(WatchJump.bestKey, store: PuzzleProgress.shared.defaults) private var jumpBest = 0
     @AppStorage(WatchAliens.info.bestKey, store: PuzzleProgress.shared.defaults) private var aliensBest = 0
     @AppStorage(WatchPlanes.info.bestKey, store: PuzzleProgress.shared.defaults) private var planesBest = 0
+    @AppStorage(WatchBubbles.info.bestKey, store: PuzzleProgress.shared.defaults) private var bubblesBest = 0
+    @AppStorage(WatchLeaks.info.bestKey, store: PuzzleProgress.shared.defaults) private var leaksBest = 0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -223,6 +235,8 @@ struct WatchHomeView: View {
                     case .jump: WatchJumpView()
                     case .aliens: WatchAliensView()
                     case .planes: WatchPlanesView()
+                    case .bubbles: WatchBubblesView()
+                    case .leaks: WatchLeaksView()
                     }
                 }
                 .containerBackground(game.backdrop, for: .navigation)
@@ -231,7 +245,7 @@ struct WatchHomeView: View {
         .onAppear {
             hub.refreshIfNeeded()
             #if DEBUG
-            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes abre ese juego.
+            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes|bubbles|leaks abre ese juego.
             if path.isEmpty, let raw = ProcessInfo.processInfo.environment["QW_GAME"] {
                 if let game = WatchArcade(rawValue: raw) { path.append(game) }
                 else if let kind = PuzzleKind(rawValue: raw), hub.offered.contains(kind) { path.append(kind) }
@@ -262,7 +276,14 @@ struct WatchHomeView: View {
     }
 
     private func arcadeRow(_ game: WatchArcade) -> some View {
-        let best = game == .jump ? jumpBest : (game == .aliens ? aliensBest : planesBest)
+        let best: Int
+        switch game {
+        case .jump: best = jumpBest
+        case .aliens: best = aliensBest
+        case .planes: best = planesBest
+        case .bubbles: best = bubblesBest
+        case .leaks: best = leaksBest
+        }
         return HStack(spacing: 8) {
             Canvas { ctx, size in game.drawIcon(in: &ctx, size: size) }
                 .frame(width: 24, height: 24)

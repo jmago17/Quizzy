@@ -299,3 +299,12 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado en Watch 42 mm temporal (borrado) con `QW_BOSS=1 QW_DEMO=1`: aviso, combate y derribo en capturas, 61
     dibujados/s. Tras las capturas subí la vida (40+20·n caía en ~7 s con el piloto) y bajé el jefe 8 pt (su barra pisaba
     el marcador): eso último solo está compilado, no capturado. **Sin verificar:** dificultad real del jefe y si 60 s es buen ritmo.
+- 2026-11-21 — **Reloj: dos juegos de acción nuevos, Pompas y Goteras** (pedidos como «tipo Pang» y «tipo Oil Panic»;
+  mecánica del género, nombres y dibujos propios). Los dos sobre `WatchArcadeStage`; `WatchArcade` gana `.bubbles` y `.leaks`.
+  - **Pompas** (`WatchBubblesView.swift`, `BubbleWorld`): pompas que rebotan y se parten grande → 2 medianas → 2 pequeñas;
+    el erizo dispara solo un pincho con cuerda (vale toda la cuerda). 3 vidas, pantallas con más pompas y +6 % de velocidad.
+  - **Goteras** (`WatchLeaksView.swift`, `LeakWorld`): 4 juntas gotean (la gota crece antes de soltarse, como aviso); cubo de 3
+    que se vacía en los bidones de los extremos (2/5/9 puntos según lleve 1/2/3). Gota al suelo o en cubo lleno = vida.
+  - Verificado en Watch 42 mm temporal (borrado): capturas en marcha con `QW_DEMO=1` y 61 dibujados/s en los dos. Tras las
+    capturas: cubo más alto (el agua casi no se veía) y Pompas algo más fácil (el piloto perdía 2 vidas en 14 s); solo compilado.
+    **Sin verificar:** iconos de la portada (quedan fuera de la captura), dificultad real de ambos, Corona y reloj real.
