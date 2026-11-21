@@ -13,6 +13,7 @@ extension PuzzleKind {
             return [AppLanguage.text("Cada ficha es un fragmento de palabra. Combina de 1 a 4 fichas para formar palabras válidas.", "Each tile is a word fragment. Combine 1 to 4 tiles to form valid words."),
                     AppLanguage.text("Hay 5 palabras que usan exactamente 4 fichas: son las joyas. Valen 8 puntos más 10 de bonus.", "There are 5 words using exactly 4 tiles: the gems. Each earns 8 points plus a 10-point bonus."),
                     AppLanguage.text("Las combinaciones más cortas puntúan 1, 2 o 4 puntos según usen 1, 2 o 3 fichas.", "Shorter combinations score 1, 2 or 4 points when using 1, 2 or 3 tiles."),
+                    AppLanguage.text("Cada 3 palabras que no sean joya se colorea una ficha: las fichas del mismo color forman la misma joya.", "Every 3 non-gem words colour a tile: tiles of the same colour form the same gem."),
                     AppLanguage.text("Para ganar hay que encontrar las 5 joyas y llegar a 100 puntos.", "To win, find all 5 gems and reach 100 points.")]
         case .wordsearch:
             return [AppLanguage.text("Arrastra el dedo sobre la rejilla para unir letras contiguas.", "Drag across the grid to connect adjacent letters."),

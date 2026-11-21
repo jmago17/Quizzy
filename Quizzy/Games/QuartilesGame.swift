@@ -28,6 +28,8 @@ struct QuartilesGame: View {
     /// Tiles locked into a solved quartile. Cached because resolving them needs
     /// backtracking, and the board asks for it once per tile per redraw.
     @State private var lockedTiles: Set<Int> = []
+    /// Ayuda de color: ficha → joya (= color) que se enseña ahora. Ver `TrocitosHints`.
+    @State private var tileGroup: [Int: Int] = [:]
     /// Dictionary availability is a system lookup, far too slow to run from
     /// `body`. Resolved once per new word and reused afterwards.
     @State private var definableWords: Set<String> = []
@@ -59,6 +61,20 @@ struct QuartilesGame: View {
     }
 
     private let cols = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
+
+    /// Un color por joya. Ninguno es el coral del juego, que queda para la ficha seleccionada.
+    private static let gemColors: [Color] = ["3FD3C6", "E0A63C", "A594F9", "6FC27A", "F28FB5"].map { Color(light: $0, dark: $0) }
+    /// Color de una joya, oscurecido para que el texto blanco se lea encima.
+    private func gemColor(_ gem: Int) -> Color {
+        Self.gemColors[gem % Self.gemColors.count].mix(with: .black, by: 0.30)
+    }
+    private func gemIndex(of word: String) -> Int? { puzzle.targets.firstIndex(of: word) }
+    /// Palabras cortas hacia la próxima ayuda de color («n/3»); nil si ya no queda nada por colorear.
+    private var hintProgress: String? {
+        guard tileGroup.count < puzzle.tiles.count else { return nil }
+        let n = TrocitosHints.shortWords(found: found, targets: puzzle.targets) % TrocitosHints.wordsPerHint
+        return "\(n)/\(TrocitosHints.wordsPerHint)"
+    }
 
     /// Widest the board is allowed to get. Beyond this the tiles stop growing
     /// and the grid centres itself instead of stretching edge to edge.
@@ -144,6 +160,14 @@ struct QuartilesGame: View {
             tileOrder = progress.tileOrder(puzzle.id, default: Array(puzzle.tiles.indices))
             elapsed = progress.elapsed(puzzle.id)
             finished = progress.isDone(puzzle.id)
+            #if DEBUG
+            // Capturas: NR_TROFOUND=n da por encontradas n palabras cortas (sin guardar); NR_TROGEM=1 añade una joya.
+            let env = ProcessInfo.processInfo.environment
+            if let n = Int(env["NR_TROFOUND"] ?? "") {
+                found = Array(puzzle.allValid.filter { !puzzle.isQuartile($0) }.sorted().prefix(n))
+                if env["NR_TROGEM"] != nil, let gem = puzzle.targets.last { found.append(gem) }
+            }
+            #endif
             refreshDerivedState()
             claimHardwareKeyboardFocus()
         }
@@ -247,6 +271,8 @@ struct QuartilesGame: View {
     /// found words actually changes, never from `body`.
     private func refreshDerivedState() {
         lockedTiles = Set(found.filter { puzzle.isQuartile($0) }.flatMap { quartileTiles($0) })
+        let groups = TrocitosHints.colorGroups(tiles: puzzle.tiles, targets: puzzle.targets, found: found)
+        withAnimation(.snappy(duration: 0.35)) { tileGroup = groups }
         for word in found where !definableWords.contains(word) {
             if PZDictionary.hasDefinition(for: word) { definableWords.insert(word) }
         }
@@ -317,6 +343,7 @@ struct QuartilesGame: View {
         let sel = selection.contains(i)
         let inQuartile = quartileTileIndices.contains(i)
         let exhausted = exhaustedTiles.contains(i)
+        let gem = tileGroup[i]
         return Button {
             pzHaptic()
             // A Button consumes the touch, so the container's tap gesture
@@ -340,8 +367,9 @@ struct QuartilesGame: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
                 // Ficha con volumen: apagada, o encendida con halo al seleccionarla.
-                .pzVolume(sel ? PZ.quartiles : nil, radius: 11, glow: sel)
-                .foregroundStyle(sel ? .white : .primary)
+                // Con ayuda de color: la ficha toma el color de su joya (mismo color = misma palabra).
+                .pzVolume(sel ? PZ.quartiles : gem.map(gemColor), radius: 11, glow: sel)
+                .foregroundStyle(sel || gem != nil ? .white : .primary)
                 // Pequeño rebote al seleccionar/soltar (solo visual, el marco no cambia).
                 .scaleEffect(sel ? 1.04 : 1)
                 .animation(.spring(response: 0.25, dampingFraction: 0.6), value: sel)
@@ -349,8 +377,10 @@ struct QuartilesGame: View {
         .buttonStyle(.plain)
         .opacity(sel ? 1 : (exhausted ? 0.4 : (inQuartile ? 0.62 : 1)))
         .accessibilityLabel(text)
-        .accessibilityValue(exhausted ? AppLanguage.text("sin combinaciones restantes", "no combinations remaining")
-                            : inQuartile ? AppLanguage.text("usada en una joya", "used in a gem") : AppLanguage.text("disponible", "available"))
+        .accessibilityValue([exhausted ? AppLanguage.text("sin combinaciones restantes", "no combinations remaining")
+                             : inQuartile ? AppLanguage.text("usada en una joya", "used in a gem") : AppLanguage.text("disponible", "available"),
+                             gem.map { AppLanguage.text("color de la joya \($0 + 1)", "colour of gem \($0 + 1)") }]
+                            .compactMap { $0 }.joined(separator: ", "))
         .accessibilityHint(AppLanguage.text("Toca para añadir a la palabra", "Tap to add to the word"))
     }
 
@@ -414,7 +444,10 @@ struct QuartilesGame: View {
 
     private var compactFoundList: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(AppLanguage.text("PALABRAS · \(found.count)", "WORDS · \(found.count)"))
+            HStack(spacing: 6) {
+                Text(AppLanguage.text("PALABRAS · \(found.count)", "WORDS · \(found.count)"))
+                hintCounter
+            }
                 .font(.system(size: 12, weight: .bold))
                 .kerning(0.6)
                 .foregroundStyle(.secondary)
@@ -432,7 +465,7 @@ struct QuartilesGame: View {
                             Text(w.lowercased())
                                 .font(.system(size: 14, weight: .semibold))
                                 .padding(.horizontal, 11).padding(.vertical, 8)
-                                .background(q ? PZ.quartiles : PZColor.surface,
+                                .background(q ? (gemIndex(of: w).map(gemColor) ?? PZ.quartiles) : PZColor.surface,
                                             in: RoundedRectangle(cornerRadius: 9))
                                 .onTapGesture { if definable { definitionWord = .init(word: w) } }
                                 .foregroundStyle(q ? .white : .primary)
@@ -445,9 +478,22 @@ struct QuartilesGame: View {
         .padding(.bottom, 12)
     }
 
+    /// «🎨 n/3»: palabras cortas hacia la próxima ficha coloreada.
+    @ViewBuilder private var hintCounter: some View {
+        if let hintProgress {
+            Label(hintProgress, systemImage: "paintpalette.fill")
+                .labelStyle(.titleAndIcon)
+                .accessibilityLabel(AppLanguage.text("Palabras hacia la próxima ayuda de color: \(hintProgress)",
+                                                     "Words towards the next colour hint: \(hintProgress)"))
+        }
+    }
+
     private var foundList: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Text(AppLanguage.text("ENCONTRADAS · \(found.count)", "FOUND · \(found.count)"))
+            HStack(spacing: 6) {
+                Text(AppLanguage.text("ENCONTRADAS · \(found.count)", "FOUND · \(found.count)"))
+                hintCounter
+            }
                 .font(.system(size: 13, weight: .bold))
                 .kerning(0.6)
                 .foregroundStyle(.secondary)
@@ -474,7 +520,7 @@ struct QuartilesGame: View {
                                 .opacity(0.65)
                         }
                         .padding(.horizontal, 11).padding(.vertical, 8)
-                        .background(q ? PZ.quartiles : PZColor.surface,
+                        .background(q ? (gemIndex(of: w).map(gemColor) ?? PZ.quartiles) : PZColor.surface,
                                     in: RoundedRectangle(cornerRadius: 9))
                         .foregroundStyle(q ? .white : .primary)
                     }
@@ -635,10 +681,14 @@ struct QuartilesGame: View {
                 }
                 progress.setTileOrder(puzzle.id, tileOrder)
             }
+            let colouredBefore = tileGroup.count
             refreshDerivedState()
             PZHaptics.success()
             flashInput(.accepted)
-            flash("¡\(word.lowercased())! +\(puzzle.points(for: word))", .success)
+            // Ayuda de color ganada con esta palabra (no al encontrar una joya, que colorea las suyas).
+            let hintEarned = !puzzle.isQuartile(word) && tileGroup.count > colouredBefore
+            flash("¡\(word.lowercased())! +\(puzzle.points(for: word))"
+                  + (hintEarned ? AppLanguage.text(" · ¡pista de color!", " · colour hint!") : ""), .success)
             checkCompletion()
         } else {
             PZHaptics.error()

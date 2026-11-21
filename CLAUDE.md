@@ -208,6 +208,18 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     Anygram, Decoder y Brinco (reposo, en marcha con piloto automático, fin de partida). **NO verificado:** la Corona
     (el simulador headless no la mueve): la sensibilidad de Brinco (`.medium`, una vuelta ↔ cuánto recorrido) está SIN
     probar y es lo primero a ajustar en el reloj; tampoco el arrastre ni la fluidez real a 60 fps.
+- 2026-11-21 — **Trocitos (iPhone): ayuda de color.** Idea de Josu: agrupar las joyas por colores y que jugar palabras
+  cortas vaya revelando el color de las fichas. Cada joya tiene un color; las fichas empiezan sin color; cada 3 palabras
+  que NO son joya se colorea una ficha de la primera joya pendiente (en orden de palabra). Fichas del mismo color = misma joya.
+  - **Cambio sobre lo pedido:** la primera ayuda de cada joya colorea DOS fichas (una sola ficha de un color no dice nada).
+    Colorear una joya entera = 3 ayudas = 9 palabras cortas; aun así hay que ordenar las 4 fichas.
+  - Sin estado guardado: `TrocitosHints.colorGroups` lo deriva de `found`. Si el jugador encuentra él la joya que se
+    coloreaba, esas ayudas pasan a la siguiente (no se pierden). Las joyas encontradas (también con la bombilla) se
+    colorean enteras y su chip en la lista lleva su color. Contador «🎨 n/3» junto a PALABRAS; aviso «¡pista de color!».
+  - Lógica en `Quizzy/Games/TrocitosHints.swift` (Foundation pura) con test: `python3 Tests/Trocitos/run.py` (14 checks).
+    Gancho DEBUG: `NR_TROFOUND=n` (n palabras cortas, sin guardar) y `NR_TROGEM=1` (añade una joya), con `NR_GAME=quartiles`.
+  - Verificado: test PASS, build iOS, capturas en simulador con 7 y 13 palabras. Sin probar jugando ni en iPhone; sin
+    valorar si 3 palabras por ayuda es mucho o poco (constante `TrocitosHints.wordsPerHint`).
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

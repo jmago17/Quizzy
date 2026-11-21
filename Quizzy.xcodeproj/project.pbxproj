@@ -64,6 +64,7 @@
 		E89F93B87858111565E1BCCF /* WatchPalabroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F74A3321B0347E04FF9D270 /* WatchPalabroView.swift */; };
 		E8D33A721943D3286505A333 /* MurdokuCaseUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D21E1B6E28C976777E523C /* MurdokuCaseUI.swift */; };
 		EAA2D490E04A1A4951BF917C /* puzzle_words.json in Resources */ = {isa = PBXBuildFile; fileRef = 2DA093B0DA86354AA54180F2 /* puzzle_words.json */; };
+		EADF3D62897A460DD7F57B59 /* TrocitosHints.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A0D5D6854D040F6CCCC9A7 /* TrocitosHints.swift */; };
 		EB152D9CAB609C3214EF387A /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D74277D3E897057B23C7421 /* AppLanguage.swift */; };
 		EBBD667F539DCC057E83ED2B /* WatchJumpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDAF4C54C48B9918C50CB4C4 /* WatchJumpView.swift */; };
 		EF70FFD3E88D3564556FB730 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D74277D3E897057B23C7421 /* AppLanguage.swift */; };
@@ -105,6 +106,7 @@
 		0B7BFD54DB46ED769E4078CF /* PuzzleTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleTiming.swift; sourceTree = "<group>"; };
 		0C43E2413306A16EC42B1228 /* Quizzy.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Quizzy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EE4BF8589A9F754CEECFB35 /* answer_words.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = answer_words.json; sourceTree = "<group>"; };
+		10A0D5D6854D040F6CCCC9A7 /* TrocitosHints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrocitosHints.swift; sourceTree = "<group>"; };
 		1A59F2E092EB61696DFBDC1F /* WordleGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordleGame.swift; sourceTree = "<group>"; };
 		1DA74E4FB57105543D0C9CEF /* EnglishPuzzleLexicon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnglishPuzzleLexicon.swift; sourceTree = "<group>"; };
 		1E7D5FEC94B05B436560DDF6 /* PZShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = PZShaders.metal; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 				1E7D5FEC94B05B436560DDF6 /* PZShaders.metal */,
 				24073164DBA8A86E8ED68902 /* PZToast.swift */,
 				575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */,
+				10A0D5D6854D040F6CCCC9A7 /* TrocitosHints.swift */,
 				1A59F2E092EB61696DFBDC1F /* WordleGame.swift */,
 				4D6364423E6526E66FC5EBBE /* WordleModel.swift */,
 				467423C8BE999C32D45CD0D2 /* WordSearchGame.swift */,
@@ -410,6 +413,7 @@
 				13A4E112239E8943C6BB4B20 /* QuartilesGame.swift in Sources */,
 				2B38C2574B1E3A3A44857BBD /* QuizzyApp.swift in Sources */,
 				E70FE42A3119D4F9D42B69D0 /* QuizzySettingsView.swift in Sources */,
+				EADF3D62897A460DD7F57B59 /* TrocitosHints.swift in Sources */,
 				F4482699C4162CED22EEE53F /* WordSearchGame.swift in Sources */,
 				D2A96727B33022D1E8EDEFC0 /* WordleGame.swift in Sources */,
 				05BF236F83224DBED4FD6A8C /* WordleModel.swift in Sources */,
