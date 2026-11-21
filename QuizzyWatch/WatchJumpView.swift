@@ -1,9 +1,11 @@
 //
 //  WatchJumpView.swift — Quizzy Watch
-//  Brinco: saltador vertical sin fin, solo en el reloj. Un quokka rebota solo de rama en rama;
+//  Brinco: saltador vertical sin fin, solo en el reloj. Un pulpo rebota solo de roca en roca;
 //  el jugador solo decide hacia dónde: la Corona lo mueve de lado a lado (salir por un borde =
-//  entrar por el otro). Alternativa: arrastrar el dedo. Puntos = altura; caerse = fin.
-//  Ramas: hoja (normal), azul (se mueve), seca (aguanta un salto) y flor (rebote largo).
+//  entrar por el otro). Alternativa: arrastrar el dedo. Puntos = altura (+5 por cangrejo); caerse = fin.
+//  Apoyos: alga (normal), azul (se mueve), arena (aguanta un salto) y anémona (rebote largo).
+//  Malos: cangrejos que pasean por algunos apoyos. Caerles encima los aplasta; tocarlos de lado
+//  o desde abajo aturde al pulpo, que ya no se agarra a nada y cae.
 //  Todo se pinta en un Canvas; el estado de la partida es una clase fuera de SwiftUI (`JumpWorld`)
 //  que avanza con el reloj de `TimelineView`, para no invalidar vistas 60 veces por segundo.
 //
@@ -16,44 +18,102 @@ enum WatchJump {
     static var title: String { AppLanguage.text("Brinco", "Hop") }
 }
 
-// MARK: - Mascota
+// MARK: - Mascota y malos
 
-/// El quokka, dibujado con formas (sin imágenes). `feet` = punto de apoyo; `size` ≈ ancho del cuerpo.
-enum Quokka {
-    static func draw(in ctx: inout GraphicsContext, feet: CGPoint, size s: CGFloat, stretch: CGFloat = 1) {
+/// El pulpo, dibujado con formas (sin imágenes). `feet` = punto de apoyo; `size` ≈ ancho de la cabeza.
+/// Los tentáculos son la animación del salto: `pose` 1 = subiendo (juntos y estirados hacia abajo,
+/// como un chorro), −1 = cayendo (abiertos y con las puntas hacia arriba, de paracaídas);
+/// `squash` 1 = recién apoyado (aplastados y abiertos sobre la roca). `time` les da un vaivén.
+enum Octopus {
+    static func draw(in ctx: inout GraphicsContext, feet: CGPoint, size s: CGFloat, stretch: CGFloat = 1,
+                     pose: CGFloat = -0.15, squash: CGFloat = 0, time: CGFloat = 0, hurt: Bool = false) {
         var g = ctx
         g.translateBy(x: feet.x, y: feet.y)
-        g.scaleBy(x: 1 / stretch.squareRoot(), y: stretch)
+        let skin = Color(hex: 0xF28FB5), skinDark = Color(hex: 0xD9689A), dark = Color(hex: 0x3A2233)
+        func mix(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat { a + (b - a) * t }
 
-        let fur = Color(hex: 0xB07E52), furDark = Color(hex: 0x8C6240), cream = Color(hex: 0xEBCFA8)
-        let dark = Color(hex: 0x3A2A22)
-        func oval(_ cx: CGFloat, _ cy: CGFloat, _ w: CGFloat, _ h: CGFloat, _ color: Color) {
-            g.fill(Path(ellipseIn: CGRect(x: (cx - w / 2) * s, y: (cy - h / 2) * s, width: w * s, height: h * s)), with: .color(color))
+        // Tentáculos (6), detrás de la cabeza.
+        let fall = (1 - max(-1, min(1, pose))) / 2          // 0 subiendo … 1 cayendo
+        let spread = mix(mix(0.13, 0.66, fall), 0.74, squash)
+        let tipY = mix(mix(0.04, -0.26, fall), 0, squash)
+        let bendY = mix(mix(-0.20, 0.03, fall), 0.0, squash)
+        for i in 0..<6 {
+            let u = (CGFloat(i) - 2.5) / 2.5
+            let sway = sin(time * 9 + CGFloat(i) * 1.3) * 0.05 * (1 - squash)
+            // Los de fuera se abren más y suben más la punta al caer.
+            let tip = CGPoint(x: (u * spread + sway) * s, y: (tipY - abs(u) * 0.10 * fall * (1 - squash)) * s)
+            var t = Path()
+            t.move(to: CGPoint(x: u * 0.27 * s, y: -0.44 * s))
+            t.addQuadCurve(to: tip, control: CGPoint(x: (u * spread * 0.95 - sway) * s, y: bendY * s))
+            g.stroke(t, with: .color(i % 2 == 0 ? skinDark : skin), style: StrokeStyle(lineWidth: s * 0.13, lineCap: .round))
         }
-        oval(-0.40, -0.14, 0.34, 0.13, furDark)            // cola
-        oval(-0.19, -0.05, 0.28, 0.12, furDark)            // patas
-        oval(0.19, -0.05, 0.28, 0.12, furDark)
-        oval(0, -0.36, 0.76, 0.66, fur)                    // cuerpo
-        oval(0, -0.30, 0.44, 0.44, cream)                  // barriga
-        oval(-0.31, -0.40, 0.14, 0.24, furDark)            // brazos
-        oval(0.31, -0.40, 0.14, 0.24, furDark)
-        oval(-0.24, -1.03, 0.24, 0.24, fur)                // orejas
-        oval(0.24, -1.03, 0.24, 0.24, fur)
-        oval(-0.24, -1.03, 0.12, 0.12, Color(hex: 0xE9A6A0))
-        oval(0.24, -1.03, 0.12, 0.12, Color(hex: 0xE9A6A0))
-        oval(0, -0.79, 0.68, 0.56, fur)                    // cabeza
-        oval(0, -0.70, 0.38, 0.27, cream)                  // hocico
-        oval(-0.25, -0.71, 0.11, 0.08, Color(hex: 0xF09A9A).opacity(0.7)) // mofletes
-        oval(0.25, -0.71, 0.11, 0.08, Color(hex: 0xF09A9A).opacity(0.7))
-        oval(-0.15, -0.85, 0.09, 0.10, dark)               // ojos
-        oval(0.15, -0.85, 0.09, 0.10, dark)
-        oval(-0.14, -0.87, 0.03, 0.03, .white)
-        oval(0.16, -0.87, 0.03, 0.03, .white)
-        oval(0, -0.76, 0.12, 0.08, dark)                   // nariz
-        var smile = Path()                                  // la sonrisa del quokka
-        smile.move(to: CGPoint(x: -0.10 * s, y: -0.68 * s))
-        smile.addQuadCurve(to: CGPoint(x: 0.10 * s, y: -0.68 * s), control: CGPoint(x: 0, y: -0.58 * s))
-        g.stroke(smile, with: .color(dark), style: StrokeStyle(lineWidth: max(0.8, s * 0.035), lineCap: .round))
+
+        // Cabeza: se estira al subir y se aplasta al apoyar.
+        var h = g
+        h.translateBy(x: 0, y: -0.40 * s)
+        h.scaleBy(x: 1 / stretch.squareRoot(), y: stretch)
+        func oval(_ cx: CGFloat, _ cy: CGFloat, _ w: CGFloat, _ hh: CGFloat, _ color: Color) {
+            h.fill(Path(ellipseIn: CGRect(x: (cx - w / 2) * s, y: (cy - hh / 2) * s, width: w * s, height: hh * s)), with: .color(color))
+        }
+        oval(0, -0.36, 0.86, 0.80, skin)
+        oval(-0.16, -0.58, 0.26, 0.16, .white.opacity(0.28))            // brillo
+        oval(-0.30, -0.20, 0.13, 0.09, Color(hex: 0xF0766B).opacity(0.75))   // mofletes
+        oval(0.30, -0.20, 0.13, 0.09, Color(hex: 0xF0766B).opacity(0.75))
+        if hurt {
+            for side in [-1.0, 1.0] as [CGFloat] {                       // ojos en X
+                var x = Path()
+                x.move(to: CGPoint(x: (side * 0.17 - 0.06) * s, y: -0.38 * s)); x.addLine(to: CGPoint(x: (side * 0.17 + 0.06) * s, y: -0.26 * s))
+                x.move(to: CGPoint(x: (side * 0.17 + 0.06) * s, y: -0.38 * s)); x.addLine(to: CGPoint(x: (side * 0.17 - 0.06) * s, y: -0.26 * s))
+                h.stroke(x, with: .color(dark), style: StrokeStyle(lineWidth: max(1, s * 0.05), lineCap: .round))
+            }
+        } else {
+            oval(-0.17, -0.32, 0.19, 0.22, .white)
+            oval(0.17, -0.32, 0.19, 0.22, .white)
+            let look = max(-1, min(1, pose)) * -0.03                     // mira hacia donde va
+            oval(-0.16, -0.31 + look, 0.10, 0.12, dark)
+            oval(0.18, -0.31 + look, 0.10, 0.12, dark)
+            oval(-0.14, -0.34 + look, 0.035, 0.035, .white)
+            oval(0.20, -0.34 + look, 0.035, 0.035, .white)
+        }
+        var smile = Path()
+        smile.move(to: CGPoint(x: -0.07 * s, y: -0.16 * s))
+        smile.addQuadCurve(to: CGPoint(x: 0.07 * s, y: -0.16 * s), control: CGPoint(x: 0, y: (hurt ? -0.22 : -0.09) * s))
+        h.stroke(smile, with: .color(dark), style: StrokeStyle(lineWidth: max(0.8, s * 0.035), lineCap: .round))
+    }
+}
+
+/// El cangrejo. `base` = punto de apoyo (centro, abajo); `size` = ancho del caparazón.
+enum Crab {
+    static func draw(in ctx: inout GraphicsContext, base: CGPoint, size s: CGFloat, phase: CGFloat) {
+        let shell = Color(hex: 0xE8553F), shellDark = Color(hex: 0xB93A2B), dark = Color(hex: 0x2A1614)
+        let step = phase.truncatingRemainder(dividingBy: 1) < 0.5
+        for side in [-1.0, 1.0] as [CGFloat] {
+            for k in 0..<3 {                                             // patas que alternan
+                let lift: CGFloat = (k % 2 == 0) == step ? 0 : s * 0.08
+                var leg = Path()
+                leg.move(to: CGPoint(x: base.x + side * s * (0.22 + CGFloat(k) * 0.10), y: base.y - s * 0.28))
+                leg.addLine(to: CGPoint(x: base.x + side * s * (0.42 + CGFloat(k) * 0.12), y: base.y - lift))
+                ctx.stroke(leg, with: .color(shellDark), style: StrokeStyle(lineWidth: max(1, s * 0.08), lineCap: .round))
+            }
+            // Pinza levantada, con la muesca.
+            let claw = CGPoint(x: base.x + side * s * 0.62, y: base.y - s * (0.62 + (step ? 0.05 : 0)))
+            var arm = Path()
+            arm.move(to: CGPoint(x: base.x + side * s * 0.36, y: base.y - s * 0.38)); arm.addLine(to: claw)
+            ctx.stroke(arm, with: .color(shellDark), style: StrokeStyle(lineWidth: max(1, s * 0.10), lineCap: .round))
+            ctx.fill(Path(ellipseIn: CGRect(x: claw.x - s * 0.17, y: claw.y - s * 0.17, width: s * 0.34, height: s * 0.30)), with: .color(shell))
+            var notch = Path()
+            notch.move(to: claw); notch.addLine(to: CGPoint(x: claw.x + side * s * 0.10, y: claw.y - s * 0.20))
+            ctx.stroke(notch, with: .color(dark), lineWidth: max(0.8, s * 0.06))
+            // Ojo con pedúnculo.
+            let eye = CGPoint(x: base.x + side * s * 0.16, y: base.y - s * 0.74)
+            var stalk = Path()
+            stalk.move(to: CGPoint(x: eye.x, y: base.y - s * 0.5)); stalk.addLine(to: eye)
+            ctx.stroke(stalk, with: .color(shellDark), lineWidth: max(1, s * 0.07))
+            ctx.fill(Path(ellipseIn: CGRect(x: eye.x - s * 0.09, y: eye.y - s * 0.09, width: s * 0.18, height: s * 0.18)), with: .color(.white))
+            ctx.fill(Path(ellipseIn: CGRect(x: eye.x - s * 0.04, y: eye.y - s * 0.04, width: s * 0.09, height: s * 0.09)), with: .color(dark))
+        }
+        ctx.fill(Path(ellipseIn: CGRect(x: base.x - s * 0.5, y: base.y - s * 0.62, width: s, height: s * 0.52)), with: .color(shell))
+        ctx.fill(Path(ellipseIn: CGRect(x: base.x - s * 0.3, y: base.y - s * 0.57, width: s * 0.4, height: s * 0.12)), with: .color(.white.opacity(0.25)))
     }
 }
 
@@ -70,14 +130,26 @@ final class JumpWorld {
         var vx: CGFloat = 0
         var spring = false
         var broken = false
-        var springKick: CGFloat = 0   // 1 → 0 tras usar la flor (animación)
+        var springKick: CGFloat = 0   // 1 → 0 tras usar la anémona (animación)
+        var crab: CGFloat?            // cangrejo: desplazamiento respecto al centro del apoyo
+        var crabDir: CGFloat = 1
     }
-    enum Event { case none, bounce, spring, dead }
+    enum Event { case none, bounce, spring, stomp, hit, dead }
 
     static let gravity: CGFloat = 720
     static let jumpSpeed: CGFloat = 318      // ≈ 70 pt de altura
     static let springSpeed: CGFloat = 540    // ≈ 200 pt
     static let playerSize: CGFloat = 26
+    static let crabSize: CGFloat = 15
+    #if DEBUG
+    /// QW_JUMP_CRABS=1 (capturas): cangrejos desde el principio y en casi la mitad de los apoyos.
+    private static let manyCrabs = ProcessInfo.processInfo.environment["QW_JUMP_CRABS"] == "1"
+    static var crabsFrom: CGFloat { manyCrabs ? 60 : 320 }
+    static var crabBase: Double { manyCrabs ? 0.45 : 0.10 }
+    #else
+    static let crabsFrom: CGFloat = 320
+    static let crabBase = 0.10
+    #endif
 
     private(set) var size: CGSize = .zero
     private(set) var platforms: [Platform] = []
@@ -88,11 +160,16 @@ final class JumpWorld {
     private(set) var maxHeight: CGFloat = 0
     private(set) var squash: CGFloat = 0
     private(set) var lastLandedY: CGFloat = 0
+    private(set) var time: CGFloat = 0
+    private(set) var hurt = false            // aturdido por un cangrejo: ya no se apoya en nada
+    private(set) var sparks: [Spark] = []    // en coordenadas (x, −y de mundo)
+    private var bonus = 0
     private var topY: CGFloat = 0
     private var rng = SystemRandomNumberGenerator()
     var lastDate: Date?
 
-    var score: Int { Int(maxHeight / 10) }
+    var score: Int { Int(maxHeight / 10) + bonus }
+    var pose: CGFloat { max(-1, min(1, vy / Self.jumpSpeed)) }
     var stretch: CGFloat { 1 + max(-0.5, min(1, vy / Self.jumpSpeed)) * 0.12 - squash * 0.22 }
 
     func reset(size: CGSize) {
@@ -100,6 +177,7 @@ final class JumpWorld {
         platforms = [Platform(x: size.width / 2, y: 26, w: 64, kind: .leaf)]
         px = size.width / 2; py = 26; vy = 0
         camY = 0; maxHeight = 0; squash = 0; topY = 26; lastLandedY = 26
+        time = 0; hurt = false; sparks = []; bonus = 0
         lastDate = nil
         fill()
     }
@@ -122,6 +200,10 @@ final class JumpWorld {
                 p.kind = .fragile
             } else if Double.random(in: 0..<1, using: &rng) < 0.09 {
                 p.spring = true
+            } else if topY > Self.crabsFrom, Double.random(in: 0..<1, using: &rng) < Self.crabBase + 0.12 * d {
+                // Cangrejo: solo en apoyos firmes y sin anémona, y nunca en los primeros saltos.
+                p.crab = 0
+                p.crabDir = Bool.random(using: &rng) ? 1 : -1
             }
             platforms.append(p)
         }
@@ -133,16 +215,42 @@ final class JumpWorld {
         for i in platforms.indices {
             if platforms[i].broken { platforms[i].y -= 220 * dt; continue }
             platforms[i].springKick = max(0, platforms[i].springKick - dt * 4)
+            if let off = platforms[i].crab {
+                let reach = max(0, platforms[i].w / 2 - 6)
+                var x = off + platforms[i].crabDir * 14 * dt
+                if abs(x) > reach { x = reach * platforms[i].crabDir; platforms[i].crabDir *= -1 }
+                platforms[i].crab = x
+            }
             guard platforms[i].kind == .moving else { continue }
             platforms[i].x += platforms[i].vx * dt
             let half = platforms[i].w / 2
             if platforms[i].x < half + 2 { platforms[i].x = half + 2; platforms[i].vx = abs(platforms[i].vx) }
             if platforms[i].x > size.width - half - 2 { platforms[i].x = size.width - half - 2; platforms[i].vx = -abs(platforms[i].vx) }
         }
+        time += dt
+        Spark.step(&sparks, dt: dt)
         squash = max(0, squash - dt * 5)
         vy -= Self.gravity * dt
         var newY = py + vy * dt
-        if vy < 0 {
+        // Cangrejos: caerle encima lo aplasta (y rebota); tocarlo de otro modo aturde.
+        if !hurt {
+            let ch = Self.crabSize * 0.7
+            for i in platforms.indices where !platforms[i].broken {
+                guard let off = platforms[i].crab else { continue }
+                let p = platforms[i], cx = p.x + off
+                guard abs(px - cx) < Self.crabSize * 0.5 + Self.playerSize * 0.24 else { continue }
+                if vy < 0, py >= p.y + ch * 0.5, newY <= p.y + ch {
+                    platforms[i].crab = nil
+                    Spark.burst(&sparks, at: CGPoint(x: cx, y: -(p.y + ch * 0.5)), color: Color(hex: 0xE8553F), count: 8)
+                    newY = p.y + ch; vy = Self.jumpSpeed * 1.08; squash = 1; lastLandedY = p.y
+                    bonus += 5; event = .stomp
+                } else if newY < p.y + ch, newY + Self.playerSize * 0.8 > p.y {
+                    hurt = true; vy = min(vy, 0) - 40; event = .hit
+                }
+                break
+            }
+        }
+        if vy < 0, !hurt, event != .stomp {
             // Aterriza si los pies cruzan la cara superior de una rama en este paso.
             for i in platforms.indices where !platforms[i].broken {
                 let p = platforms[i]
@@ -172,7 +280,13 @@ final class JumpWorld {
     func autopilotTarget() -> CGFloat {
         let next = platforms.filter { !$0.broken && $0.y > lastLandedY + 4 && $0.y - lastLandedY < 66 }.min { $0.y < $1.y }
         let stay = platforms.filter { !$0.broken && abs($0.y - lastLandedY) < 2 }.first
-        return (next ?? stay)?.x ?? px
+        guard let goal = next ?? stay else { return px }
+        // Con cangrejo: mientras sube se aparta (no atravesarlo desde abajo); al caer, va a por él.
+        if let off = goal.crab, goal.y > lastLandedY + 4 {
+            let cx = goal.x + off
+            return vy > 0 && py < goal.y + 14 ? cx + (cx < size.width / 2 ? 30 : -30) : cx
+        }
+        return goal.x
     }
     #endif
 }
@@ -290,7 +404,8 @@ struct WatchJumpView: View {
         world.px = CGFloat(crown) * width
         switch world.step(dt: dt) {
         case .none, .bounce: break
-        case .spring: WHaptics.tick()
+        case .spring, .stomp: WHaptics.tick()
+        case .hit: WHaptics.warning()
         case .dead: finish()
         }
         if world.score != score { score = world.score }
@@ -331,15 +446,15 @@ struct WatchJumpView: View {
         let w = world
         func sy(_ worldY: CGFloat) -> CGFloat { size.height - (worldY - w.camY) }
 
-        // Estrellas con paralaje (posiciones fijas por índice).
-        for i in 0..<22 {
-            let x = CGFloat((i * 73 + 11) % 100) / 100 * size.width
+        // Burbujas con paralaje (posiciones fijas por índice): es el fondo del mar.
+        for i in 0..<18 {
+            let x = CGFloat((i * 73 + 11) % 100) / 100 * size.width + sin(w.time * 1.5 + CGFloat(i)) * 2
             let base = CGFloat((i * 131 + 37) % 100) / 100 * size.height
             let depth: CGFloat = i % 3 == 0 ? 0.30 : 0.14
             let y = (base + w.camY * depth).truncatingRemainder(dividingBy: size.height)
-            let r: CGFloat = i % 3 == 0 ? 1.1 : 0.7
-            ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)),
-                     with: .color(.white.opacity(i % 3 == 0 ? 0.55 : 0.3)))
+            let r: CGFloat = i % 3 == 0 ? 2.4 : 1.4
+            ctx.stroke(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)),
+                       with: .color(Color(hex: 0xBFE6FF).opacity(i % 3 == 0 ? 0.45 : 0.28)), lineWidth: 0.8)
         }
 
         for p in w.platforms {
@@ -365,7 +480,7 @@ struct WatchJumpView: View {
                 ctx.stroke(crack, with: .color(Color(hex: 0x5A4030)), lineWidth: 1.2)
             }
             if p.spring {
-                // Flor: rebote largo. Se aplasta un instante al usarla.
+                // Anémona: rebote largo. Se aplasta un instante al usarla.
                 let h: CGFloat = 7 - 3 * p.springKick
                 ctx.fill(Path(CGRect(x: p.x - 0.75, y: top - h + 2, width: 1.5, height: h - 2)), with: .color(Color(hex: 0x4E9A5A)))
                 for k in 0..<5 {
@@ -377,13 +492,24 @@ struct WatchJumpView: View {
             }
         }
 
-        // El quokka (y su copia al otro lado cuando asoma por un borde).
+        for p in w.platforms where !p.broken {
+            guard let off = p.crab else { continue }
+            let top = sy(p.y)
+            guard top > -20, top < size.height + 20 else { continue }
+            Crab.draw(in: &ctx, base: CGPoint(x: p.x + off, y: top), size: JumpWorld.crabSize, phase: w.time * 3)
+        }
+        var fx = ctx
+        fx.translateBy(x: 0, y: size.height + w.camY)
+        Spark.draw(w.sparks, in: &fx)
+
+        // El pulpo (y su copia al otro lado cuando asoma por un borde).
         let s = JumpWorld.playerSize
         let feetY = sy(w.py)
         for dx in [0, -size.width, size.width] {
             let x = w.px + dx
             guard x > -s, x < size.width + s else { continue }
-            Quokka.draw(in: &ctx, feet: CGPoint(x: x, y: feetY), size: s, stretch: w.stretch)
+            Octopus.draw(in: &ctx, feet: CGPoint(x: x, y: feetY), size: s, stretch: w.stretch,
+                         pose: w.pose, squash: w.squash, time: w.time, hurt: w.hurt)
         }
     }
 }

@@ -274,7 +274,7 @@ final class SkyWorld: ArcadeWorld {
             WatchPlanes.drawPlane(in: &ctx, at: CGPoint(x: px, y: py), size: 22, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B), spin: time * 40)
         }
         Spark.draw(sparks, in: &ctx)
-        drawLives(lives, in: &ctx)
+        drawLives(lives, in: &ctx, width: size.width)
         if power > 0 {
             // Barra de lo que queda de triple disparo.
             ctx.fill(Path(roundedRect: CGRect(x: size.width - 44, y: 6, width: 38 * power / 10, height: 4), cornerRadius: 2), with: .color(Color(hex: 0xF2C14E)))

@@ -272,3 +272,17 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   estaba en `.low` y no se toca). Solo verificado que compila: el simulador headless no mueve la Corona. Si en el reloj
   sigue nerviosa, `.low` es el mínimo de la API: el siguiente paso es ampliar el rango (p. ej. `through: 2` y dividir
   el valor entre 2), que sí permite ajustar la proporción a voluntad.
+- 2026-11-21 — **Reloj: Brinco pasa a ser un pulpo con cangrejos; Marcianitos y Escuadrón ganan la franja del título.**
+  - Brinco: el quokka no convencía a Josu → `Octopus` (rosa, sobre fondo de mar liso `0x0E3A4F` con burbujas). La animación
+    del salto son los 6 tentáculos: juntos y estirados al subir, abiertos con las puntas hacia arriba al caer, aplastados
+    sobre el apoyo al tocarlo (`pose` = vy normalizada, `squash`), con vaivén. `Quokka` ya no existe.
+  - Malos: `Crab` pasea por ~10–22 % de los apoyos firmes a partir de altura 320 (marcador 32). Caerle encima lo aplasta
+    (+5 puntos, rebote); tocarlo de lado o desde abajo aturde al pulpo (`hurt`: ojos en X, ya no se apoya y cae).
+    Gancho DEBUG nuevo `QW_JUMP_CRABS=1` (cangrejos desde el principio, para capturas).
+  - Marcianitos («más arriba, que use más pantalla»): en `WatchArcadeStage`, al jugar se quita el título y el lienzo sube
+    20 pt (`titleBand`); el marcador se pinta en el lienzo arriba a la derecha, bajo la hora, con las vidas a su izquierda
+    (`drawLives(_:in:width:)`, `ArcadeHUD`). La formación queda justo bajo el botón de volver: más arriba se metería
+    debajo de él. Afecta igual a Escuadrón. Primer intento descartado: vidas a la izquierda → las tapaba el botón de volver.
+  - Verificado en Watch 42 mm temporal (borrado): capturas de los tres juegos; 61 pasos y 61 dibujados/s sin piloto en
+    Brinco y Marcianitos. **Sin verificar:** aplastar un cangrejo (solo revisado en código; el piloto solo llegó a chocar),
+    si los cangrejos salen demasiado o demasiado poco, y todo lo de la Corona y el reloj real.

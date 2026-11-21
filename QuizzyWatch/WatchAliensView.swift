@@ -233,7 +233,7 @@ final class AlienWorld: ArcadeWorld {
             WatchAliens.drawShip(in: &ctx, at: CGPoint(x: px, y: py), size: 18, flame: sin(time * 30))
         }
         Spark.draw(sparks, in: &ctx)
-        drawLives(lives, in: &ctx)
+        drawLives(lives, in: &ctx, width: size.width)
         if cleared {
             ctx.draw(Text(AppLanguage.text("Oleada \(wave + 1)", "Wave \(wave + 1)"))
                 .font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundColor(WatchAliens.info.color),

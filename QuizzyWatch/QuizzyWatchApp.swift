@@ -51,16 +51,20 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: return AppLanguage.text("Pilota con la Corona", "Fly with the Crown")
         }
     }
-    /// Fondo de la pantalla del juego. En Escuadrón es el azul del mar, para que la franja de la
-    /// hora no corte el dibujo.
+    /// Fondo de la pantalla del juego. En Escuadrón y Brinco es un color liso de mar, para que la
+    /// franja de la hora no corte el dibujo.
     var backdrop: AnyShapeStyle {
-        self == .planes ? AnyShapeStyle(Color(hex: 0x14355A)) : AnyShapeStyle(color.gradient.opacity(0.35))
+        switch self {
+        case .planes: return AnyShapeStyle(Color(hex: 0x14355A))
+        case .jump: return AnyShapeStyle(Color(hex: 0x0E3A4F))    // fondo del mar: el pulpo rosa destaca
+        case .aliens: return AnyShapeStyle(color.gradient.opacity(0.35))
+        }
     }
     /// Icono de la portada: el protagonista de cada juego, dibujado.
     func drawIcon(in ctx: inout GraphicsContext, size: CGSize) {
         let c = CGPoint(x: size.width / 2, y: size.height / 2)
         switch self {
-        case .jump: Quokka.draw(in: &ctx, feet: CGPoint(x: c.x, y: size.height - 1), size: size.height * 0.84)
+        case .jump: Octopus.draw(in: &ctx, feet: CGPoint(x: c.x, y: size.height - 1), size: size.height * 0.84)
         case .aliens: WatchAliens.drawAlien(in: &ctx, at: CGPoint(x: c.x, y: c.y + 2), size: size.height * 0.8, kind: 3, phase: 0)
         case .planes: WatchPlanes.drawPlane(in: &ctx, at: c, size: size.height * 0.9, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B))
         }

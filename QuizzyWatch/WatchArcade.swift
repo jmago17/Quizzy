@@ -70,16 +70,23 @@ struct Spark {
     }
 }
 
-/// Vidas: corazones pequeños arriba a la izquierda del lienzo.
-func drawLives(_ lives: Int, in ctx: inout GraphicsContext) {
+/// Vidas: corazones pequeños arriba a la derecha, a la izquierda del marcador (que pinta
+/// `WatchArcadeStage` pegado al borde, bajo la hora). A la izquierda no: ahí está el botón de volver.
+func drawLives(_ lives: Int, in ctx: inout GraphicsContext, width: CGFloat) {
     for i in 0..<max(0, lives) {
-        let x = 9 + CGFloat(i) * 11, y: CGFloat = 8
+        let x = width - ArcadeHUD.scoreBand - 6 - CGFloat(i) * 11, y = ArcadeHUD.y
         var heart = Path()
         heart.move(to: CGPoint(x: x, y: y + 4))
         heart.addCurve(to: CGPoint(x: x, y: y - 2), control1: CGPoint(x: x - 7, y: y), control2: CGPoint(x: x - 3, y: y - 6))
         heart.addCurve(to: CGPoint(x: x, y: y + 4), control1: CGPoint(x: x + 3, y: y - 6), control2: CGPoint(x: x + 7, y: y))
         ctx.fill(heart, with: .color(Color(hex: 0xF0766B)))
     }
+}
+
+enum ArcadeHUD {
+    static let y: CGFloat = 7
+    /// Ancho reservado al marcador (hasta 5 cifras) desde el borde derecho.
+    static let scoreBand: CGFloat = 46
 }
 
 // MARK: - Medidor (DEBUG)
@@ -107,6 +114,7 @@ private final class FrameClock { var last: Date? }
 
 struct WatchArcadeStage<World: ArcadeWorld>: View {
     private enum Phase { case ready, playing, over }
+    private static var titleBand: CGFloat { 20 }
 
     let info: ArcadeInfo
     @State private var world: World
@@ -137,6 +145,12 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
                     ArcadeProbe.shared.draws += 1
                     #endif
                     world.draw(&ctx, size: size)
+                    if phase == .playing {
+                        // Jugando, el marcador va en el lienzo (junto a las vidas), no en el título:
+                        // así el juego ocupa también la franja del título. Ver `.padding(.top, …)`.
+                        ctx.draw(Text("\(world.score)").font(.system(size: 14, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9)), at: CGPoint(x: size.width - 8, y: ArcadeHUD.y), anchor: .trailing)
+                    }
                 }
                 .onChange(of: timeline.date) { _, now in tick(now) }
             }
@@ -164,8 +178,11 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
                 if phase == .playing { world.resize(new) } else { world.reset(size: new); redraw += 1 }
             }
         }
+        // Jugando se quita el título y el lienzo sube a ocupar su franja (quitar el título solo
+        // no libera el hueco: mismo truco que Decoder y Anygram). La hora sigue arriba a la derecha.
+        .padding(.top, phase == .playing ? -Self.titleBand : 0)
         .ignoresSafeArea(edges: .bottom)
-        .navigationTitle(phase == .ready ? info.title : "\(score)")
+        .navigationTitle(phase == .playing ? "" : (phase == .ready ? info.title : "\(score)"))
         .focusable()
         .focused($crownFocus)
         .digitalCrownRotation($crown, from: 0, through: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: false)
