@@ -1,6 +1,7 @@
 //
 //  QuizzyWatchApp.swift — Quizzy Watch
-//  Portada del reloj: Palabro, Anygram, Laberinto, Decoder y Brinco (este último solo existe aquí).
+//  Portada del reloj: Palabro, Anygram, Laberinto y Decoder, más los juegos de acción que solo
+//  existen aquí (`WatchArcade`: Brinco, Marcianitos y Escuadrón).
 //  Trocitos se quitó del reloj el 2026-11-20 (20 fichas no caben: no era viable).
 //  Los diarios usan las MISMAS semillas que el iPhone (`PuzzleSeed`), así que el reto del día es
 //  el mismo; el progreso es local al reloj (no se sincroniza con el iPhone).
@@ -19,7 +20,52 @@ struct QuizzyWatchApp: App {
 }
 
 /// Juegos que solo existen en el reloj (no son `PuzzleKind`: el iPhone no los conoce).
-enum WatchArcade: Hashable { case jump }
+enum WatchArcade: String, Hashable, CaseIterable {
+    case jump, aliens, planes
+
+    var title: String {
+        switch self {
+        case .jump: return WatchJump.title
+        case .aliens: return WatchAliens.info.title
+        case .planes: return WatchPlanes.info.title
+        }
+    }
+    var color: Color {
+        switch self {
+        case .jump: return WatchJump.color
+        case .aliens: return WatchAliens.info.color
+        case .planes: return WatchPlanes.info.color
+        }
+    }
+    var bestKey: String {
+        switch self {
+        case .jump: return WatchJump.bestKey
+        case .aliens: return WatchAliens.info.bestKey
+        case .planes: return WatchPlanes.info.bestKey
+        }
+    }
+    var blurb: String {
+        switch self {
+        case .jump: return AppLanguage.text("Salta con la Corona", "Jump with the Crown")
+        case .aliens: return AppLanguage.text("Defiende con la Corona", "Defend with the Crown")
+        case .planes: return AppLanguage.text("Pilota con la Corona", "Fly with the Crown")
+        }
+    }
+    /// Fondo de la pantalla del juego. En Escuadrón es el azul del mar, para que la franja de la
+    /// hora no corte el dibujo.
+    var backdrop: AnyShapeStyle {
+        self == .planes ? AnyShapeStyle(Color(hex: 0x14355A)) : AnyShapeStyle(color.gradient.opacity(0.35))
+    }
+    /// Icono de la portada: el protagonista de cada juego, dibujado.
+    func drawIcon(in ctx: inout GraphicsContext, size: CGSize) {
+        let c = CGPoint(x: size.width / 2, y: size.height / 2)
+        switch self {
+        case .jump: Quokka.draw(in: &ctx, feet: CGPoint(x: c.x, y: size.height - 1), size: size.height * 0.84)
+        case .aliens: WatchAliens.drawAlien(in: &ctx, at: CGPoint(x: c.x, y: c.y + 2), size: size.height * 0.8, kind: 3, phase: 0)
+        case .planes: WatchPlanes.drawPlane(in: &ctx, at: c, size: size.height * 0.9, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B))
+        }
+    }
+}
 
 /// Partida en juego de cada tipo.
 enum WatchPuzzle: Identifiable {
@@ -148,6 +194,8 @@ struct WatchHomeView: View {
     @Environment(\.scenePhase) private var phase
     @State private var path = NavigationPath()
     @AppStorage(WatchJump.bestKey, store: PuzzleProgress.shared.defaults) private var jumpBest = 0
+    @AppStorage(WatchAliens.info.bestKey, store: PuzzleProgress.shared.defaults) private var aliensBest = 0
+    @AppStorage(WatchPlanes.info.bestKey, store: PuzzleProgress.shared.defaults) private var planesBest = 0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -156,23 +204,32 @@ struct WatchHomeView: View {
                     NavigationLink(value: kind) { row(kind) }
                         .listRowBackground(WTheme.surface.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous)))
                 }
-                NavigationLink(value: WatchArcade.jump) { jumpRow }
-                    .listRowBackground(WTheme.surface.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous)))
+                ForEach(WatchArcade.allCases, id: \.self) { game in
+                    NavigationLink(value: game) { arcadeRow(game) }
+                        .listRowBackground(WTheme.surface.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous)))
+                }
             }
             .navigationTitle("Quizzy")
             .navigationDestination(for: PuzzleKind.self) { kind in
                 WatchGameScreen(kind: kind)
             }
-            .navigationDestination(for: WatchArcade.self) { _ in
-                WatchJumpView().containerBackground(WatchJump.color.gradient.opacity(0.35), for: .navigation)
+            .navigationDestination(for: WatchArcade.self) { game in
+                Group {
+                    switch game {
+                    case .jump: WatchJumpView()
+                    case .aliens: WatchAliensView()
+                    case .planes: WatchPlanesView()
+                    }
+                }
+                .containerBackground(game.backdrop, for: .navigation)
             }
         }
         .onAppear {
             hub.refreshIfNeeded()
             #if DEBUG
-            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump abre ese juego.
+            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes abre ese juego.
             if path.isEmpty, let raw = ProcessInfo.processInfo.environment["QW_GAME"] {
-                if raw == "jump" { path.append(WatchArcade.jump) }
+                if let game = WatchArcade(rawValue: raw) { path.append(game) }
                 else if let kind = PuzzleKind(rawValue: raw), hub.offered.contains(kind) { path.append(kind) }
             }
             #endif
@@ -200,17 +257,15 @@ struct WatchHomeView: View {
         .padding(.vertical, 2)
     }
 
-    private var jumpRow: some View {
-        HStack(spacing: 8) {
-            Canvas { ctx, size in
-                Quokka.draw(in: &ctx, feet: CGPoint(x: size.width / 2, y: size.height - 1), size: size.height * 0.84)
-            }
-            .frame(width: 24, height: 24)
-            .accessibilityHidden(true)
+    private func arcadeRow(_ game: WatchArcade) -> some View {
+        let best = game == .jump ? jumpBest : (game == .aliens ? aliensBest : planesBest)
+        return HStack(spacing: 8) {
+            Canvas { ctx, size in game.drawIcon(in: &ctx, size: size) }
+                .frame(width: 24, height: 24)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                Text(WatchJump.title).font(.system(.body, design: .rounded).weight(.semibold))
-                Text(jumpBest > 0 ? AppLanguage.text("Récord: \(jumpBest)", "Best: \(jumpBest)")
-                                  : AppLanguage.text("Salta con la Corona", "Jump with the Crown"))
+                Text(game.title).font(.system(.body, design: .rounded).weight(.semibold))
+                Text(best > 0 ? AppLanguage.text("Récord: \(best)", "Best: \(best)") : game.blurb)
                     .font(.caption2).foregroundStyle(WTheme.inkSecondary)
             }
             Spacer(minLength: 0)

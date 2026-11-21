@@ -230,6 +230,24 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     (`QW_JUMP_FPS=1` arranca sin piloto y lo imprime por consola: `simctl launch --console-pty`), no con capturas.
   - Descartado: rendimiento del reloj y `TimelineView` limitado por watchOS (el fallo sale igual en el simulador).
   - Sin comprobar en el reloj real: que ahora vaya fluido allí, y la sensibilidad de la Corona (sigue sin poder probarse).
+- 2026-11-21 — **Dos juegos de acción más en el reloj: Marcianitos y Escuadrón** (pedidos como "tipo Galaga" y "tipo
+  1943"; son originales del género, con dibujos propios en Canvas, sin nombres, personajes ni insignias de aquellos).
+  - Base común `QuizzyWatch/WatchArcade.swift`: protocolo `ArcadeWorld` (estado + física + dibujo, fuera de SwiftUI) y
+    `WatchArcadeStage` (bucle, Corona 0…1 sin dar la vuelta, arrastre, inicio/fin, récord `watch.<id>.best`). Brinco NO
+    se ha migrado a esta base (funciona y lleva su propio bucle). `WatchArcade` (portada) tiene ya 3 casos.
+  - **Marcianitos** (`WatchAliensView.swift`): formación 6×4 que se mece; algunos bajan en picado hacia la nave; disparo
+    automático (máx. 3); 3 vidas; oleadas cada vez más agresivas. 10/25 puntos (formación/picado) + 50 por oleada.
+  - **Escuadrón** (`WatchPlanesView.swift`): avión sobre mar con scroll, islas; cazas, acróbatas en zigzag y bombarderos
+    (4 impactos, disparan apuntando, sueltan «P» = triple disparo 10 s o corazón); 3 vidas; sube de nivel cada 20 s.
+  - Fallo encontrado EN CAPTURA y arreglado: si el lienzo cambiaba de tamaño tras arrancar, la nave quedaba fuera de
+    pantalla (el mundo guardaba el alto antiguo). Ahora `resize(_:)` en los tres juegos, también en Brinco.
+  - Ganchos DEBUG: `QW_GAME=aliens|planes`, `QW_FPS=1` (arranca sin piloto e imprime pasos/dibujados por segundo; en
+    Marcianitos también cada golpe, `QWHIT`), `QW_DEMO=1` (piloto automático).
+  - Verificado en simulador: 61 dibujados/s en los tres juegos SIN piloto; capturas en marcha y de fin de partida; build
+    iOS con el Watch embebido. **NO verificado:** nada en reloj real; la Corona (sensibilidad `.medium` sin probar, igual
+    que en Brinco); la DIFICULTAD: el piloto de prueba (torpe: se pone debajo de los que bajan) pierde las 3 vidas en
+    11–18 s en Marcianitos y aguanta ~35 s en Escuadrón. Ya se suavizó una vez la 1.ª oleada (sin bombas en picado,
+    todo más lento); si Josu dice que es difícil, tocar `diveT`, `bombT` y `bombSpeed` en `AlienWorld.step`.
 - Pendiente: "next build number" de Xcode Cloud a 23 — no está en la API pública; hacerlo en la web de ASC.
 - Pendiente: la copia `verify/` (en `Quizzy-20261114/`) difiere en `MurdleGame.swift`; no tiene este arreglo.
 - 2026-11-15: rama `diseno/noche-20261115` — especificación `docs/DISENO.md` y su aplicación a tokens,

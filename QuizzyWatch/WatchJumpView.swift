@@ -105,6 +105,8 @@ final class JumpWorld {
     }
 
     func start() { vy = Self.jumpSpeed; lastDate = nil }
+    /// Cambio de tamaño del lienzo a mitad de partida: no reinicia.
+    func resize(_ size: CGSize) { self.size = size }
 
     private func fill() {
         while topY < camY + size.height + 80 {
@@ -219,7 +221,9 @@ struct WatchJumpView: View {
                 .onEnded { _ in dragStart = nil })
             .onTapGesture { if phase == .ready { begin() } }
             .onAppear { world.reset(size: geo.size); crown = 0.5; redraw += 1; crownFocus = true; demoStart() }
-            .onChange(of: geo.size) { _, new in if phase != .playing { world.reset(size: new); redraw += 1 } }
+            .onChange(of: geo.size) { _, new in
+                if phase == .playing { world.resize(new) } else { world.reset(size: new); redraw += 1 }
+            }
         }
         .ignoresSafeArea(edges: .bottom)
         .navigationTitle(phase == .ready ? WatchJump.title : "\(score)")
