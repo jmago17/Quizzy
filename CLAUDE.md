@@ -286,3 +286,6 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado en Watch 42 mm temporal (borrado): capturas de los tres juegos; 61 pasos y 61 dibujados/s sin piloto en
     Brinco y Marcianitos. **Sin verificar:** aplastar un cangrejo (solo revisado en código; el piloto solo llegó a chocar),
     si los cangrejos salen demasiado o demasiado poco, y todo lo de la Corona y el reloj real.
+- 2026-11-21 — **Reloj: Brinco también sube a la franja del título.** Mismo arreglo que `WatchArcadeStage` (que ya cubría
+  Marcianitos y Escuadrón): jugando, sin título, lienzo 20 pt más arriba (`ArcadeHUD.titleBand`, ahora compartido) y
+  marcador pintado en el lienzo bajo la hora. Verificado: build watchOS y captura en Watch 42 mm temporal (borrado).

@@ -320,6 +320,12 @@ struct WatchJumpView: View {
                     Self.probe.draws += 1
                     #endif
                     draw(&ctx, size: size)
+                    if phase == .playing {
+                        // Igual que en `WatchArcadeStage`: jugando, el marcador va en el lienzo (bajo la
+                        // hora) y el lienzo sube a ocupar la franja del título.
+                        ctx.draw(Text("\(world.score)").font(.system(size: 14, weight: .heavy, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9)), at: CGPoint(x: size.width - 8, y: ArcadeHUD.y), anchor: .trailing)
+                    }
                 }
                 .onChange(of: timeline.date) { _, now in tick(now, width: geo.size.width) }
             }
@@ -339,8 +345,9 @@ struct WatchJumpView: View {
                 if phase == .playing { world.resize(new) } else { world.reset(size: new); redraw += 1 }
             }
         }
+        .padding(.top, phase == .playing ? -ArcadeHUD.titleBand : 0)
         .ignoresSafeArea(edges: .bottom)
-        .navigationTitle(phase == .ready ? WatchJump.title : "\(score)")
+        .navigationTitle(phase == .playing ? "" : (phase == .ready ? WatchJump.title : "\(score)"))
         .focusable()
         .focused($crownFocus)
         .digitalCrownRotation($crown, from: 0, through: 1, sensitivity: .low, isContinuous: true, isHapticFeedbackEnabled: false)

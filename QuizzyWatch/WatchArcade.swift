@@ -85,6 +85,8 @@ func drawLives(_ lives: Int, in ctx: inout GraphicsContext, width: CGFloat) {
 
 enum ArcadeHUD {
     static let y: CGFloat = 7
+    /// Lo que sube el lienzo al jugar, cuando se quita el título.
+    static let titleBand: CGFloat = 20
     /// Ancho reservado al marcador (hasta 5 cifras) desde el borde derecho.
     static let scoreBand: CGFloat = 46
 }
@@ -114,7 +116,6 @@ private final class FrameClock { var last: Date? }
 
 struct WatchArcadeStage<World: ArcadeWorld>: View {
     private enum Phase { case ready, playing, over }
-    private static var titleBand: CGFloat { 20 }
 
     let info: ArcadeInfo
     @State private var world: World
@@ -180,7 +181,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         }
         // Jugando se quita el título y el lienzo sube a ocupar su franja (quitar el título solo
         // no libera el hueco: mismo truco que Decoder y Anygram). La hora sigue arriba a la derecha.
-        .padding(.top, phase == .playing ? -Self.titleBand : 0)
+        .padding(.top, phase == .playing ? -ArcadeHUD.titleBand : 0)
         .ignoresSafeArea(edges: .bottom)
         .navigationTitle(phase == .playing ? "" : (phase == .ready ? info.title : "\(score)"))
         .focusable()
