@@ -4,6 +4,8 @@
 //  Corona lo mueve de lado a lado. Enemigos: cazas (rectos), acróbatas (en zigzag) y bombarderos
 //  (lentos, 4 impactos, disparan apuntando). Los bombarderos pueden soltar una «P» (triple
 //  disparo durante 10 s) o un corazón (vida). 3 vidas; la dificultad sube cada 20 s.
+//  Tonel: un giro brusco de Corona (ver `rollSwing`) hace que el avión dé una vuelta sobre su eje;
+//  mientras dura no le alcanza nada. Tiene recarga, para que no sea un escudo permanente.
 //  Jefe: cada `bossEvery` segundos de vuelo deja de llegar tráfico y entra un cuatrimotor que
 //  se queda arriba cruzando de lado a lado; alterna abanico apuntado y ráfaga recta. Cada jefe
 //  aguanta más y dispara más seguido. Derribarlo: 300 puntos y un premio seguro.
@@ -84,6 +86,22 @@ final class SkyWorld: ArcadeWorld {
     private var fireT: CGFloat = 0, spawnT: CGFloat = 1, islandT: CGFloat = 2
     private var power: CGFloat = 0     // segundos de triple disparo
     private var invuln: CGFloat = 0
+    /// Tonel. Se dispara cuando el recorrido reciente de la Corona en un mismo sentido supera
+    /// `rollSwing` (fracción del ancho). El recorrido «se olvida» con constante `rollMemory`, así
+    /// que equivale a pedir una velocidad sostenida de rollSwing / rollMemory ≈ 1,4 anchos/s.
+    static let rollSwing: CGFloat = 0.28
+    static let rollMemory: CGFloat = 0.2
+    static let rollTime: CGFloat = 0.55
+    static let rollCooldown: CGFloat = 2.5
+    private var roll: CGFloat = 0          // segundos que le quedan al tonel
+    private var rollDir: CGFloat = 1
+    private var rollWait: CGFloat = 0
+    private var swing: CGFloat = 0
+    private var lastInput: CGFloat?
+    #if DEBUG
+    private let alwaysRoll = ProcessInfo.processInfo.environment["QW_ROLL"] == "1"   // capturas: tonel continuo
+    #endif
+
     private var boss: Boss?
     private var bossT: CGFloat = SkyWorld.bossEvery   // cuenta atrás hasta el aviso
     private var bossWarn: CGFloat = 0                  // aviso «¡JEFE!» antes de que entre
@@ -100,6 +118,7 @@ final class SkyWorld: ArcadeWorld {
         lives = 3; time = 0; scroll = 0; score = 0
         fireT = 0.2; spawnT = 1; islandT = 3; power = 0; invuln = 0
         boss = nil; bossWarn = 0; bossCount = 0; bossT = Self.bossEvery
+        roll = 0; rollWait = 0; swing = 0; lastInput = nil
         #if DEBUG
         if ProcessInfo.processInfo.environment["QW_BOSS"] == "1" { bossT = 2 }   // capturas: jefe enseguida
         #endif
@@ -116,6 +135,26 @@ final class SkyWorld: ArcadeWorld {
         py = size.height - 20
         invuln = max(0, invuln - dt)
         power = max(0, power - dt)
+
+        // Tonel: recorrido reciente de la Corona en un sentido.
+        swing *= exp(-dt / Self.rollMemory)
+        if let last = lastInput { swing += input - last }
+        lastInput = input
+        roll = max(0, roll - dt)
+        rollWait = max(0, rollWait - dt)
+        var wantRoll = abs(swing) > Self.rollSwing
+        #if DEBUG
+        if alwaysRoll { wantRoll = true; rollWait = 0 }
+        #endif
+        if wantRoll, roll <= 0, rollWait <= 0 {
+            roll = Self.rollTime; rollWait = Self.rollCooldown
+            rollDir = swing >= 0 ? 1 : -1
+            swing = 0
+            event = .bonus
+            #if DEBUG
+            if ArcadeProbe.shared.fps { print("QWROLL t=\(time)") }
+            #endif
+        }
         Spark.step(&sparks, dt: dt)
 
         // Fondo: islas que bajan con el mar.
@@ -287,7 +326,7 @@ final class SkyWorld: ArcadeWorld {
         }
 
         // Golpes al avión.
-        if invuln <= 0 {
+        if invuln <= 0, roll <= 0 {
             var hit = false
             if let b = bullets.firstIndex(where: { abs($0.p.x - px) < 7 && abs($0.p.y - py) < 8 }) { bullets.remove(at: b); hit = true }
             if let j = enemies.firstIndex(where: { abs($0.p.x - px) < ($0.kind == .bomber ? 17 : 12) && abs($0.p.y - py) < 12 }) {
@@ -366,7 +405,19 @@ final class SkyWorld: ArcadeWorld {
         if lives > 0, invuln <= 0 || Int(time * 12) % 2 == 0 {
             // Sombra sobre el mar + avión.
             ctx.fill(Path(ellipseIn: CGRect(x: px - 2, y: py + 8, width: 18, height: 7)), with: .color(.black.opacity(0.18)))
-            WatchPlanes.drawPlane(in: &ctx, at: CGPoint(x: px, y: py), size: 22, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B), spin: time * 40)
+            if roll > 0 {
+                // Vuelta sobre el eje del fuselaje: el ancho se encoge, pasa por el canto y vuelve.
+                // Boca abajo se ve la panza, más oscura. Sube un poco durante el giro.
+                let turn = (1 - roll / Self.rollTime) * 2 * .pi
+                let c = cos(turn)
+                var g = ctx
+                g.translateBy(x: px, y: py - sin(turn / 2) * 5)
+                g.scaleBy(x: rollDir * (c >= 0 ? max(0.1, c) : min(-0.1, c)), y: 1 + sin(turn / 2) * 0.12)
+                WatchPlanes.drawPlane(in: &g, at: .zero, size: 22, body: c >= 0 ? Color(hex: 0xF2C14E) : Color(hex: 0xB9892A),
+                                      wing: c >= 0 ? Color(hex: 0xD99E2B) : Color(hex: 0x8F6A1E), spin: time * 40)
+            } else {
+                WatchPlanes.drawPlane(in: &ctx, at: CGPoint(x: px, y: py), size: 22, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B), spin: time * 40)
+            }
         }
         Spark.draw(sparks, in: &ctx)
         drawLives(lives, in: &ctx, width: size.width)

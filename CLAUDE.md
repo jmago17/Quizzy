@@ -308,3 +308,12 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado en Watch 42 mm temporal (borrado): capturas en marcha con `QW_DEMO=1` y 61 dibujados/s en los dos. Tras las
     capturas: cubo más alto (el agua casi no se veía) y Pompas algo más fácil (el piloto perdía 2 vidas en 14 s); solo compilado.
     **Sin verificar:** iconos de la portada (quedan fuera de la captura), dificultad real de ambos, Corona y reloj real.
+- 2026-11-21 — **Reloj, Escuadrón: tonel con un giro brusco de Corona.** (Build 33 en TestFlight ANTES de esto: jefe, Pompas, Goteras.)
+  - `SkyWorld`: se acumula el recorrido reciente de la Corona en un sentido (`swing`, se olvida con `rollMemory` = 0,2 s);
+    si supera `rollSwing` = 0,28 del ancho (≈ 1,4 anchos/s sostenidos) el avión da una vuelta sobre su eje (`rollTime` 0,55 s)
+    y durante ella no le alcanza nada. Recarga `rollCooldown` 2,5 s. Toque háptico al dispararlo. Pegado a un borde no se
+    puede hacer hacia ese lado (la Corona ya no avanza).
+  - Gancho DEBUG `QW_ROLL=1` (tonel continuo, para capturas); con `QW_FPS=1` imprime `QWROLL` al dispararse.
+  - Verificado en Watch 42 mm temporal (borrado): captura a medio giro; el piloto automático no lo dispara nunca en 20 s
+    (no hay disparos accidentales con movimiento normal) y sigue a 61 dibujados/s. **Sin verificar:** que el umbral sea
+    alcanzable y cómodo con la Corona real en `.low`; es lo primero a ajustar (`rollSwing`).
