@@ -14,7 +14,8 @@
 
 import SwiftUI
 
-enum ArcadeEvent { case none, bonus, hit, dead }
+/// `notch`: toque háptico distinto al clic normal (la muesca de Caja fuerte).
+enum ArcadeEvent { case none, bonus, notch, hit, dead }
 
 protocol ArcadeWorld: AnyObject {
     var score: Int { get }
@@ -26,6 +27,15 @@ protocol ArcadeWorld: AnyObject {
     func draw(_ ctx: inout GraphicsContext, size: CGSize)
     /// Solo para capturas y medidas (QW_DEMO=1): a dónde iría un jugador, 0…1.
     func autopilot() -> CGFloat
+    /// Toque en la pantalla durante la partida (Tintazo dispara con él). Por defecto, nada.
+    func tap()
+    /// `true`: la Corona no tiene topes y `input` da la vuelta de 1 a 0 (el dial de Caja fuerte).
+    static var crownWraps: Bool { get }
+}
+
+extension ArcadeWorld {
+    func tap() {}
+    static var crownWraps: Bool { false }
 }
 
 struct ArcadeInfo {
@@ -168,10 +178,11 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
                 .onChanged { v in
                     let start = dragStart ?? crown
                     dragStart = start
-                    crown = min(1, max(0, start + Double(v.translation.width / max(1, geo.size.width))))
+                    let raw = start + Double(v.translation.width / max(1, geo.size.width))
+                    crown = World.crownWraps ? raw - raw.rounded(.down) : min(1, max(0, raw))
                 }
                 .onEnded { _ in dragStart = nil })
-            .onTapGesture { if phase == .ready { begin() } }
+            .onTapGesture { if phase == .ready { begin() } else if phase == .playing { world.tap() } }
             .onAppear {
                 geoSize = geo.size
                 world.reset(size: geo.size); redraw += 1; crownFocus = true
@@ -193,7 +204,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         .navigationTitle(phase == .playing ? "" : (phase == .ready ? info.title : "\(score)"))
         .focusable()
         .focused($crownFocus)
-        .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
+        .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: World.crownWraps, isHapticFeedbackEnabled: true)
         .onChange(of: scene) { _, new in if new != .active { clock.last = nil } }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(info.title)
@@ -232,6 +243,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
 
     private func begin() {
         score = 0; record = false
+        crown = 0.5          // la Corona empieza centrada (en Derrape, 0,5 = volante recto)
         clock.last = nil
         phase = .playing
         crownFocus = true
@@ -248,12 +260,14 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         #if DEBUG
         if ArcadeProbe.shared.demo {
             let want = Double(world.autopilot())
-            crown = min(1, max(0, crown + max(-1.8 * Double(dt), min(1.8 * Double(dt), want - crown))))
+            let moved = crown + max(-1.8 * Double(dt), min(1.8 * Double(dt), want - crown))
+            crown = World.crownWraps ? moved - moved.rounded(.down) : min(1, max(0, moved))
         }
         #endif
         switch world.step(dt: dt, input: CGFloat(crown)) {
         case .none: break
         case .bonus: WHaptics.tick()
+        case .notch: WHaptics.notch()
         case .hit: WHaptics.warning()
         case .dead:
             phase = .over

@@ -343,3 +343,23 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     (3, 4, 5, 6, 7; una por joya). Texto de reglas actualizado (es/en).
   - **Descartado, no volver:** pareja salteada para «no regalar tanto». Si vuelve a parecer fácil, tocar `costs`, no esto.
   - Verificado: `Tests/Trocitos/run.py` (20 comprobaciones) y build iOS. **Sin verificar:** en la app.
+- 2026-11-22 — **Reloj: tres juegos nuevos — Tintazo, Caja fuerte y Derrape** (`WatchArcade` `.ink`, `.safe`, `.drift`; ya son 8).
+  - `WatchArcadeStage` ganó tres cosas: `ArcadeWorld.tap()` (toque durante la partida; por defecto nada),
+    `static var crownWraps` (Corona sin topes, `input` da la vuelta) y `ArcadeEvent.notch` (`WHaptics.notch()` = `.start`).
+    Además `begin()` centra la Corona en 0,5 en TODOS los juegos (en Derrape 0,5 = volante recto).
+  - **Tintazo** (`WatchInkView.swift`): el pulpo dispara tinta a cangrejos. Corona = ángulo (12°–80°); la fuerza oscila
+    sola (115–240, vaivén de 1,7 s; se ve en la línea de puntos) y un toque dispara. Disparos = cangrejos + 2; 10 por
+    cangrejo, 5 por disparo sobrante; sin tinta con cangrejos vivos = −1 vida y se repite el nivel. Muro desde el nivel 3,
+    repisas desde el 2. Cada nivel se valida con el mismo simulador del disparo (`solution(for:)`): siempre tiene solución.
+    **Descartado a propósito:** mantener pulsado para cargar (dedo en pantalla + Corona con la misma mano es incómodo) y
+    estructuras que se derrumban (cuerpos rígidos; no luce en 187 pt y acerca demasiado al juego original).
+  - **Caja fuerte** (`WatchSafeView.swift`): dial de 40 números, una vuelta por recorrido de Corona. La marca de arriba se
+    enciende desde 4 números de distancia y en la muesca da `.notch`; 0,35 s quieto fija el pasador y el siguiente está al
+    otro lado (flecha del centro). 30 s, +5…8,5 s por caja; pasadores 3 → 6. La pista visual es obligada: la háptica no
+    se puede probar en simulador.
+  - **Derrape** (`WatchDriftView.swift`): la Corona es el volante (±43°), no la posición. Carretera que serpentea y se
+    estrecha (36 → 24 pt de semiancho), 95 → 190 pt/s, tráfico más lento desde los 6 s. Arcén o coche = −1 vida.
+  - Verificado en Watch 42 mm temporal (borrado), con piloto automático: los tres juegan solos, capturas con máscara
+    revisadas (nada cortado por las esquinas), ≥ 61 dibujados/s. **Sin verificar:** nada en reloj real — sobre todo
+    si el volante se controla sin un «centro» táctil en la Corona (riesgo principal de Derrape; se toca en `maxSteer`),
+    si la muesca se distingue al tacto, la dificultad de los tres, y los iconos en la lista (no llegué a verlos).

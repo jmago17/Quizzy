@@ -49,6 +49,7 @@ enum WHaptics {
     static func success() { WKInterfaceDevice.current().play(.success) }
     static func error() { WKInterfaceDevice.current().play(.failure) }
     static func warning() { WKInterfaceDevice.current().play(.retry) }
+    static func notch() { WKInterfaceDevice.current().play(.start) }
 }
 
 /// Ficha con el «volumen» de la app: degradado, brillo arriba y sombra corta.

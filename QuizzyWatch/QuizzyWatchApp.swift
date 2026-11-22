@@ -21,7 +21,7 @@ struct QuizzyWatchApp: App {
 
 /// Juegos que solo existen en el reloj (no son `PuzzleKind`: el iPhone no los conoce).
 enum WatchArcade: String, Hashable, CaseIterable {
-    case jump, aliens, planes, bubbles, leaks
+    case jump, aliens, planes, bubbles, leaks, ink, safe, drift
 
     var title: String {
         switch self {
@@ -30,6 +30,9 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: return WatchPlanes.info.title
         case .bubbles: return WatchBubbles.info.title
         case .leaks: return WatchLeaks.info.title
+        case .ink: return WatchInk.info.title
+        case .safe: return WatchSafe.info.title
+        case .drift: return WatchDrift.info.title
         }
     }
     var color: Color {
@@ -39,6 +42,9 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: return WatchPlanes.info.color
         case .bubbles: return WatchBubbles.info.color
         case .leaks: return WatchLeaks.info.color
+        case .ink: return WatchInk.info.color
+        case .safe: return WatchSafe.info.color
+        case .drift: return WatchDrift.info.color
         }
     }
     var bestKey: String {
@@ -48,6 +54,9 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: return WatchPlanes.info.bestKey
         case .bubbles: return WatchBubbles.info.bestKey
         case .leaks: return WatchLeaks.info.bestKey
+        case .ink: return WatchInk.info.bestKey
+        case .safe: return WatchSafe.info.bestKey
+        case .drift: return WatchDrift.info.bestKey
         }
     }
     var blurb: String {
@@ -57,6 +66,9 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: return AppLanguage.text("Pilota con la Corona", "Fly with the Crown")
         case .bubbles: return AppLanguage.text("Explota pompas con la Corona", "Pop bubbles with the Crown")
         case .leaks: return AppLanguage.text("Recoge gotas con la Corona", "Catch drops with the Crown")
+        case .ink: return AppLanguage.text("Apunta con la Corona y toca", "Aim with the Crown and tap")
+        case .safe: return AppLanguage.text("Abre cajas a tacto", "Crack safes by feel")
+        case .drift: return AppLanguage.text("Conduce con la Corona", "Steer with the Crown")
         }
     }
     /// Fondo de la pantalla del juego. En Escuadrón y Brinco es un color liso de mar, para que la
@@ -65,7 +77,8 @@ enum WatchArcade: String, Hashable, CaseIterable {
         switch self {
         case .planes: return AnyShapeStyle(Color(hex: 0x14355A))
         case .jump: return AnyShapeStyle(Color(hex: 0x0E3A4F))    // fondo del mar: el pulpo rosa destaca
-        case .aliens, .bubbles, .leaks: return AnyShapeStyle(color.gradient.opacity(0.35))
+        case .drift: return AnyShapeStyle(WatchDrift.grass)       // hierba lisa: la franja de la hora no corta
+        case .aliens, .bubbles, .leaks, .ink, .safe: return AnyShapeStyle(color.gradient.opacity(0.35))
         }
     }
     /// Icono de la portada: el protagonista de cada juego, dibujado.
@@ -77,6 +90,9 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: WatchPlanes.drawPlane(in: &ctx, at: c, size: size.height * 0.9, body: Color(hex: 0xF2C14E), wing: Color(hex: 0xD99E2B))
         case .bubbles: WatchBubbles.drawBubble(in: &ctx, at: c, radius: size.height * 0.42, tier: 0)
         case .leaks: WatchLeaks.drawDrop(in: &ctx, at: CGPoint(x: c.x, y: c.y + 2), size: size.height * 0.42)
+        case .ink: WatchInk.drawBlob(in: &ctx, at: c, radius: size.height * 0.36)
+        case .safe: WatchSafe.drawDial(in: &ctx, center: c, radius: size.height * 0.46, pos: 0, numbers: false)
+        case .drift: WatchDrift.drawCar(in: &ctx, at: c, size: size.height * 0.92, angle: 0.3, body: Color(hex: 0xF0766B))
         }
     }
 }
@@ -212,6 +228,9 @@ struct WatchHomeView: View {
     @AppStorage(WatchPlanes.info.bestKey, store: PuzzleProgress.shared.defaults) private var planesBest = 0
     @AppStorage(WatchBubbles.info.bestKey, store: PuzzleProgress.shared.defaults) private var bubblesBest = 0
     @AppStorage(WatchLeaks.info.bestKey, store: PuzzleProgress.shared.defaults) private var leaksBest = 0
+    @AppStorage(WatchInk.info.bestKey, store: PuzzleProgress.shared.defaults) private var inkBest = 0
+    @AppStorage(WatchSafe.info.bestKey, store: PuzzleProgress.shared.defaults) private var safeBest = 0
+    @AppStorage(WatchDrift.info.bestKey, store: PuzzleProgress.shared.defaults) private var driftBest = 0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -237,6 +256,9 @@ struct WatchHomeView: View {
                     case .planes: WatchPlanesView()
                     case .bubbles: WatchBubblesView()
                     case .leaks: WatchLeaksView()
+                    case .ink: WatchInkView()
+                    case .safe: WatchSafeView()
+                    case .drift: WatchDriftView()
                     }
                 }
                 .containerBackground(game.backdrop, for: .navigation)
@@ -245,7 +267,7 @@ struct WatchHomeView: View {
         .onAppear {
             hub.refreshIfNeeded()
             #if DEBUG
-            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes|bubbles|leaks abre ese juego.
+            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes|bubbles|leaks|ink|safe|drift abre ese juego.
             if path.isEmpty, let raw = ProcessInfo.processInfo.environment["QW_GAME"] {
                 if let game = WatchArcade(rawValue: raw) { path.append(game) }
                 else if let kind = PuzzleKind(rawValue: raw), hub.offered.contains(kind) { path.append(kind) }
@@ -283,6 +305,9 @@ struct WatchHomeView: View {
         case .planes: best = planesBest
         case .bubbles: best = bubblesBest
         case .leaks: best = leaksBest
+        case .ink: best = inkBest
+        case .safe: best = safeBest
+        case .drift: best = driftBest
         }
         return HStack(spacing: 8) {
             Canvas { ctx, size in game.drawIcon(in: &ctx, size: size) }
