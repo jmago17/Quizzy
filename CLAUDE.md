@@ -337,3 +337,9 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - A propósito NO se tocó: una casilla con × manual sigue admitiendo «quizá» (igual que admite colocar), y los «quizá»
     ya puestos no se borran solos cuando luego se coloca a alguien en esa fila/columna.
   - Verificado: solo build iOS. **Sin verificar:** tocándolo en la app.
+- 2026-11-22 — **Trocitos: la pareja coloreada va SEGUIDA en la palabra.** (Build 38 lanzado ANTES de esto: no lo lleva.)
+  - Josu lo probó: dos fichas del mismo color que no iban seguidas «me ha despistado mucho» (se leen como «van pegadas»).
+    `TrocitosHints.colorGroups`: joyas pares → 1.ª+2.ª ficha, impares → 3.ª+4.ª (antes 1.ª+3.ª / 2.ª+4.ª). Dosis igual
+    (3, 4, 5, 6, 7; una por joya). Texto de reglas actualizado (es/en).
+  - **Descartado, no volver:** pareja salteada para «no regalar tanto». Si vuelve a parecer fácil, tocar `costs`, no esto.
+  - Verificado: `Tests/Trocitos/run.py` (20 comprobaciones) y build iOS. **Sin verificar:** en la app.

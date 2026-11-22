@@ -31,11 +31,11 @@ func check(_ ok: @autoclosure () -> Bool, _ name: String, line: Int = #line) {
         check(groups([]).isEmpty, "empieza sin colores")
         check(groups(first(2)).isEmpty, "2 palabras cortas: aún nada")
         let g1 = groups(first(3))
-        check(g1.count == 2 && Set(shown(g1, 0)) == Set(["CON", "TIEM"]), "3 palabras → pareja NO contigua de la 1.ª joya (1.ª y 3.ª ficha)")
+        check(g1.count == 2 && Set(shown(g1, 0)) == Set(["CON", "TRA"]), "3 palabras → pareja seguida de la 1.ª joya (1.ª y 2.ª ficha)")
         check(groups(first(6)) == g1, "de 4 a 6 palabras no añade nada")
         let g2 = groups(first(7))
-        check(g2.count == 4 && Set(shown(g2, 1)) == Set(["CI", "RO"]), "7 palabras → pareja de la 2.ª joya (2.ª y 4.ª ficha)")
-        check(Set(shown(g2, 0)) == Set(["CON", "TIEM"]), "la 1.ª joya sigue con solo 2 fichas")
+        check(g2.count == 4 && Set(shown(g2, 1)) == Set(["NE", "RO"]), "7 palabras → pareja de la 2.ª joya (3.ª y 4.ª ficha)")
+        check(Set(shown(g2, 0)) == Set(["CON", "TRA"]), "la 1.ª joya sigue con solo 2 fichas")
         // Tope: una pareja por joya, nunca más de media joya pendiente.
         let top = groups(many)
         check(top.count == 10 && (0..<5).allSatisfy { g in top.values.filter { $0 == g }.count == 2 }, "40 palabras → 10 fichas, 2 por joya, ninguna joya resuelta")
@@ -47,7 +47,7 @@ func check(_ ok: @autoclosure () -> Bool, _ name: String, line: Int = #line) {
         check(groups([targets[2], targets[3], targets[4]]).count == 12, "3 joyas no dan ayuda (no son palabras cortas)")
         // Si el jugador encuentra la joya que tenía pareja, la ayuda pasa a la siguiente pendiente.
         let moved = groups(first(3) + [targets[0]])
-        check(moved.count == 6 && Set(shown(moved, 1)) == Set(["CI", "RO"]), "la ayuda no se pierde: pasa a la siguiente joya")
+        check(moved.count == 6 && Set(shown(moved, 1)) == Set(["NE", "RO"]), "la ayuda no se pierde: pasa a la siguiente joya")
         // El contador solo se enseña si la próxima ayuda sirve para algo.
         check(TrocitosHints.progress(found: first(3), targets: targets)! == (0, 4), "contador tras la 1.ª ayuda: 0/4")
         check(TrocitosHints.progress(found: first(7) + [targets[2], targets[3], targets[4]], targets: targets) == nil,

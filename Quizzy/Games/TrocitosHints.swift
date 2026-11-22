@@ -4,8 +4,10 @@
 //
 //  Cada joya (palabra de 4 fichas) tiene un color. Las fichas empiezan sin color. Una ayuda
 //  colorea DOS fichas de la primera joya pendiente que aún no tenga pareja, y ahí se queda:
-//  una joya pendiente nunca enseña más de 2 de sus 4 fichas, y esas dos no son contiguas en la
-//  palabra (1.ª+3.ª o 2.ª+4.ª). La ayuda dice «estas dos van juntas», no resuelve la joya.
+//  una joya pendiente nunca enseña más de 2 de sus 4 fichas, y esas dos van SEGUIDAS en la
+//  palabra (1.ª+2.ª o 3.ª+4.ª). La ayuda dice «estas dos van juntas», no resuelve la joya.
+//  (Hasta el 2026-11-22 eran salteadas, 1.ª+3.ª o 2.ª+4.ª: Josu lo probó y despistaba mucho,
+//  porque dos fichas del mismo color se leen como «van pegadas».)
 //
 //  Dosificación (2026-11-21, 2.ª versión). La 1.ª daba una ficha cada 3 palabras sin tope y era
 //  demasiado fácil: medido sobre los 12 puzles, hay entre 93 y 240 palabras cortas por tablero,
@@ -78,8 +80,8 @@ enum TrocitosHints {
             } else if hints > 0 {
                 hints -= 1
                 let mine = owner[gem]
-                // Pareja no contigua, alternando por joya para que no sea siempre «la 1.ª y la 3.ª».
-                let pair = mine.count >= 4 ? (gem % 2 == 0 ? [mine[0], mine[2]] : [mine[1], mine[3]]) : Array(mine.prefix(2))
+                // Pareja seguida en la palabra, alternando por joya: el principio o el final.
+                let pair = mine.count >= 4 ? (gem % 2 == 0 ? [mine[0], mine[1]] : [mine[2], mine[3]]) : Array(mine.prefix(2))
                 for tile in pair { groups[tile] = gem }
             }
         }
