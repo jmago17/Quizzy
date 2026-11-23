@@ -4,6 +4,9 @@
 //  en picado hacia la nave soltando una bomba. La nave dispara sola; el jugador solo la mueve
 //  con la Corona. 3 vidas; cada oleada despejada trae otra más agresiva.
 //  Puntos: 10 por marciano en formación, 25 si se le caza en picado, 50 por oleada.
+//  Cada oleada trae otra FORMACIÓN (`shapes`: bloque, rombo, uve, anillo, columnas, damero, flecha)
+//  y otro vaivén (de lado a lado, respirando o en onda). Desde la 2.ª hay blindados que piden
+//  2 impactos (casco) y desde la 4.ª, de 3 (casco dorado); valen 10 puntos más por impacto extra.
 //  Dibujos propios (formas en Canvas). Bucle y pantallas: `WatchArcadeStage`.
 //
 
@@ -17,9 +20,21 @@ enum WatchAliens {
     static let palette: [UInt32] = [0xF28FB5, 0xC59BFF, 0xF2B95C, 0x7BE08A]
 
     /// Marciano: cuerpo redondo, dos ojos, antenas y tres patas que se mueven.
-    static func drawAlien(in ctx: inout GraphicsContext, at c: CGPoint, size s: CGFloat, kind: Int, phase: CGFloat) {
-        let color = Color(hex: palette[kind % palette.count])
+    static func drawAlien(in ctx: inout GraphicsContext, at c: CGPoint, size s: CGFloat, kind: Int, phase: CGFloat,
+                          armor: Int = 0, flash: Bool = false) {
+        let color = flash ? Color.white : Color(hex: palette[kind % palette.count])
         let dark = Color(hex: 0x10141D)
+        defer {
+            // Blindaje: un casco por encima (gris = aguanta 1 impacto más; dorado = 2 más).
+            if armor > 0 {
+                var helmet = Path()
+                helmet.addArc(center: CGPoint(x: c.x, y: c.y - s * 0.12), radius: s * 0.5, startAngle: .degrees(180), endAngle: .degrees(360), clockwise: false)
+                helmet.closeSubpath()
+                ctx.fill(helmet, with: .color(armor > 1 ? Color(hex: 0xF2C14E) : Color(hex: 0xB9C2D0)))
+                ctx.fill(Path(CGRect(x: c.x - s * 0.5, y: c.y - s * 0.16, width: s, height: s * 0.09)), with: .color(.black.opacity(0.35)))
+                ctx.fill(Path(ellipseIn: CGRect(x: c.x - s * 0.28, y: c.y - s * 0.52, width: s * 0.22, height: s * 0.1)), with: .color(.white.opacity(0.6)))
+            }
+        }
         // Antenas
         for side in [-1.0, 1.0] as [CGFloat] {
             var antenna = Path()
@@ -70,8 +85,20 @@ final class AlienWorld: ArcadeWorld {
         var t: CGFloat = 0
         var fromX: CGFloat = 0, toX: CGFloat = 0
         var fired = false
+        var hp = 1
+        var flash: CGFloat = 0
     }
     static let cols = 6, rows = 4
+    /// Formaciones, fila a fila (`#` = marciano). Rotan con la oleada.
+    static let shapes: [[String]] = [
+        ["######", "######", "######", "######"],     // bloque
+        ["..##..", ".####.", "######", ".####."],     // rombo
+        ["#....#", "##..##", ".####.", "..##.."],     // uve
+        ["######", "#....#", "#....#", "######"],     // anillo
+        ["##..##", "##..##", "##..##", "##..##"],     // columnas
+        ["#.#.#.", ".#.#.#", "#.#.#.", ".#.#.#"],     // damero
+        ["..##..", ".####.", "######", "..##.."],     // flecha
+    ]
 
     private var size: CGSize = .zero
     private var enemies: [Enemy] = []
@@ -91,7 +118,7 @@ final class AlienWorld: ArcadeWorld {
     func reset(size: CGSize) {
         self.size = size
         shots = []; bombs = []; sparks = []
-        px = size.width / 2; py = size.height - 16
+        px = size.width / 2; py = size.height - 24
         lives = 3; wave = 1; time = 0; score = 0
         fireT = 0.3; diveT = 1.5; bombT = 2.5; invuln = 0; cleared = false; waveDelay = 0
         spawn()
@@ -100,22 +127,35 @@ final class AlienWorld: ArcadeWorld {
     func resize(_ size: CGSize) { self.size = size }
 
     private func spawn() {
-        enemies = (0..<Self.rows).flatMap { r in (0..<Self.cols).map { Enemy(col: $0, row: r) } }
-        for i in enemies.indices { enemies[i].pos = slot(enemies[i]) }
+        let shape = Self.shapes[(wave - 1) % Self.shapes.count].map(Array.init)
+        enemies = (0..<Self.rows).flatMap { r in (0..<Self.cols).compactMap { shape[r][$0] == "#" ? Enemy(col: $0, row: r) : nil } }
+        // Blindados: ninguno en la 1.ª oleada; luego cada vez más, y desde la 4.ª algunos de 3.
+        let share = wave < 2 ? 0 : min(0.5, 0.12 + Double(wave) * 0.05)
+        for i in enemies.indices {
+            if Double.random(in: 0..<1) < share { enemies[i].hp = wave >= 4 && Bool.random() ? 3 : 2 }
+            enemies[i].pos = slot(enemies[i])
+        }
     }
 
     private func slot(_ e: Enemy) -> CGPoint {
-        let sx = min(27, (size.width - 26) / CGFloat(Self.cols))
-        return CGPoint(x: size.width / 2 + (CGFloat(e.col) - CGFloat(Self.cols - 1) / 2) * sx + sin(time * 1.1) * 8,
-                       y: 24 + CGFloat(e.row) * 16)
+        var sx = min(27, (size.width - 26) / CGFloat(Self.cols))
+        var dx = sin(time * 1.1) * 8, dy: CGFloat = 0
+        switch (wave - 1) % 3 {
+        case 1: sx *= 0.9 + 0.1 * sin(time * 1.6); dx *= 0.5          // respira (se abre y se cierra)
+        case 2: dy = sin(time * 2 + CGFloat(e.col) * 0.9) * 3.5        // onda que recorre las columnas
+        default: break                                                 // de lado a lado
+        }
+        return CGPoint(x: size.width / 2 + (CGFloat(e.col) - CGFloat(Self.cols - 1) / 2) * sx + dx,
+                       y: 24 + CGFloat(e.row) * 16 + dy)
     }
 
     func step(dt: CGFloat, input: CGFloat) -> ArcadeEvent {
         guard size.width > 0, lives > 0 else { return .none }
         var event = ArcadeEvent.none
         time += dt
-        px = 12 + input * (size.width - 24)
-        py = size.height - 16
+        // A 24 pt del fondo y 16 de los lados: las esquinas de la pantalla son redondas.
+        px = 16 + input * (size.width - 32)
+        py = size.height - 24
         invuln = max(0, invuln - dt)
         Spark.step(&sparks, dt: dt)
 
@@ -150,6 +190,7 @@ final class AlienWorld: ArcadeWorld {
         }
 
         for i in enemies.indices {
+            enemies[i].flash = max(0, enemies[i].flash - dt)
             switch enemies[i].mode {
             case .slot:
                 enemies[i].pos = slot(enemies[i])
@@ -183,10 +224,18 @@ final class AlienWorld: ArcadeWorld {
         for i in shots.indices.reversed() {
             let s = shots[i]
             guard let j = enemies.firstIndex(where: { abs($0.pos.x - s.x) < 9 && abs($0.pos.y - s.y) < 8 }) else { continue }
+            shots.remove(at: i)
+            enemies[j].hp -= 1
+            if enemies[j].hp > 0 {
+                // Blindado: pierde una capa de casco, da puntos y sigue.
+                enemies[j].flash = 0.1
+                score += 10
+                Spark.burst(&sparks, at: CGPoint(x: s.x, y: s.y), color: Color(hex: 0xB9C2D0), count: 4)
+                continue
+            }
             score += enemies[j].mode == .slot ? 10 : 25
             Spark.burst(&sparks, at: enemies[j].pos, color: Color(hex: WatchAliens.palette[enemies[j].row % 4]))
             enemies.remove(at: j)
-            shots.remove(at: i)
         }
 
         // Golpes a la nave.
@@ -213,14 +262,26 @@ final class AlienWorld: ArcadeWorld {
     }
 
     func draw(_ ctx: inout GraphicsContext, size: CGSize) {
-        for i in 0..<20 {   // estrellas fijas que titilan
+        // Fondo: nebulosa y planeta (cambian de color con la oleada) y dos capas de estrellas que caen.
+        let tint = Color(hex: WatchAliens.palette[(wave - 1) % WatchAliens.palette.count])
+        ctx.fill(Path(CGRect(x: 0, y: -40, width: size.width, height: size.height + 80)),
+                 with: .radialGradient(Gradient(colors: [tint.opacity(0.18), tint.opacity(0)]), center: CGPoint(x: size.width * 0.3, y: size.height * 0.55),
+                                       startRadius: 0, endRadius: size.width * 0.5))
+        let planet = CGRect(x: size.width - 46, y: size.height * 0.56, width: 34, height: 34)
+        ctx.fill(Path(ellipseIn: planet), with: .linearGradient(Gradient(colors: [tint.opacity(0.5), tint.opacity(0.12)]),
+                                                               startPoint: CGPoint(x: planet.minX, y: planet.minY), endPoint: CGPoint(x: planet.maxX, y: planet.maxY)))
+        ctx.stroke(Path(ellipseIn: planet.insetBy(dx: -9, dy: 11)), with: .color(tint.opacity(0.3)), lineWidth: 1.5)
+        for i in 0..<26 {
+            let near = i % 3 == 0
             let x = CGFloat((i * 73 + 11) % 100) / 100 * size.width
-            let y = CGFloat((i * 131 + 37) % 100) / 100 * size.height
+            let y = (CGFloat((i * 131 + 37) % 100) / 100 * size.height + time * (near ? 14 : 5)).truncatingRemainder(dividingBy: size.height)
             let a = 0.25 + 0.25 * sin(time * 2 + CGFloat(i))
-            ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1.4, height: 1.4)), with: .color(.white.opacity(a)))
+            let r: CGFloat = near ? 1.7 : 1.1
+            ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: r, height: r)), with: .color(.white.opacity(a + (near ? 0.2 : 0))))
         }
         for e in enemies {
-            WatchAliens.drawAlien(in: &ctx, at: e.pos, size: 15, kind: e.row, phase: time * 2 + CGFloat(e.col) * 0.5)
+            WatchAliens.drawAlien(in: &ctx, at: e.pos, size: 15, kind: e.row, phase: time * 2 + CGFloat(e.col) * 0.5,
+                                  armor: e.hp - 1, flash: e.flash > 0)
         }
         for s in shots {
             ctx.fill(Path(roundedRect: CGRect(x: s.x - 1.2, y: s.y - 4, width: 2.4, height: 8), cornerRadius: 1.2), with: .color(Color(hex: 0xFFF2B0)))
@@ -246,10 +307,10 @@ final class AlienWorld: ArcadeWorld {
         let threats = bombs + enemies.filter { $0.mode == .dive }.map(\.pos)
         if let b = threats.filter({ abs($0.x - px) < 15 && $0.y < py && py - $0.y < 75 }).max(by: { $0.y < $1.y }) {
             let side: CGFloat = px < 30 ? 1 : (px > size.width - 30 ? -1 : (b.x >= px ? -1 : 1))
-            return (px + side * 34 - 12) / max(1, size.width - 24)
+            return (px + side * 34 - 16) / max(1, size.width - 32)
         }
         guard let target = enemies.max(by: { $0.pos.y < $1.pos.y }) else { return 0.5 }
-        return (target.pos.x - 12) / max(1, size.width - 24)
+        return (target.pos.x - 16) / max(1, size.width - 32)
     }
 }
 

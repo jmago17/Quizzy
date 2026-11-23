@@ -11,6 +11,7 @@
 import SwiftUI
 
 enum WatchBubbles {
+    static let skyTop = Color(hex: 0x2B3566)
     static var info: ArcadeInfo {
         ArcadeInfo(id: "bubbles", title: AppLanguage.text("Pompas", "Bubbles"),
                    hint: AppLanguage.text("Gira la Corona", "Turn the Crown"), color: Color(hex: 0xC59BFF))
@@ -67,7 +68,7 @@ final class BubbleWorld: ArcadeWorld {
     private var cleared = false, levelDelay: CGFloat = 0
     private(set) var score = 0
 
-    private var floorY: CGFloat { size.height - 6 }
+    private var floorY: CGFloat { size.height - 24 }   // esquinas redondas: como Goteras
     private var speedUp: CGFloat { 1 + 0.06 * CGFloat(level - 1) }
 
     func reset(size: CGSize) {
@@ -95,7 +96,7 @@ final class BubbleWorld: ArcadeWorld {
         guard size.width > 0, lives > 0 else { return .none }
         var event = ArcadeEvent.none
         time += dt
-        px = 10 + input * (size.width - 20)
+        px = 16 + input * (size.width - 32)
         invuln = max(0, invuln - dt)
         Spark.step(&sparks, dt: dt)
 
@@ -153,8 +154,40 @@ final class BubbleWorld: ArcadeWorld {
     }
 
     func draw(_ ctx: inout GraphicsContext, size: CGSize) {
-        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: size.height - floorY)), with: .color(Color(hex: 0x4E9A5A)))
+        // Prado al atardecer: cielo, sol, nubes, dos filas de colinas y hierba.
+        ctx.fill(Path(CGRect(x: 0, y: -40, width: size.width, height: floorY + 40)),
+                 with: .linearGradient(Gradient(colors: [WatchBubbles.skyTop, Color(hex: 0x5B6FA8), Color(hex: 0xE8A07A)]),
+                                       startPoint: .zero, endPoint: CGPoint(x: 0, y: floorY)))
+        let sun = CGPoint(x: size.width * 0.7, y: floorY - 34)
+        ctx.fill(Path(ellipseIn: CGRect(x: sun.x - 30, y: sun.y - 30, width: 60, height: 60)),
+                 with: .radialGradient(Gradient(colors: [Color(hex: 0xFFE2A0).opacity(0.55), .clear]), center: sun, startRadius: 4, endRadius: 30))
+        ctx.fill(Path(ellipseIn: CGRect(x: sun.x - 9, y: sun.y - 9, width: 18, height: 18)), with: .color(Color(hex: 0xFFE9B8)))
+        for (cx, cy, w) in [(0.2, 0.3, 34.0), (0.62, 0.2, 26.0)] as [(CGFloat, CGFloat, CGFloat)] {
+            let c = CGPoint(x: size.width * cx, y: floorY * cy)
+            for (dx, s) in [(-0.3, 0.6), (0.0, 1.0), (0.32, 0.7)] as [(CGFloat, CGFloat)] {
+                ctx.fill(Path(ellipseIn: CGRect(x: c.x + dx * w - w * s * 0.3, y: c.y - w * s * 0.16, width: w * s * 0.6, height: w * s * 0.32)), with: .color(.white.opacity(0.22)))
+            }
+        }
+        for (k, color) in [Color(hex: 0x3D5C6E), Color(hex: 0x2F6B4A)].enumerated() {
+            var hills = Path()
+            let base = floorY, h: CGFloat = k == 0 ? 30 : 17
+            hills.move(to: CGPoint(x: -10, y: base))
+            for j in 0...4 {
+                let x = size.width * (CGFloat(j) + (k == 0 ? 0.2 : 0.7)) / 4
+                hills.addQuadCurve(to: CGPoint(x: x, y: base - (j % 2 == k ? h * 0.35 : 0)), control: CGPoint(x: x - size.width / 8, y: base - h))
+            }
+            hills.addLine(to: CGPoint(x: size.width + 10, y: base)); hills.closeSubpath()
+            ctx.fill(hills, with: .color(color))
+        }
+        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: size.height - floorY + 30)),
+                 with: .linearGradient(Gradient(colors: [Color(hex: 0x4E9A5A), Color(hex: 0x2C6B3A)]), startPoint: CGPoint(x: 0, y: floorY), endPoint: CGPoint(x: 0, y: size.height)))
         ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: 1.5)), with: .color(Color(hex: 0x7BE08A)))
+        var blades = Path()
+        for k in 0..<22 {
+            let x = CGFloat((k * 47 + 9) % 100) / 100 * size.width
+            blades.move(to: CGPoint(x: x, y: floorY + 1)); blades.addLine(to: CGPoint(x: x + (k % 2 == 0 ? 1.5 : -1.5), y: floorY - 3.5))
+        }
+        ctx.stroke(blades, with: .color(Color(hex: 0x7BE08A)), lineWidth: 1)
         if let tip = harpoonTip {
             var rope = Path()
             var y = floorY, k = 0
@@ -181,14 +214,14 @@ final class BubbleWorld: ArcadeWorld {
     }
 
     func autopilot() -> CGFloat {
-        let span = max(1, size.width - 20)
+        let span = max(1, size.width - 32)
         // Si una pompa baja cerca, se aparta; si no, se pone bajo la más baja.
         if let b = balls.filter({ abs($0.p.x - px) < WatchBubbles.radius[$0.tier] + 16 && $0.p.y > floorY - 62 }).max(by: { $0.p.y < $1.p.y }) {
             let away: CGFloat = px < 34 ? 1 : (px > size.width - 34 ? -1 : (b.v.dx > 0 ? -1 : 1))
-            return (px + away * 40 - 10) / span
+            return (px + away * 40 - 16) / span
         }
         guard let target = balls.max(by: { $0.p.y < $1.p.y }) else { return 0.5 }
-        return (target.p.x + target.v.dx * 0.3 - 10) / span
+        return (target.p.x + target.v.dx * 0.3 - 16) / span
     }
 }
 

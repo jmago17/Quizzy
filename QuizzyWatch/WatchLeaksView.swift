@@ -16,6 +16,7 @@ enum WatchLeaks {
                    hint: AppLanguage.text("Gira la Corona", "Turn the Crown"), color: Color(hex: 0x6FB7F2))
     }
     static let water = Color(hex: 0x6FB7F2)
+    static let wallTop = Color(hex: 0x2A2331)
 
     static func drawDrop(in ctx: inout GraphicsContext, at c: CGPoint, size s: CGFloat) {
         var drop = Path()
@@ -151,8 +152,55 @@ final class LeakWorld: ArcadeWorld {
     }
 
     func draw(_ ctx: inout GraphicsContext, size: CGSize) {
-        // Suelo y charcos.
-        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: size.height - floorY)), with: .color(Color(hex: 0x3A4254)))
+        // Sótano: pared de ladrillo con una mancha de humedad, ventanuco, estante y suelo de baldosa.
+        ctx.fill(Path(CGRect(x: 0, y: -40, width: size.width, height: floorY + 40)),
+                 with: .linearGradient(Gradient(colors: [WatchLeaks.wallTop, Color(hex: 0x3A3142)]), startPoint: .zero, endPoint: CGPoint(x: 0, y: floorY)))
+        var mortar = Path()
+        var row = 0
+        for y in stride(from: CGFloat(4), to: floorY, by: 11) {
+            mortar.move(to: CGPoint(x: 0, y: y)); mortar.addLine(to: CGPoint(x: size.width, y: y))
+            for x in stride(from: CGFloat(row % 2 == 0 ? 0 : 12), to: size.width, by: 24) {
+                mortar.move(to: CGPoint(x: x, y: y)); mortar.addLine(to: CGPoint(x: x, y: y + 11))
+            }
+            row += 1
+        }
+        ctx.stroke(mortar, with: .color(.black.opacity(0.22)), lineWidth: 1)
+        ctx.fill(Path(ellipseIn: CGRect(x: size.width * 0.5, y: 22, width: 70, height: 44)), with: .color(Color(hex: 0x1F3A4A).opacity(0.35)))
+        // Ventanuco con luz de luna.
+        let win = CGRect(x: size.width - 52, y: floorY - 96, width: 30, height: 22)
+        ctx.fill(Path(roundedRect: win.insetBy(dx: -2.5, dy: -2.5), cornerRadius: 3), with: .color(Color(hex: 0x1B1620)))
+        ctx.fill(Path(roundedRect: win, cornerRadius: 2), with: .linearGradient(Gradient(colors: [Color(hex: 0x4E6E9A), Color(hex: 0x2B3F60)]),
+                                                                              startPoint: CGPoint(x: win.minX, y: win.minY), endPoint: CGPoint(x: win.maxX, y: win.maxY)))
+        ctx.fill(Path(ellipseIn: CGRect(x: win.maxX - 12, y: win.minY + 4, width: 7, height: 7)), with: .color(Color(hex: 0xF4EFD0).opacity(0.9)))
+        ctx.fill(Path(CGRect(x: win.midX - 0.8, y: win.minY, width: 1.6, height: win.height)), with: .color(Color(hex: 0x1B1620)))
+        var beam = Path()
+        beam.move(to: CGPoint(x: win.minX, y: win.maxY)); beam.addLine(to: CGPoint(x: win.maxX, y: win.maxY))
+        beam.addLine(to: CGPoint(x: win.maxX - 34, y: floorY)); beam.addLine(to: CGPoint(x: win.minX - 46, y: floorY)); beam.closeSubpath()
+        ctx.fill(beam, with: .linearGradient(Gradient(colors: [Color(hex: 0xBFD6FF).opacity(0.13), .clear]),
+                                             startPoint: CGPoint(x: 0, y: win.maxY), endPoint: CGPoint(x: 0, y: floorY)))
+        // Estante con tarros.
+        let shelfY = floorY - 62
+        ctx.fill(Path(CGRect(x: 22, y: shelfY, width: 42, height: 3)), with: .color(Color(hex: 0x6E4E33)))
+        ctx.fill(Path(CGRect(x: 26, y: shelfY + 3, width: 2, height: 7)), with: .color(Color(hex: 0x4A3322)))
+        ctx.fill(Path(CGRect(x: 58, y: shelfY + 3, width: 2, height: 7)), with: .color(Color(hex: 0x4A3322)))
+        for (k, color) in [Color(hex: 0xB9773E), Color(hex: 0x6FA07A), Color(hex: 0x8D97A8)].enumerated() {
+            let jar = CGRect(x: 27 + CGFloat(k) * 12, y: shelfY - 10 + CGFloat(k % 2) * 2, width: 8, height: 10 - CGFloat(k % 2) * 2)
+            ctx.fill(Path(roundedRect: jar, cornerRadius: 2), with: .color(color.opacity(0.85)))
+            ctx.fill(Path(CGRect(x: jar.minX + 1, y: jar.minY - 1.5, width: 6, height: 2)), with: .color(Color(hex: 0x2A2630)))
+        }
+        // Suelo de baldosas y charcos.
+        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: size.height - floorY + 30)),
+                 with: .linearGradient(Gradient(colors: [Color(hex: 0x4A5263), Color(hex: 0x2B303B)]), startPoint: CGPoint(x: 0, y: floorY), endPoint: CGPoint(x: 0, y: size.height)))
+        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: 1.5)), with: .color(.white.opacity(0.25)))
+        var tiles = Path()
+        for x in stride(from: CGFloat(-10), to: size.width + 30, by: 26) {
+            tiles.move(to: CGPoint(x: x, y: floorY)); tiles.addLine(to: CGPoint(x: x - 12, y: size.height + 10))
+        }
+        ctx.stroke(tiles, with: .color(.black.opacity(0.25)), lineWidth: 1)
+        // Abrazaderas que sujetan la tubería al techo.
+        for bx in [56, size.width - 56] as [CGFloat] {
+            ctx.fill(Path(CGRect(x: bx - 1.2, y: -10, width: 2.4, height: Self.pipeY + 8)), with: .color(Color(hex: 0x5E687A)))
+        }
         for p in puddles {
             ctx.fill(Path(ellipseIn: CGRect(x: p.x - 13, y: floorY - 2.5, width: 26, height: 5)), with: .color(WatchLeaks.water.opacity(min(1, p.life))))
         }

@@ -66,7 +66,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .planes: return AppLanguage.text("Pilota con la Corona", "Fly with the Crown")
         case .bubbles: return AppLanguage.text("Explota pompas con la Corona", "Pop bubbles with the Crown")
         case .leaks: return AppLanguage.text("Recoge gotas con la Corona", "Catch drops with the Crown")
-        case .ink: return AppLanguage.text("Apunta con la Corona y toca", "Aim with the Crown and tap")
+        case .ink: return AppLanguage.text("Apunta, carga y suelta", "Aim, charge and release")
         case .safe: return AppLanguage.text("Abre cajas a tacto", "Crack safes by feel")
         case .drift: return AppLanguage.text("Conduce con la Corona", "Steer with the Crown")
         }
@@ -75,10 +75,15 @@ enum WatchArcade: String, Hashable, CaseIterable {
     /// franja de la hora no corte el dibujo.
     var backdrop: AnyShapeStyle {
         switch self {
-        case .planes: return AnyShapeStyle(Color(hex: 0x14355A))
+        case .planes: return AnyShapeStyle(WatchPlanes.band)
         case .jump: return AnyShapeStyle(Color(hex: 0x0E3A4F))    // fondo del mar: el pulpo rosa destaca
         case .drift: return AnyShapeStyle(WatchDrift.grass)       // hierba lisa: la franja de la hora no corta
-        case .aliens, .bubbles, .leaks, .ink, .safe: return AnyShapeStyle(color.gradient.opacity(0.35))
+        // Colores lisos iguales al borde superior del dibujo de cada juego.
+        case .leaks: return AnyShapeStyle(WatchLeaks.wallTop)
+        case .ink: return AnyShapeStyle(WatchInk.shallow)
+        case .safe: return AnyShapeStyle(WatchSafe.steelTop)
+        case .bubbles: return AnyShapeStyle(WatchBubbles.skyTop)
+        case .aliens: return AnyShapeStyle(color.gradient.opacity(0.35))
         }
     }
     /// Icono de la portada: el protagonista de cada juego, dibujado.
@@ -91,7 +96,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .bubbles: WatchBubbles.drawBubble(in: &ctx, at: c, radius: size.height * 0.42, tier: 0)
         case .leaks: WatchLeaks.drawDrop(in: &ctx, at: CGPoint(x: c.x, y: c.y + 2), size: size.height * 0.42)
         case .ink: WatchInk.drawBlob(in: &ctx, at: c, radius: size.height * 0.36)
-        case .safe: WatchSafe.drawDial(in: &ctx, center: c, radius: size.height * 0.46, pos: 0, numbers: false)
+        case .safe: WatchSafe.drawDial(in: &ctx, center: c, radius: size.height * 0.46, pos: 0, detail: false)
         case .drift: WatchDrift.drawCar(in: &ctx, at: c, size: size.height * 0.92, angle: 0.3, body: Color(hex: 0xF0766B))
         }
     }

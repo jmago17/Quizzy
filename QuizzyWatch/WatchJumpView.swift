@@ -3,7 +3,7 @@
 //  Brinco: saltador vertical sin fin, solo en el reloj. Un pulpo rebota solo de roca en roca;
 //  el jugador solo decide hacia dónde: la Corona lo mueve de lado a lado (salir por un borde =
 //  entrar por el otro). Alternativa: arrastrar el dedo. Puntos = altura (+5 por cangrejo); caerse = fin.
-//  Apoyos: alga (normal), azul (se mueve), arena (aguanta un salto) y anémona (rebote largo).
+//  Apoyos: alga (normal), azul (se mueve), arena (aguanta un salto) y corriente de agua (chorro: salto largo).
 //  Malos: cangrejos que pasean por algunos apoyos. Caerles encima los aplasta; tocarlos de lado
 //  o desde abajo aturde al pulpo, que ya no se agarra a nada y cae.
 //  Todo se pinta en un Canvas; el estado de la partida es una clase fuera de SwiftUI (`JumpWorld`)
@@ -130,7 +130,7 @@ final class JumpWorld {
         var vx: CGFloat = 0
         var spring = false
         var broken = false
-        var springKick: CGFloat = 0   // 1 → 0 tras usar la anémona (animación)
+        var springKick: CGFloat = 0   // 1 → 0 tras usar la corriente (animación)
         var crab: CGFloat?            // cangrejo: desplazamiento respecto al centro del apoyo
         var crabDir: CGFloat = 1
     }
@@ -144,11 +144,11 @@ final class JumpWorld {
     #if DEBUG
     /// QW_JUMP_CRABS=1 (capturas): cangrejos desde el principio y en casi la mitad de los apoyos.
     private static let manyCrabs = ProcessInfo.processInfo.environment["QW_JUMP_CRABS"] == "1"
-    static var crabsFrom: CGFloat { manyCrabs ? 60 : 320 }
-    static var crabBase: Double { manyCrabs ? 0.45 : 0.10 }
+    static var crabsFrom: CGFloat { manyCrabs ? 60 : 700 }
+    static var crabBase: Double { manyCrabs ? 0.45 : 0.05 }
     #else
-    static let crabsFrom: CGFloat = 320
-    static let crabBase = 0.10
+    static let crabsFrom: CGFloat = 700
+    static let crabBase = 0.05
     #endif
 
     private(set) var size: CGSize = .zero
@@ -188,20 +188,24 @@ final class JumpWorld {
 
     private func fill() {
         while topY < camY + size.height + 80 {
-            let d = min(1, topY / 4500)   // dificultad 0…1 con la altura
-            topY += CGFloat.random(in: (26 + 10 * d)...(44 + 22 * d), using: &rng)   // siempre < 70 (alcanzable)
-            let w: CGFloat = 44 - 12 * d
+            // Dificultad 0…1 con la altura. Hasta el 2026-11-23 llegaba a 1 en 4500 pt (450 puntos) y
+            // «se ponía difícil muy pronto»: ahora tarda 14 000 pt y además entra despacio (curva
+            // cuadrática al principio). Los primeros 500 pt son solo algas anchas, para coger el ritmo.
+            let t = min(1, max(0, topY - 500) / 13500)
+            let d = t * t * (3 - 2 * t)
+            topY += CGFloat.random(in: (24 + 12 * d)...(38 + 28 * d), using: &rng)   // siempre < 70 (alcanzable)
+            let w: CGFloat = 50 - 18 * d
             var p = Platform(x: CGFloat.random(in: (w / 2 + 4)...(size.width - w / 2 - 4), using: &rng), y: topY, w: w, kind: .leaf)
             let roll = Double.random(in: 0..<1, using: &rng)
-            if roll < 0.10 + 0.22 * d {
+            if topY > 500, roll < 0.05 + 0.27 * d {
                 p.kind = .moving
                 p.vx = CGFloat.random(in: 28...(40 + 30 * d), using: &rng) * (Bool.random(using: &rng) ? 1 : -1)
-            } else if roll < 0.16 + 0.40 * d {
+            } else if topY > 900, roll < 0.08 + 0.48 * d {
                 p.kind = .fragile
             } else if Double.random(in: 0..<1, using: &rng) < 0.09 {
                 p.spring = true
-            } else if topY > Self.crabsFrom, Double.random(in: 0..<1, using: &rng) < Self.crabBase + 0.12 * d {
-                // Cangrejo: solo en apoyos firmes y sin anémona, y nunca en los primeros saltos.
+            } else if topY > Self.crabsFrom, Double.random(in: 0..<1, using: &rng) < Self.crabBase + 0.17 * d {
+                // Cangrejo: solo en apoyos firmes y sin corriente, y nunca en los primeros saltos.
                 p.crab = 0
                 p.crabDir = Bool.random(using: &rng) ? 1 : -1
             }
@@ -453,7 +457,30 @@ struct WatchJumpView: View {
         let w = world
         func sy(_ worldY: CGFloat) -> CGFloat { size.height - (worldY - w.camY) }
 
-        // Burbujas con paralaje (posiciones fijas por índice): es el fondo del mar.
+        // Fondo del mar: claridad arriba, rayos de luz y columnas de algas lejanas con paralaje.
+        ctx.fill(Path(CGRect(x: 0, y: -40, width: size.width, height: size.height + 80)),
+                 with: .linearGradient(Gradient(colors: [.clear, Color(hex: 0x061E2B).opacity(0.75)]),
+                                       startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
+        for k in 0..<3 {
+            let x0 = size.width * (0.3 + CGFloat(k) * 0.3) + sin(w.time * 0.4 + CGFloat(k)) * 6
+            var ray = Path()
+            ray.move(to: CGPoint(x: x0, y: -40)); ray.addLine(to: CGPoint(x: x0 + 18, y: -40))
+            ray.addLine(to: CGPoint(x: x0 - 30, y: size.height)); ray.addLine(to: CGPoint(x: x0 - 60, y: size.height)); ray.closeSubpath()
+            ctx.fill(ray, with: .linearGradient(Gradient(colors: [.white.opacity(0.07), .white.opacity(0)]),
+                                                startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
+        }
+        for k in 0..<5 {
+            let span = size.height + 120
+            let x = CGFloat((k * 59 + 17) % 100) / 100 * size.width
+            let top = (CGFloat((k * 83 + 41) % 100) / 100 * span + w.camY * 0.22).truncatingRemainder(dividingBy: span) - 60
+            let sway = sin(w.time * 1.1 + CGFloat(k) * 1.9) * 4
+            var kelp = Path()
+            kelp.move(to: CGPoint(x: x - 3, y: top + 64))
+            kelp.addQuadCurve(to: CGPoint(x: x + sway, y: top), control: CGPoint(x: x - 8 - sway * 0.4, y: top + 32))
+            kelp.addQuadCurve(to: CGPoint(x: x + 3, y: top + 64), control: CGPoint(x: x + 8 + sway * 0.6, y: top + 32))
+            ctx.fill(kelp, with: .color(Color(hex: 0x1C6A5A).opacity(0.35)))
+        }
+        // Burbujas con paralaje (posiciones fijas por índice).
         for i in 0..<18 {
             let x = CGFloat((i * 73 + 11) % 100) / 100 * size.width + sin(w.time * 1.5 + CGFloat(i)) * 2
             let base = CGFloat((i * 131 + 37) % 100) / 100 * size.height
@@ -487,15 +514,27 @@ struct WatchJumpView: View {
                 ctx.stroke(crack, with: .color(Color(hex: 0x5A4030)), lineWidth: 1.2)
             }
             if p.spring {
-                // Anémona: rebote largo. Se aplasta un instante al usarla.
-                let h: CGFloat = 7 - 3 * p.springKick
-                ctx.fill(Path(CGRect(x: p.x - 0.75, y: top - h + 2, width: 1.5, height: h - 2)), with: .color(Color(hex: 0x4E9A5A)))
-                for k in 0..<5 {
-                    let a = CGFloat(k) / 5 * 2 * .pi
-                    ctx.fill(Path(ellipseIn: CGRect(x: p.x + cos(a) * 2.6 - 2, y: top - h + sin(a) * 2.6 - 2, width: 4, height: 4)),
-                             with: .color(WatchJump.color))
+                // Corriente de agua (antes una anémona, que no se entendía): un chorro que sube
+                // desde el apoyo. Rayas que ascienden, puntas de flecha y una boca en el alga.
+                let jet = Color(hex: 0x9FE3FF)
+                let boost = 1 + p.springKick * 0.6
+                ctx.fill(Path(roundedRect: CGRect(x: p.x - 7, y: top - 1.5, width: 14, height: 3), cornerRadius: 1.5), with: .color(jet))
+                for k in 0..<3 {
+                    let lx = p.x + CGFloat(k - 1) * 4.5
+                    let phase = (w.time * 1.6 * boost + CGFloat(k) * 0.37).truncatingRemainder(dividingBy: 1)
+                    let y0 = top - 3 - phase * 22, len: CGFloat = 7
+                    var streak = Path()
+                    streak.move(to: CGPoint(x: lx, y: y0))
+                    streak.addLine(to: CGPoint(x: lx + sin(w.time * 5 + CGFloat(k)) * 0.8, y: y0 - len))
+                    ctx.stroke(streak, with: .color(jet.opacity(0.9 * (1 - phase))), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
                 }
-                ctx.fill(Path(ellipseIn: CGRect(x: p.x - 1.6, y: top - h - 1.6, width: 3.2, height: 3.2)), with: .color(Color(hex: 0xF2D45C)))
+                for k in 0..<2 {
+                    let phase = (w.time * 1.1 * boost + CGFloat(k) * 0.5).truncatingRemainder(dividingBy: 1)
+                    let ay = top - 8 - phase * 20
+                    var arrow = Path()
+                    arrow.move(to: CGPoint(x: p.x - 4, y: ay + 3)); arrow.addLine(to: CGPoint(x: p.x, y: ay - 1)); arrow.addLine(to: CGPoint(x: p.x + 4, y: ay + 3))
+                    ctx.stroke(arrow, with: .color(.white.opacity(0.85 * (1 - phase))), style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+                }
             }
         }
 

@@ -366,3 +366,33 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
 - 2026-11-23 — **Fuera Trivial (10 en 60) y Cifras del código**: ya no se ofrecían. Borrados `TriviaPuzzle`/`TriviaGame`,
   `NumbersPuzzle`/`NumbersSolver`/`NumbersGame`, `DifferencesPuzzle` (sin uso) y `trivia_questions.json` (y su entrada en el
   .xcodeproj). Se conservan los `case .trivia/.numbers/.ladder` de `PuzzleKind` para decodificar datos antiguos.
+- 2026-11-23 — **Reloj: repaso de los ocho juegos tras probar el build 40** (lista de Josu, punto por punto).
+  - **Derrape:** «no hay una orientación que coincida con la curva». Causa: el desplazamiento lateral era
+    `v·sin(ángulo)·1,5`, así que para seguir una curva el coche tenía que ir MENOS girado que la carretera. Ahora
+    `vx = v·tan(ángulo)`: coche paralelo al arcén = sigue la curva. Carretera con pendiente acotada (`maxSlope` 0,5) y
+    ondas más largas. Poner el coche recto no era problema (dicho por Josu): el «centro» de la Corona no hace falta.
+  - **Brinco:** la dificultad llegaba al máximo en 4500 pt de altura; ahora en 14 000 y con arranque suave; los primeros
+    500 pt son solo algas anchas; móviles desde 500, frágiles desde 900, cangrejos desde 700 y menos. La flor/anémona
+    del salto largo es ahora una **corriente de agua** (chorro con rayas y flechas que suben). Fondo con rayos y algas.
+  - **Caja fuerte, rehecha:** SOLO háptica, sin pista visual (pedido expreso; antes la marca se encendía). Un clic propio
+    por número (`ArcadeEvent.detent` = `.click`; clics del sistema apagados con `crownHaptics = false`) y uno más grave
+    en la clave (`.notch` = `WKHapticType.start`; si resulta exagerado o no se distingue, cambiarlo en `WHaptics.notch`).
+    Se fija TOCANDO la pantalla (antes, quedándose quieto: sin pista visual eso permitía barrer despacio sin notar
+    nada); tocar fuera cuesta 3 s. `ticksPerSpan` 40 → 24 para separar los clics. Diseño nuevo: puerta de acero,
+    bisel y pomo metálicos, aro dorado de tiempo, pilotos de pasador.
+  - **Tintazo:** disparo nuevo. Se MANTIENE el dedo para cargar (1,5 s de mínimo a máximo; barra y trayectoria que
+    crece) y se suelta para disparar; apuntando hay una flecha fija. `ArcadeWorld.usesPress`/`press(_:)` en el escenario.
+    Corrige mi descarte del 22: cargar va después de apuntar, no a la vez. Fondo marino, rocas con musgo, cartel de nivel.
+  - **Marcianitos:** 7 formaciones que rotan por oleada (`AlienWorld.shapes`) y 3 vaivenes; blindados de 2 impactos
+    desde la 2.ª oleada y de 3 desde la 4.ª (casco gris/dorado). Fondo con nebulosa, planeta y estrellas en dos capas.
+  - **Escuadrón:** pantallas = zonas. Cada jefe derribado cambia de zona (mar → desierto → bosque → ciudad → …) con
+    suelo y decorado propios y cartel «ZONA n». Cañones en tierra (`Turret`, 2 impactos, 30 puntos, disparan apuntando).
+    Gancho DEBUG `QW_ZONE=n`.
+  - **Goteras:** sótano (ladrillo, ventanuco con luz, estante, baldosas). **Pompas:** prado al atardecer.
+  - De paso, esquinas redondas: nave de Marcianitos, avión de Escuadrón y erizo/suelo de Pompas suben y se meten hacia
+    dentro, como se hizo con Goteras. El fondo de la franja de la hora es ahora un color liso igual al borde del dibujo.
+  - Verificado en Watch 42 mm temporal (borrado): los ocho con piloto automático, ≥ 61 dibujados/s, capturas con máscara
+    de todos (las cuatro zonas de Escuadrón con `QW_ZONE`). **Sin verificar:** el cambio de zona al derribar un jefe (el
+    piloto murió antes; solo se vio cada zona por separado), TODA la háptica de Caja fuerte (es el juego entero),
+    cargar/soltar con el dedo real, el volante con la Corona real, y la dificultad de todo. El piloto de Pompas pierde
+    en ~10 s: no sé si es el piloto o que al subir el suelo quedó más difícil.

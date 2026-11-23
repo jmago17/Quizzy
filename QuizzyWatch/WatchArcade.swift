@@ -14,8 +14,9 @@
 
 import SwiftUI
 
-/// `notch`: toque háptico distinto al clic normal (la muesca de Caja fuerte).
-enum ArcadeEvent { case none, bonus, notch, hit, dead }
+/// Caja fuerte: `detent` = clic de cada posición del dial, `notch` = el clic grave de la clave,
+/// `success` = pasador fijado.
+enum ArcadeEvent { case none, bonus, detent, notch, success, hit, dead }
 
 protocol ArcadeWorld: AnyObject {
     var score: Int { get }
@@ -31,11 +32,20 @@ protocol ArcadeWorld: AnyObject {
     func tap()
     /// `true`: la Corona no tiene topes y `input` da la vuelta de 1 a 0 (el dial de Caja fuerte).
     static var crownWraps: Bool { get }
+    /// `false`: sin los clics del sistema al girar (el juego da los suyos, uno por posición).
+    static var crownHaptics: Bool { get }
+    /// `true`: el juego quiere saber cuándo se apoya y se levanta el dedo (`press`); entonces el
+    /// arrastre ya no mueve la Corona ni hay `tap()`.
+    static var usesPress: Bool { get }
+    func press(_ down: Bool)
 }
 
 extension ArcadeWorld {
     func tap() {}
+    func press(_ down: Bool) {}
     static var crownWraps: Bool { false }
+    static var crownHaptics: Bool { true }
+    static var usesPress: Bool { false }
 }
 
 struct ArcadeInfo {
@@ -140,6 +150,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
     @State private var phase = Phase.ready
     @State private var crown = 0.5
     @State private var dragStart: Double?
+    @State private var pressed = false
     @State private var score = 0
     @State private var record = false
     @State private var redraw = 0
@@ -174,15 +185,27 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
             }
             .overlay { overlay }
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 4)
+            .gesture(DragGesture(minimumDistance: World.usesPress ? 0 : 4)
                 .onChanged { v in
+                    if World.usesPress {
+                        if !pressed { pressed = true; if phase == .playing { world.press(true) } }
+                        return
+                    }
                     let start = dragStart ?? crown
                     dragStart = start
                     let raw = start + Double(v.translation.width / max(1, geo.size.width))
                     crown = World.crownWraps ? raw - raw.rounded(.down) : min(1, max(0, raw))
                 }
-                .onEnded { _ in dragStart = nil })
-            .onTapGesture { if phase == .ready { begin() } else if phase == .playing { world.tap() } }
+                .onEnded { _ in
+                    dragStart = nil
+                    guard World.usesPress else { return }
+                    pressed = false
+                    if phase == .ready { begin() } else if phase == .playing { world.press(false) }
+                })
+            .onTapGesture {
+                guard !World.usesPress else { return }
+                if phase == .ready { begin() } else if phase == .playing { world.tap() }
+            }
             .onAppear {
                 geoSize = geo.size
                 world.reset(size: geo.size); redraw += 1; crownFocus = true
@@ -204,7 +227,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         .navigationTitle(phase == .playing ? "" : (phase == .ready ? info.title : "\(score)"))
         .focusable()
         .focused($crownFocus)
-        .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: World.crownWraps, isHapticFeedbackEnabled: true)
+        .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: World.crownWraps, isHapticFeedbackEnabled: World.crownHaptics)
         .onChange(of: scene) { _, new in if new != .active { clock.last = nil } }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(info.title)
@@ -267,7 +290,9 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         switch world.step(dt: dt, input: CGFloat(crown)) {
         case .none: break
         case .bonus: WHaptics.tick()
+        case .detent: WHaptics.tick()
         case .notch: WHaptics.notch()
+        case .success: WHaptics.success()
         case .hit: WHaptics.warning()
         case .dead:
             phase = .over

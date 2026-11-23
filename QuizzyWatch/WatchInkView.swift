@@ -1,8 +1,12 @@
 //
 //  WatchInkView.swift — Quizzy Watch
-//  Tintazo: el pulpo dispara tinta a los cangrejos. La Corona elige el ÁNGULO; la fuerza sube y
-//  baja sola (se ve en la línea de puntos, que se alarga y se encoge) y un toque en la pantalla
-//  dispara con la que haya en ese momento. Por turnos: no hay prisa.
+//  Tintazo: el pulpo dispara tinta a los cangrejos. La Corona elige el ÁNGULO (una flecha lo
+//  marca). Para disparar se MANTIENE el dedo en la pantalla: la fuerza carga despacio (barra
+//  sobre el pulpo y línea de puntos que crece) y al SOLTAR sale el disparo. Si se mantiene de
+//  más, la fuerza vuelve a bajar. Por turnos: no hay prisa.
+//  (Hasta el 2026-11-23 la fuerza oscilaba sola y se disparaba con un toque: Josu lo encontró
+//  rápido y poco intuitivo. Cargar y soltar va DESPUÉS de apuntar, así que no hay que girar la
+//  Corona con el dedo apoyado, que era el motivo por el que se había descartado.)
 //  Cada nivel da (cangrejos + 2) disparos. Limpiarlo: 10 por cangrejo y 5 por disparo sobrante.
 //  Quedarse sin tinta con cangrejos vivos cuesta una vida (3) y el nivel se repite con otro reparto.
 //  Rocas y repisas paran la tinta. No hay estructuras que se derrumben: a propósito (ver CLAUDE.md).
@@ -15,9 +19,10 @@ import SwiftUI
 enum WatchInk {
     static var info: ArcadeInfo {
         ArcadeInfo(id: "ink", title: AppLanguage.text("Tintazo", "Ink Shot"),
-                   hint: AppLanguage.text("Apunta y toca", "Aim and tap"), color: Color(hex: 0xB58CFF))
+                   hint: AppLanguage.text("Apunta, mantén y suelta", "Aim, hold, release"), color: Color(hex: 0xB58CFF))
     }
     static let ink = Color(hex: 0xB58CFF)
+    static let deep = Color(hex: 0x0A2A45), shallow = Color(hex: 0x14506E)
 
     static func drawBlob(in ctx: inout GraphicsContext, at c: CGPoint, radius r: CGFloat) {
         ctx.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)), with: .color(ink))
@@ -34,7 +39,8 @@ final class InkWorld: ArcadeWorld {
 
     static let gravity: CGFloat = 260
     static let vMin: CGFloat = 115, vMax: CGFloat = 240
-    static let period: CGFloat = 1.7          // segundos de un vaivén completo de la fuerza
+    static let chargeTime: CGFloat = 1.5      // segundos de mínimo a máximo manteniendo el dedo
+    static var usesPress: Bool { true }
     private static let hitRadius: CGFloat = 10
 
     private var size: CGSize = .zero
@@ -51,6 +57,10 @@ final class InkWorld: ArcadeWorld {
     private var wait: CGFloat = 0
     private var pending: Pending?
     private var plan: (input: CGFloat, v: CGFloat)?
+    private var charging = false
+    private var charge: CGFloat = 0           // segundos con el dedo apoyado
+    private var banner: CGFloat = 0
+    private var bannerText = ""
     private(set) var score = 0
 
     // Suelo a 24 pt del fondo y todo a 15 pt de los lados: las esquinas de la pantalla son redondas.
@@ -58,10 +68,12 @@ final class InkWorld: ArcadeWorld {
     private var muzzle: CGPoint { CGPoint(x: 27, y: floorY - 19) }
     private var angle: CGFloat { Self.angle(input) }
     private static func angle(_ input: CGFloat) -> CGFloat { (12 + 68 * min(1, max(0, input))) * .pi / 180 }
-    private var power: CGFloat {
-        let p = (time / Self.period).truncatingRemainder(dividingBy: 1)
-        return Self.vMin + (Self.vMax - Self.vMin) * (1 - abs(2 * p - 1))
+    /// Fuerza cargada, 0…1: sube en `chargeTime` y, si se sigue manteniendo, baja y vuelve a subir.
+    private var chargeLevel: CGFloat {
+        let p = (charge / (Self.chargeTime * 2)).truncatingRemainder(dividingBy: 1)
+        return 1 - abs(2 * p - 1)
     }
+    private var power: CGFloat { Self.vMin + (Self.vMax - Self.vMin) * chargeLevel }
     private func launch(angle: CGFloat, v: CGFloat) -> Shot {
         Shot(p: muzzle, v: CGVector(dx: cos(angle) * v, dy: -sin(angle) * v))
     }
@@ -70,6 +82,7 @@ final class InkWorld: ArcadeWorld {
         self.size = size
         lives = 3; level = 0; score = 0; time = 0; wait = 0; pending = nil
         shot = nil; splats = []; sparks = []
+        charging = false; charge = 0; banner = 1.6; bannerText = AppLanguage.text("Nivel 1", "Level 1")
         buildLevel()
     }
 
@@ -138,18 +151,28 @@ final class InkWorld: ArcadeWorld {
         return nil
     }
 
-    func tap() {
-        guard shot == nil, wait <= 0, shotsLeft > 0, lives > 0 else { return }
-        shotsLeft -= 1
-        shot = launch(angle: angle, v: power)
-        plan = nil
-        WHaptics.tick()
+    private var canShoot: Bool { shot == nil && wait <= 0 && shotsLeft > 0 && lives > 0 }
+
+    func press(_ down: Bool) {
+        if down {
+            guard canShoot else { return }
+            charging = true; charge = 0
+        } else if charging {
+            charging = false
+            guard canShoot else { return }
+            shotsLeft -= 1
+            shot = launch(angle: angle, v: power)
+            plan = nil
+            WHaptics.tick()
+        }
     }
 
     func step(dt: CGFloat, input: CGFloat) -> ArcadeEvent {
         guard size.width > 0, lives > 0 else { return .none }
         self.input = input
         time += dt
+        banner = max(0, banner - dt)
+        if charging { charge += dt }
         Spark.step(&sparks, dt: dt)
         for i in splats.indices { splats[i].life -= dt }
         splats.removeAll { $0.life <= 0 }
@@ -159,6 +182,8 @@ final class InkWorld: ArcadeWorld {
             if wait <= 0, let what = pending {
                 pending = nil
                 if what == .nextLevel { level += 1 }
+                banner = 1.4
+                bannerText = what == .nextLevel ? AppLanguage.text("Nivel \(level + 1)", "Level \(level + 1)") : AppLanguage.text("Otra vez", "Try again")
                 buildLevel()
             }
             return .none
@@ -194,39 +219,124 @@ final class InkWorld: ArcadeWorld {
     }
 
     func draw(_ ctx: inout GraphicsContext, size: CGSize) {
-        // Fondo de arena.
-        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: size.height - floorY)), with: .color(Color(hex: 0x8A7350)))
-        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: 2)), with: .color(Color(hex: 0xB89C6E)))
-        for r in rocks {
-            ctx.fill(Path(roundedRect: r, cornerRadius: 2.5), with: .color(Color(hex: 0x5E687A)))
-            ctx.fill(Path(CGRect(x: r.minX + 1, y: r.minY + 1, width: r.width - 2, height: 1.2)), with: .color(.white.opacity(0.3)))
-        }
+        drawSea(&ctx, size: size)
+        for r in rocks { drawRock(&ctx, r) }
         for s in splats {
-            ctx.fill(Path(ellipseIn: CGRect(x: s.p.x - 6, y: s.p.y - 2.5, width: 12, height: 5)), with: .color(WatchInk.ink.opacity(min(0.8, s.life))))
+            ctx.fill(Path(ellipseIn: CGRect(x: s.p.x - 7, y: s.p.y - 3, width: 14, height: 6)), with: .color(WatchInk.ink.opacity(min(0.8, s.life))))
+            ctx.fill(Path(ellipseIn: CGRect(x: s.p.x + 5, y: s.p.y - 5, width: 4, height: 3)), with: .color(WatchInk.ink.opacity(min(0.6, s.life))))
         }
         for t in targets where t.alive { Crab.draw(in: &ctx, base: t.base, size: 16, phase: time * 2) }
 
         if lives > 0 {
-            // Puntería: el principio de la trayectoria con la fuerza de este instante.
-            if shot == nil, wait <= 0, shotsLeft > 0 {
-                var s = launch(angle: angle, v: power)
-                for i in 1...24 {
-                    s.v.dy += Self.gravity / 60; s.p.x += s.v.dx / 60; s.p.y += s.v.dy / 60
-                    if i % 3 == 0 {
-                        let r = 1.7 - CGFloat(i) * 0.03
-                        ctx.fill(Path(ellipseIn: CGRect(x: s.p.x - r, y: s.p.y - r, width: r * 2, height: r * 2)), with: .color(.white.opacity(0.85)))
+            if canShoot {
+                if charging {
+                    // Cargando: la trayectoria con la fuerza de este instante, cada vez más larga.
+                    var s = launch(angle: angle, v: power)
+                    let steps = 14 + Int(chargeLevel * 34)
+                    for i in 1...steps {
+                        s.v.dy += Self.gravity / 60; s.p.x += s.v.dx / 60; s.p.y += s.v.dy / 60
+                        if i % 3 == 0 {
+                            let r = max(0.9, 2 - CGFloat(i) * 0.022)
+                            ctx.fill(Path(ellipseIn: CGRect(x: s.p.x - r, y: s.p.y - r, width: r * 2, height: r * 2)), with: .color(.white.opacity(0.9)))
+                        }
                     }
+                } else {
+                    // Apuntando: flecha fija en la dirección del disparo.
+                    let a = angle, from = muzzle
+                    let tip = CGPoint(x: from.x + cos(a) * 30, y: from.y - sin(a) * 30)
+                    var aim = Path()
+                    aim.move(to: CGPoint(x: from.x + cos(a) * 9, y: from.y - sin(a) * 9)); aim.addLine(to: tip)
+                    ctx.stroke(aim, with: .color(.white.opacity(0.85)), style: StrokeStyle(lineWidth: 1.6, lineCap: .round, dash: [3, 4]))
+                    var head = Path()
+                    head.move(to: CGPoint(x: tip.x + cos(a + 2.6) * 6, y: tip.y - sin(a + 2.6) * 6)); head.addLine(to: tip)
+                    head.addLine(to: CGPoint(x: tip.x + cos(a - 2.6) * 6, y: tip.y - sin(a - 2.6) * 6))
+                    ctx.stroke(head, with: .color(.white), style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
                 }
             }
-            Octopus.draw(in: &ctx, feet: CGPoint(x: 24, y: floorY), size: 22, squash: shot != nil ? 0.5 : 0, time: time)
+            Octopus.draw(in: &ctx, feet: CGPoint(x: 24, y: floorY), size: 22, squash: charging ? 0.3 + chargeLevel * 0.6 : (shot != nil ? 0.4 : 0), time: time)
+            // Barra de fuerza, sobre el pulpo.
+            let bar = CGRect(x: 10, y: floorY - 38, width: 30, height: 5)
+            ctx.fill(Path(roundedRect: bar.insetBy(dx: -1, dy: -1), cornerRadius: 3.5), with: .color(.black.opacity(0.45)))
+            if charging {
+                let level = chargeLevel
+                let color = level > 0.8 ? Color(hex: 0xF0766B) : (level > 0.5 ? Color(hex: 0xF2C14E) : Color(hex: 0x6FD08C))
+                ctx.fill(Path(roundedRect: CGRect(x: bar.minX, y: bar.minY, width: max(3, bar.width * level), height: bar.height), cornerRadius: 2.5), with: .color(color))
+            }
         }
-        if let s = shot { WatchInk.drawBlob(in: &ctx, at: s.p, radius: 3.6) }
-        // Tinta que queda, bajo el suelo.
+        if let s = shot {
+            // Tinta en vuelo, con una estela corta.
+            for k in 1...3 {
+                let back = CGFloat(k) * 0.018
+                WatchInk.drawBlob(in: &ctx, at: CGPoint(x: s.p.x - s.v.dx * back, y: s.p.y - s.v.dy * back), radius: 3.4 - CGFloat(k) * 0.8)
+            }
+            WatchInk.drawBlob(in: &ctx, at: s.p, radius: 3.8)
+        }
+        // Tinta que queda: tarros en la arena.
         for i in 0..<max(0, shotsLeft) {
-            WatchInk.drawBlob(in: &ctx, at: CGPoint(x: 44 + CGFloat(i) * 9, y: floorY + 11), radius: 2.8)
+            let c = CGPoint(x: 46 + CGFloat(i) * 10, y: floorY + 11)
+            ctx.fill(Path(ellipseIn: CGRect(x: c.x - 3.8, y: c.y - 3.8, width: 7.6, height: 7.6)), with: .color(.black.opacity(0.35)))
+            WatchInk.drawBlob(in: &ctx, at: c, radius: 3)
         }
         Spark.draw(sparks, in: &ctx)
         drawLives(lives, in: &ctx, width: size.width)
+        if banner > 0 {
+            ctx.draw(Text(bannerText).font(.system(size: 17, weight: .black, design: .rounded))
+                .foregroundColor(.white.opacity(Double(min(1, banner * 2)))), at: CGPoint(x: size.width / 2, y: size.height * 0.3))
+        }
+    }
+
+    /// Fondo marino: agua con degradado, rayos de luz, algas al fondo, burbujas y arena con relieve.
+    private func drawSea(_ ctx: inout GraphicsContext, size: CGSize) {
+        ctx.fill(Path(CGRect(x: 0, y: -40, width: size.width, height: floorY + 40)),
+                 with: .linearGradient(Gradient(colors: [WatchInk.shallow, WatchInk.deep]), startPoint: .zero, endPoint: CGPoint(x: 0, y: floorY)))
+        for k in 0..<3 {
+            let x0 = size.width * (0.25 + CGFloat(k) * 0.27) + sin(time * 0.4 + CGFloat(k)) * 6
+            var ray = Path()
+            ray.move(to: CGPoint(x: x0, y: -40)); ray.addLine(to: CGPoint(x: x0 + 16, y: -40))
+            ray.addLine(to: CGPoint(x: x0 - 26, y: floorY)); ray.addLine(to: CGPoint(x: x0 - 52, y: floorY)); ray.closeSubpath()
+            ctx.fill(ray, with: .linearGradient(Gradient(colors: [.white.opacity(0.09), .white.opacity(0)]),
+                                                startPoint: CGPoint(x: 0, y: 0), endPoint: CGPoint(x: 0, y: floorY)))
+        }
+        // Algas lejanas (siluetas) que se mecen.
+        for k in 0..<7 {
+            let x = size.width * (0.08 + CGFloat(k) * 0.145), h = CGFloat(22 + (k * 37) % 26)
+            let sway = sin(time * 1.2 + CGFloat(k) * 1.7) * 5
+            var weed = Path()
+            weed.move(to: CGPoint(x: x - 3, y: floorY))
+            weed.addQuadCurve(to: CGPoint(x: x + sway, y: floorY - h), control: CGPoint(x: x - 6 - sway * 0.3, y: floorY - h * 0.5))
+            weed.addQuadCurve(to: CGPoint(x: x + 3, y: floorY), control: CGPoint(x: x + 6 + sway * 0.6, y: floorY - h * 0.5))
+            ctx.fill(weed, with: .color(Color(hex: k % 2 == 0 ? 0x1C6A5A : 0x175448).opacity(0.75)))
+        }
+        for i in 0..<10 {
+            let x = CGFloat((i * 73 + 11) % 100) / 100 * size.width + sin(time * 1.5 + CGFloat(i)) * 2
+            let span = floorY + 20
+            let y = span - (CGFloat((i * 131 + 37) % 100) / 100 * span + time * (10 + CGFloat(i % 3) * 5)).truncatingRemainder(dividingBy: span)
+            let r: CGFloat = i % 3 == 0 ? 2.2 : 1.3
+            ctx.stroke(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(Color(hex: 0xBFE6FF).opacity(0.35)), lineWidth: 0.8)
+        }
+        // Arena.
+        ctx.fill(Path(CGRect(x: 0, y: floorY, width: size.width, height: size.height - floorY + 30)),
+                 with: .linearGradient(Gradient(colors: [Color(hex: 0xC9A970), Color(hex: 0x8A6E45)]), startPoint: CGPoint(x: 0, y: floorY), endPoint: CGPoint(x: 0, y: size.height)))
+        var crest = Path()
+        crest.move(to: CGPoint(x: 0, y: floorY + 1))
+        for k in 0...8 {
+            let x = size.width * CGFloat(k) / 8
+            crest.addQuadCurve(to: CGPoint(x: x, y: floorY + 1), control: CGPoint(x: x - size.width / 16, y: floorY - (k % 2 == 0 ? 2.5 : 1)))
+        }
+        ctx.stroke(crest, with: .color(Color(hex: 0xE3C891)), lineWidth: 2)
+        for k in 0..<9 {
+            let x = CGFloat((k * 61 + 23) % 100) / 100 * size.width, y = floorY + 6 + CGFloat((k * 29) % 12)
+            ctx.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 3.5, height: 2)), with: .color(Color(hex: 0x6E5636).opacity(0.6)))
+        }
+    }
+
+    private func drawRock(_ ctx: inout GraphicsContext, _ r: CGRect) {
+        let shape = Path(roundedRect: r, cornerRadius: min(4, r.width / 2.5))
+        ctx.fill(Path(roundedRect: r.offsetBy(dx: 2, dy: 2), cornerRadius: 3), with: .color(.black.opacity(0.25)))
+        ctx.fill(shape, with: .linearGradient(Gradient(colors: [Color(hex: 0x7C8798), Color(hex: 0x4A5263)]),
+                                              startPoint: CGPoint(x: r.minX, y: r.minY), endPoint: CGPoint(x: r.maxX, y: r.maxY)))
+        // Musgo arriba.
+        ctx.fill(Path(roundedRect: CGRect(x: r.minX, y: r.minY - 1, width: r.width, height: 3), cornerRadius: 1.5), with: .color(Color(hex: 0x3E9A6E)))
     }
 
     /// El piloto apunta al primer cangrejo vivo y dispara él mismo cuando ángulo y fuerza cuadran.
@@ -234,7 +344,10 @@ final class InkWorld: ArcadeWorld {
         guard shot == nil, wait <= 0, let index = targets.firstIndex(where: { $0.alive }) else { return input }
         if plan == nil { plan = solution(for: index) ?? (0.6, 180) }
         guard let plan else { return input }
-        if abs(input - plan.input) < 0.004, abs(power - plan.v) < 5 { tap() }
+        // Apunta, mantiene «el dedo» hasta la fuerza del plan y suelta.
+        if abs(input - plan.input) < 0.004 {
+            if !charging { press(true) } else if power >= plan.v - 2 { press(false) }
+        }
         return plan.input
     }
 }

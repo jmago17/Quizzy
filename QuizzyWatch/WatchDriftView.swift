@@ -1,7 +1,12 @@
 //
 //  WatchDriftView.swift — Quizzy Watch
 //  Derrape: la Corona es el VOLANTE, no la posición. Centrada (como empieza) el coche va recto;
-//  girarla lo inclina hasta 43° a cada lado y el coche se desplaza hacia donde apunta. La
+//  girarla lo inclina hasta 40° a cada lado y el coche avanza EXACTAMENTE hacia donde apunta el
+//  morro (vx = v·tan(ángulo)). Hasta el 2026-11-23 el desplazamiento lateral iba multiplicado por
+//  1,5: para seguir una curva había que llevar el coche menos girado que la carretera, y Josu
+//  no encontraba «una orientación que coincida con la curva». Ahora coche paralelo al arcén =
+//  sigue la curva. La pendiente de la carretera está acotada (`maxSlope`) para que siempre haya
+//  volante de sobra. La
 //  carretera serpentea, se estrecha y el coche acelera con el tiempo. Tocar el arcén o a otro
 //  coche cuesta una vida (3) y devuelve al centro. Puntos: la distancia, y 3 por adelantamiento.
 //  Es distinto de Escuadrón/Marcianitos a propósito: allí la Corona coloca, aquí gira.
@@ -35,7 +40,8 @@ enum WatchDrift {
 
 final class DriftWorld: ArcadeWorld {
     struct Rival { var d: CGFloat; var off: CGFloat; var color: Color }
-    static let maxSteer: CGFloat = 0.75       // radianes a tope de Corona
+    static let maxSteer: CGFloat = 0.70       // radianes a tope de Corona (40°; tan = 0,84)
+    static let maxSlope: CGFloat = 0.5        // desvío lateral máximo de la carretera por punto de avance (27°)
     static let carSize: CGFloat = 20
 
     private var size: CGSize = .zero
@@ -55,8 +61,10 @@ final class DriftWorld: ArcadeWorld {
     private var speed: CGFloat { min(190, 95 + time * 2.2) }
     private func half(_ at: CGFloat) -> CGFloat { max(24, 36 - at * 0.002) }
     private func center(_ at: CGFloat) -> CGFloat {
-        let amp = min(size.width / 2 - half(at) - 10, 14 + max(0, at) * 0.012)
-        return size.width / 2 + amp * (sin(at / 140) + 0.5 * sin(at / 61 + 1.3)) / 1.5
+        // Dos ondas largas. La pendiente máxima es amp·(1/150 + 0,35/85)/1,35 ≈ amp·0,008,
+        // así que amp ≤ maxSlope/0,008 la mantiene dentro de lo que el volante puede seguir.
+        let amp = min(size.width / 2 - half(at) - 10, Self.maxSlope / 0.008, 14 + max(0, at) * 0.012)
+        return size.width / 2 + amp * (sin(at / 150) + 0.35 * sin(at / 85 + 1.3)) / 1.35
     }
     /// Distancia de carretera que se ve en la fila `y` de la pantalla.
     private func dist(atY y: CGFloat) -> CGFloat { d + (carY - y) }
@@ -78,7 +86,7 @@ final class DriftWorld: ArcadeWorld {
         let v = speed
         heading = (input - 0.5) * 2 * Self.maxSteer
         d += v * dt
-        x += v * sin(heading) * 1.5 * dt
+        x += v * tan(heading) * dt
 
         // Tráfico: más lento que el jugador, así que baja por la pantalla.
         spawnT -= dt
@@ -163,7 +171,8 @@ final class DriftWorld: ArcadeWorld {
             let rx = center(r.d) + r.off
             if abs(rx - want) < 17 { want += (r.off > 0 ? -1 : 1) * min(17, half(r.d) - 11) - r.off * 0.3 }
         }
-        return min(1, max(0, 0.5 + (want - x) / 55))
+        // Apunta el morro al punto de la carretera que tiene 34 pt por delante.
+        return min(1, max(0, 0.5 + atan2(want - x, 34) / (2 * Self.maxSteer)))
     }
 }
 
