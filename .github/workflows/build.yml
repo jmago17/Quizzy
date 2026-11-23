@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+    branches: [main, "limpieza/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Elegir el Xcode más reciente
+        run: |
+          ls -d /Applications/Xcode*.app
+          XC=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Usando $XC"
+          sudo xcode-select -s "$XC"
+          echo "DEVELOPER_DIR=$XC/Contents/Developer" >> "$GITHUB_ENV"
+          xcodebuild -version
+          xcodebuild -showsdks
+
+      - name: Compilar Quizzy (iOS Simulator, incluye la app del reloj)
+        run: |
+          set -o pipefail
+          xcodebuild -project Quizzy.xcodeproj -scheme Quizzy \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            build | tail -n 80
+
+      - name: Tests sin simulador (GamesLanguage, Decoder, Trocitos)
+        run: |
+          python3 Tests/GamesLanguage/run.py
+          python3 Tests/Decoder/run.py
+          python3 Tests/Trocitos/run.py
