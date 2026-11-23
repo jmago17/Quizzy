@@ -18,7 +18,7 @@ def block(text, signature):
     return text[start:i]
 def core(name):
     text=(games/name).read_text()
-    if text.startswith('#if os(iOS)'): text=text[len('#if os(iOS)'):]
+    if text.startswith('#if os('): text=text.split('\n',1)[1]  # '#if os(iOS)' o '#if os(iOS) || os(watchOS)'
     if text.rstrip().endswith('#endif'): text=text.rstrip()[:-6]
     return text
 # UI cannot be linked into the Foundation harness; guard its entry points explicitly.
@@ -38,16 +38,16 @@ sources=['import Foundation\nimport Combine\nlet testSuiteName = "kaffa-games-te
 sources.append((root/'Quizzy/Support/AppLanguage.swift').read_text().replace('.standard','testDefaults'))
 sources.append(core('PuzzleModels.swift').replace('UserDefaults(suiteName: "quizzy.games")\n        ?? .standard','testDefaults'))
 sources.append(core('DecoderCore.swift'))  # PuzzleKind.decoder: seed salt, stats ids, DecoderStore wipe
-sources += [core(n) for n in ['PuzzleGenerator.swift','MiniCrossword.swift','PuzzleStats.swift','PuzzleSnapshotStore.swift','AnygramPrefetch.swift','AnygramDefaultData.swift']]
+sources += [core(n) for n in ['WordleModel.swift','MazeModel.swift','PuzzleGenerator.swift','MiniCrossword.swift','PuzzleStats.swift','PuzzleSnapshotStore.swift','AnygramPrefetch.swift','AnygramDefaultData.swift']]
 sources.append(core('EnglishPuzzleLexicon.swift'))
-for name, types in [('WordleGame.swift',['struct WordlePuzzle']),('CasualPuzzleGames.swift',['struct HashtagPuzzle','private enum HashtagBank']),('MurdleGame.swift',['struct MurdlePuzzle','struct MurdokuPuzzle']),('MazeGame.swift',['struct MazePuzzle'])]:
+for name, types in [('CasualPuzzleGames.swift',['struct HashtagPuzzle','private enum HashtagBank']),('MurdleGame.swift',['struct MurdlePuzzle','struct MurdokuPuzzle'])]:
     text=(games/name).read_text()
     sources += [block(text,t) for t in types]
 sources.append((Path(__file__).parent/'main.swift').read_text())
 for name in ['logic_checks.swift','word_checks.swift','spanish_wide.swift']:
     p=Path(__file__).parent/name
     if p.exists(): sources.append(p.read_text())
-env=dict(os.environ, DEVELOPER_DIR='/Applications/Xcode-beta.app/Contents/Developer')
+env=dict(os.environ, DEVELOPER_DIR=os.environ.get('DEVELOPER_DIR', '/Applications/Xcode-beta.app/Contents/Developer'))
 with tempfile.TemporaryDirectory(prefix='kaffa-games-') as temp:
     work=Path(temp); source=work/'Checks.swift'; source.write_text('\n'.join(sources))
     resources=work/'Resources'; resources.mkdir()
