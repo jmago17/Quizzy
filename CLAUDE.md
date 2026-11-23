@@ -363,3 +363,6 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     revisadas (nada cortado por las esquinas), ≥ 61 dibujados/s. **Sin verificar:** nada en reloj real — sobre todo
     si el volante se controla sin un «centro» táctil en la Corona (riesgo principal de Derrape; se toca en `maxSteer`),
     si la muesca se distingue al tacto, la dificultad de los tres, y los iconos en la lista (no llegué a verlos).
+- 2026-11-23 — **Fuera Trivial (10 en 60) y Cifras del código**: ya no se ofrecían. Borrados `TriviaPuzzle`/`TriviaGame`,
+  `NumbersPuzzle`/`NumbersSolver`/`NumbersGame`, `DifferencesPuzzle` (sin uso) y `trivia_questions.json` (y su entrada en el
+  .xcodeproj). Se conservan los `case .trivia/.numbers/.ladder` de `PuzzleKind` para decodificar datos antiguos.

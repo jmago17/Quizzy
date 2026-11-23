@@ -376,22 +376,6 @@ final class PuzzleProgress: ObservableObject {
         defaults.set(Array(recent.suffix(300)), forKey: Self.languageKey("newsraider.wordleRecent", language: language))
     }
 
-    // MARK: Trivia question history
-
-    /// Ids of trivia questions already served, so a freshly generated round
-    /// avoids repeating them until the bank has been exhausted.
-    func recentTriviaQuestions() -> [Int] {
-        (defaults.array(forKey: "newsraider.triviaRecent") as? [Int]) ?? []
-    }
-
-    func rememberTriviaQuestions(_ ids: [Int], bankSize: Int) {
-        var recent = recentTriviaQuestions().filter { !ids.contains($0) }
-        recent.append(contentsOf: ids)
-        // Keep just under a full bank so there is always something fresh.
-        let cap = max(10, bankSize - 10)
-        defaults.set(Array(recent.suffix(cap)), forKey: "newsraider.triviaRecent")
-    }
-
     // MARK: Hints
 
     /// Hints taken on a puzzle. Each one costs `PZHintButton.penalty` seconds,

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		033C8E579CE1FC9636D4662D /* trivia_questions.json in Resources */ = {isa = PBXBuildFile; fileRef = 56C2A8E64C77272714245B9B /* trivia_questions.json */; };
 		05BF236F83224DBED4FD6A8C /* WordleModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6364423E6526E66FC5EBBE /* WordleModel.swift */; };
 		06185A10EE913F5B05F493E9 /* MurdleGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A86C5D85E163FE524111E8 /* MurdleGame.swift */; };
 		0784C968444A972E8C1EEE02 /* MazeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE02A968205CD9E3E54855B /* MazeModel.swift */; };
@@ -132,7 +131,6 @@
 		49F051ABB495E2CD5EA5BF69 /* WatchPlanesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlanesView.swift; sourceTree = "<group>"; };
 		4C691B1260601D1CC96717CC /* PuzzleStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleStats.swift; sourceTree = "<group>"; };
 		4D6364423E6526E66FC5EBBE /* WordleModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordleModel.swift; sourceTree = "<group>"; };
-		56C2A8E64C77272714245B9B /* trivia_questions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = trivia_questions.json; sourceTree = "<group>"; };
 		575BBF76FD7B8BBE108EF8CC /* QuartilesGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuartilesGame.swift; sourceTree = "<group>"; };
 		59266AE81579624E2701C025 /* PuzzleSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleSnapshotStore.swift; sourceTree = "<group>"; };
 		595C5F0F175E39DD26890AED /* AnygramPrefetch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnygramPrefetch.swift; sourceTree = "<group>"; };
@@ -286,7 +284,6 @@
 				DEE711DBEA2B6D7C3A4A36A5 /* playable_words.json */,
 				2DA093B0DA86354AA54180F2 /* puzzle_words.json */,
 				862F97087A8F53AD1D9A1BF9 /* puzzles.json */,
-				56C2A8E64C77272714245B9B /* trivia_questions.json */,
 				A96F6EDE07429F0E81BCD717 /* wordle_answers.json */,
 			);
 			path = Data;
@@ -384,7 +381,6 @@
 				B9C0B8092C74F7D56F207B12 /* playable_words.json in Resources */,
 				C3CBEC174A84C9BFB96EF3A1 /* puzzle_words.json in Resources */,
 				07B749F2C296B2F24DB3B640 /* puzzles.json in Resources */,
-				033C8E579CE1FC9636D4662D /* trivia_questions.json in Resources */,
 				2C48035F25025D399307BB7F /* wordle_answers.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

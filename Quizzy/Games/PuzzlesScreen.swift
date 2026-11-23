@@ -388,10 +388,6 @@ struct PuzzlesScreen: View {
         case .wordle:
             if let dayIndex { return .d(WordlePuzzle.daily(dayIndex: dayIndex, language: language)) }
             return .d(WordlePuzzle.generate(seed: seed, language: language))
-        case .trivia:
-            if let dayIndex { return .t(TriviaPuzzle.daily(dayIndex: dayIndex)) }
-            return .t(TriviaPuzzle.generate(seed: seed))
-        case .numbers:    return .n(NumbersPuzzle.generate(seed: seed))
         case .anygram:    return AnygramPuzzle.generate(seed: seed, language: language).map(AnyPuzzle.a)
         case .hashtag:    return .h(HashtagPuzzle.generate(seed: seed, language: language))
         case .minicross:  return MiniCrosswordGenerator.daily(dayIndex: dayIndex ?? PuzzleSeed.dayIndex(), language: language)
@@ -400,7 +396,7 @@ struct PuzzlesScreen: View {
             let levels = MurdlePuzzle.Difficulty.allCases
             return .u(MurdlePuzzle.generate(seed: seed, difficulty: levels[Int(seed % UInt64(levels.count))], language: language))
         case .murdoku:    return .k(MurdokuPuzzle.generate(seed: seed, language: language))
-        case .ladder:     return nil   // retirado: solo se conserva el case para decodificar datos antiguos
+        case .trivia, .numbers, .ladder: return nil   // retirados: solo se conservan los case para decodificar datos antiguos
         case .decoder:    return .r(DecoderGame.make(seed: seed, spanish: language == .spanish))
         }
     }
@@ -501,14 +497,10 @@ struct PuzzlesScreen: View {
             let recentWords: Set<String> = kind == .wordle
                 ? Set(progress.recentWordleAnswers(language: language)) : Set<String>()
             let defaults = progress.defaults
-            let recentQuestions: Set<Int> = kind == .trivia
-                ? Set(progress.recentTriviaQuestions()) : Set<Int>()
             let game: AnyPuzzle? = await Task.detached(priority: .userInitiated) {
                 switch kind {
                 case .wordle:
                     return .d(WordlePuzzle.generate(seed: seed, excluding: recentWords, language: language))
-                case .trivia:
-                    return .t(TriviaPuzzle.generate(seed: seed, excluding: recentQuestions))
                 case .anygram:
                     // Si hay uno ya preparado, instantáneo; si no, se genera (unos segundos en español).
                     if let ready = AnygramPrefetch.take(language: language, defaults: defaults) { return .a(ready) }
@@ -549,9 +541,6 @@ struct PuzzlesScreen: View {
         switch game {
         case .d(let wordle):
             progress.rememberWordleAnswer(wordle.answer, language: PuzzleLanguage.from(puzzleID: wordle.id))
-        case .t(let trivia):
-            progress.rememberTriviaQuestions(trivia.questions.map(\.id),
-                                             bankSize: TriviaPuzzle.bankSize)
         default:
             break
         }
@@ -588,8 +577,6 @@ struct PuzzlesScreen: View {
             case .c(let p): CrosswordGame(puzzle: p)
             case .m(let p): MazeGame(puzzle: p)
             case .d(let p): WordleGame(puzzle: p)
-            case .t(let p): TriviaGame(puzzle: p)
-            case .n(let p): NumbersGame(puzzle: p)
             case .a(let p): AnygramGame(puzzle: p)
             case .h(let p): HashtagGame(puzzle: p)
             case .u(let p): MurdleGame(puzzle: p)
@@ -624,7 +611,7 @@ struct PuzzlesScreen: View {
 
 enum AnyPuzzle: Identifiable, Sendable, Hashable {
     case q(QuartilePuzzle), w(WordSearchPuzzle), c(CrosswordPuzzle), m(MazePuzzle), d(WordlePuzzle)
-    case t(TriviaPuzzle), n(NumbersPuzzle), a(AnygramPuzzle), h(HashtagPuzzle), u(MurdlePuzzle)
+    case a(AnygramPuzzle), h(HashtagPuzzle), u(MurdlePuzzle)
     case k(MurdokuPuzzle)
     case x(CrosswordPuzzle)
     case r(DecoderGame)
@@ -635,8 +622,6 @@ enum AnyPuzzle: Identifiable, Sendable, Hashable {
         case .c(let p): return p.id
         case .m(let p): return p.id
         case .d(let p): return p.id
-        case .t(let p): return p.id
-        case .n(let p): return p.id
         case .a(let p): return p.id
         case .h(let p): return p.id
         case .u(let p): return p.id
@@ -652,8 +637,6 @@ enum AnyPuzzle: Identifiable, Sendable, Hashable {
         case .c(let p): return AppLanguage.text("\(p.entries.count) definiciones", "\(p.entries.count) clues")
         case .m(let p): return "\(p.cols) × \(p.rows)"
         case .d:        return AppLanguage.text("6 intentos", "6 attempts")
-        case .t(let p): return "\(p.questions.count) preguntas"
-        case .n(let p): return "objetivo \(p.target)"
         case .a(let p): return AppLanguage.text("\(p.answers.count) palabras cruzadas", "\(p.answers.count) crossing words")
         case .h(let p): return AppLanguage.text("\(p.words.count) palabras cruzadas", "\(p.words.count) crossing words")
         case .u(let p): return AppLanguage.text("\(p.suspects.count) sospechosos · \(p.difficulty.title)", "\(p.suspects.count) suspects · \(p.difficulty.title)")
