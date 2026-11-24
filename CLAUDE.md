@@ -415,3 +415,14 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     volver (¿funciona el gesto de borde con la barra oculta? En Tintazo el arrastre es del juego; si no, solo queda
     perder o pulsar la Corona), tamaños de reloj distintos de 42 mm, la dificultad de Torreta (el piloto apunta perfecto,
     no dice nada) y si ±78° en 2,5 vueltas de Corona se maneja bien.
+- 2026-11-24 — **Reloj, Torreta: ciclo día/noche y meteorología** (build 46 en TestFlight ANTES de esto: no lo lleva).
+  - Ciclo completo cada `TurretWorld.dayLength` = 96 s (empieza a media tarde, `day` 0,7): cielo interpolado entre cuatro
+    paletas (`WatchTurret.sky`: medianoche, amanecer, mediodía, atardecer), sol y luna que cruzan, estrellas solo de noche,
+    sierra y suelo que se aclaran de día. Tiempo: despejado, nubes, lluvia, tormenta (rayos con destello) y nieve (cuaja en
+    suelo y sierra); cambia cada 14–22 s con fundido de 3 s. **Solo decorado: no toca la física** (decisión mía; el viento
+    que desvía meteoritos sería el siguiente paso si Josu lo pide). Disparos con borde oscuro para verse sobre cielo claro.
+  - Ganchos DEBUG: `QW_DAY=0…1` (hora inicial) y `QW_WX=clear|cloudy|rain|storm|snow` (tiempo fijo 60 s).
+  - Verificado en Watch 42 mm temporal (borrado): capturas de mediodía, amanecer, día nublado, tormenta, lluvia al
+    atardecer y nieve de noche; 58–65 dibujados/s con lluvia y nieve. **Sin verificar:** un rayo en captura (no coincidió),
+    el fundido entre tiempos y el ciclo entero seguido (solo momentos sueltos), y que de día/nieve se sigan viendo bien
+    los meteoritos en el reloj real.
