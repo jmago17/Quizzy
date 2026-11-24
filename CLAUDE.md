@@ -444,3 +444,12 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   «Kuizi»; preguntado, se queda «Kuizzy» (como en App Store Connect y en los textos de compartir).
   - Verificado: build de iOS (con el reloj embebido) en verde; los dos `Info.plist` dicen «Kuizzy»; el catálogo genera
     los iconos. NO verificado: cómo queda el icono en la pantalla de inicio ni recortado en círculo en el reloj.
+  - **App Store Connect (todo por API con `asc`):** contacto de revisión beta copiado del de Kaffa (pedido de Josu);
+    descripción beta y correo de feedback en es-ES y en-US; grupo externo «Público»
+    (`1e2f76f9-b4e3-4dc8-9517-71deda8b922a`) con enlace público sin límite: https://testflight.apple.com/join/He4bC3VS.
+    Run del workflow externo → **build 51** (`dcd2dc8`, `APP_STORE_ELIGIBLE`, VALID), con notas «Qué probar» en los dos
+    idiomas, añadido al grupo y **enviado a revisión beta** (`WAITING_FOR_REVIEW`, 2026-11-24). El enlace no deja instalar
+    hasta que Apple lo apruebe. Duplicar un workflow por API no copia post-acciones, y aun así la archive sube sola.
+  - Builds siguientes para el público: lanzar "External TestFlight Build" (no el interno) y añadir el build al grupo
+    «Público» (`asc builds add-groups --build-id … --group … --submit --confirm`); solo el primero de cada versión pasa
+    revisión completa.
