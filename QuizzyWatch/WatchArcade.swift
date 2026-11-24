@@ -107,11 +107,33 @@ enum ArcadeHUD {
     /// Pantalla completa (2026-11-24): el lienzo ocupa TODA la pantalla. La fila de arriba es del
     /// marcador (izquierda) y de la hora del sistema (derecha, no se puede quitar): lo que va anclado
     /// arriba en un juego empieza en `top`. `left` salva la esquina redonda.
-    static let y: CGFloat = 15
-    static let top: CGFloat = 24
-    static let left: CGFloat = 24
+    static let y: CGFloat = 20
+    static let top: CGFloat = 28
+    static let left: CGFloat = 46
     /// Ancho reservado al marcador (hasta 5 cifras) desde `left`.
     static let scoreBand: CGFloat = 44
+    /// Botón de salir mientras se juega (la barra del sistema está oculta; sin él solo se podía salir
+    /// perdiendo, visto por Josu en el build 46). Pedido expreso: cristal líquido transparente, bajito,
+    /// de la altura de la hora, en la esquina superior izquierda.
+    struct ExitButton: View {
+        @Environment(\.dismiss) private var dismiss
+        var body: some View {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: ArcadeHUD.exitWidth, height: 19)
+                    .glassEffect(.clear.interactive(), in: .capsule)
+                    .frame(width: ArcadeHUD.exitWidth + 10, height: 32)   // zona de toque mayor que el dibujo
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .position(x: 12 + ArcadeHUD.exitWidth / 2, y: ArcadeHUD.y)
+            .accessibilityLabel(AppLanguage.text("Salir", "Exit"))
+        }
+    }
+    static let exitWidth: CGFloat = 28
+
     /// Vueltas de Corona por pantalla, respecto a `.low` (que ya es el mínimo del sistema y seguía
     /// siendo demasiado sensible, 2026-11-21): la Corona recorre 0…crownSpan y el juego usa 0…1.
     static let crownSpan: Double = 2.5
@@ -208,6 +230,7 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
                 guard !World.usesPress else { return }
                 if phase == .ready { begin() } else if phase == .playing { world.tap() }
             }
+            .overlay { if phase == .playing { ArcadeHUD.ExitButton() } }
             .onAppear {
                 geoSize = geo.size
                 world.reset(size: geo.size); redraw += 1; crownFocus = true

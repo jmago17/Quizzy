@@ -426,3 +426,12 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     atardecer y nieve de noche; 58–65 dibujados/s con lluvia y nieve. **Sin verificar:** un rayo en captura (no coincidió),
     el fundido entre tiempos y el ciclo entero seguido (solo momentos sueltos), y que de día/nieve se sigan viendo bien
     los meteoritos en el reloj real.
+- 2026-11-24 — **Reloj: botón de salir durante la partida** (build 48 lanzado ANTES de esto: no lo lleva).
+  - Josu, tras el build 46: «¿cómo salgo de los juegos al menú?». Con la barra oculta solo se podía salir perdiendo.
+    `ArcadeHUD.ExitButton` (en `WatchArcadeStage` y Brinco, solo jugando): cápsula de cristal líquido transparente
+    (`.glassEffect(.clear.interactive(), in: .capsule)`), 28×19 pt, arriba a la izquierda a la altura de la hora; llama a
+    `dismiss()`. Pedido expreso de Josu en forma y sitio. El marcador se corre a `ArcadeHUD.left` = 46; fila en `y` = 20 y
+    `top` = 28 para alinear con la hora.
+  - Verificado en Watch 42 mm temporal (borrado): capturas de seis juegos y 61 dibujados/s con el cristal encima del
+    lienzo. **Sin verificar:** tocarlo (simulador headless): que `dismiss()` vuelva a la lista y que en Tintazo (arrastre
+    con distancia 0 en todo el lienzo) el botón gane el toque.

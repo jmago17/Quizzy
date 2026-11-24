@@ -343,6 +343,7 @@ struct WatchJumpView: View {
                 }
                 .onEnded { _ in dragStart = nil })
             .onTapGesture { if phase == .ready { begin() } }
+            .overlay { if phase == .playing { ArcadeHUD.ExitButton() } }
             .onAppear { world.reset(size: geo.size); crown = 0.5; redraw += 1; crownFocus = true; demoStart() }
             .onChange(of: geo.size) { _, new in
                 if phase == .playing { world.resize(new) } else { world.reset(size: new); redraw += 1 }
