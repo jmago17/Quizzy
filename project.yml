@@ -40,7 +40,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
         SWIFT_EMIT_LOC_STRINGS: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Quizzy
+        INFOPLIST_KEY_CFBundleDisplayName: Kuizzy
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.puzzle-games
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
@@ -88,7 +88,7 @@ targets:
         SKIP_INSTALL: YES
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_CFBundleDisplayName: Quizzy
+        INFOPLIST_KEY_CFBundleDisplayName: Kuizzy
         INFOPLIST_KEY_WKApplication: YES
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.maromeapps.quizzies
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO

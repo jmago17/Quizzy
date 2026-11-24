@@ -256,7 +256,7 @@ struct WatchHomeView: View {
                         .listRowBackground(WTheme.surface.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous)))
                 }
             }
-            .navigationTitle("Quizzy")
+            .navigationTitle("Kuizzy")
             .navigationDestination(for: PuzzleKind.self) { kind in
                 WatchGameScreen(kind: kind)
             }

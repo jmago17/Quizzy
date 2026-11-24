@@ -21,12 +21,15 @@ Regenerar solo al añadir/quitar ficheros o cambiar `project.yml`.
 ## Identidad en App Store Connect (IMPORTANTE)
 
 - **Desde 2026-11-15 (noche): app propia "Kuizzy"** (ASC app 6835185679, bundle ID `com.maromeapps.quizzies`,
-  equipo `ES2766ARHJ`). "Quizzy" está cogido por otra cuenta. En el iPhone se ve "Quizzy" (`CFBundleDisplayName`).
+  equipo `ES2766ARHJ`). "Quizzy" está cogido por otra cuenta. Desde 2026-11-24 también se ve "Kuizzy" bajo el icono del iPhone y del
+  reloj (`CFBundleDisplayName`); antes ponía "Quizzy". Target, scheme y producto siguen llamándose `Quizzy`.
   Es OTRA app en el dispositivo: el progreso de la instalación vieja no pasa.
 - Antes (builds 20–22): bundle ID prestado `com.maromeapps.quotamini` (app QuotaMini 6822259409, abandonada;
   grupo "Personal"). Ya no se usa; queda por limpiar.
 - **Xcode Cloud** (producto "Quizzy", repo `jmago17/Quizzy`): workflow "Default" (build en cada push a `main`) e
-  "Internal TestFlight Build" (archive → TestFlight interno, solo manual). Xcode Cloud pone su propio número de build;
+  "Internal TestFlight Build" (archive → TestFlight interno, solo manual). Sus builds son `INTERNAL_ONLY`: NO valen para
+  testers externos. Para eso está "External TestFlight Build" (`e1b67099-d55d-4598-9dc6-ce1673bd750e`, copia con
+  `buildDistributionAudience: APP_STORE_ELIGIBLE`, solo manual, creada por API el 2026-11-24). Xcode Cloud pone su propio número de build;
   subir solo desde ahí (si se sube a mano un número mayor, ajustar el "next build number" del producto).
 - TestFlight: grupo interno "Internal" con dos testers (correos fuera del repo).
 - La 1.ª archive de Xcode Cloud (run 2) falló en "Preparing build for App Store Connect" porque el proyecto aún tenía
@@ -435,3 +438,9 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado en Watch 42 mm temporal (borrado): capturas de seis juegos y 61 dibujados/s con el cristal encima del
     lienzo. **Sin verificar:** tocarlo (simulador headless): que `dismiss()` vuelva a la lista y que en Tintazo (arrastre
     con distancia 0 en todo el lienzo) el botón gane el toque.
+- 2026-11-24 — **Preparación del TestFlight público: icono nuevo y nombre «Kuizzy».** Icono de Josu (tres fichas y una K
+  sobre azul marino) en `AppIcon-1024.png` de iOS y del reloj (el original era JPG 1254 px; pasado a PNG 1024 sin alfa
+  con `sips`). `CFBundleDisplayName` «Quizzy» → «Kuizzy» en los dos targets y título de la lista del reloj. Josu escribió
+  «Kuizi»; preguntado, se queda «Kuizzy» (como en App Store Connect y en los textos de compartir).
+  - Verificado: build de iOS (con el reloj embebido) en verde; los dos `Info.plist` dicen «Kuizzy»; el catálogo genera
+    los iconos. NO verificado: cómo queda el icono en la pantalla de inicio ni recortado en círculo en el reloj.
