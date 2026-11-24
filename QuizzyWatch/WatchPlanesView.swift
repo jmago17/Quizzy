@@ -73,7 +73,7 @@ final class SkyWorld: ArcadeWorld {
     /// Segundos de vuelo (sin contar los combates) entre un jefe y el siguiente.
     static let bossEvery: CGFloat = 60
     static let bossSize: CGFloat = 54
-    private static let bossY: CGFloat = 60   // su barra de vida queda bajo el marcador
+    private static let bossY: CGFloat = ArcadeHUD.top + 52   // su barra de vida queda bajo el marcador
 
     /// Decorado del suelo; se dibuja según la zona en la que nació (isla, duna, arboleda, manzana).
     struct Island { var x: CGFloat; var y: CGFloat; var w: CGFloat; var h: CGFloat; var zone = 0; var seed = 0 }
@@ -421,11 +421,6 @@ final class SkyWorld: ArcadeWorld {
         }
         for isle in islands { drawDecor(&ctx, isle) }
         for t in turrets { drawTurret(&ctx, t) }
-        // El lienzo no llega bajo la hora y el suelo cambia de color con la zona: arriba se funde
-        // con el fondo fijo de la pantalla (`WatchPlanes.band`) en vez de cortarse en una línea.
-        ctx.fill(Path(CGRect(x: 0, y: -1, width: size.width, height: 23)),
-                 with: .linearGradient(Gradient(colors: [WatchPlanes.band, WatchPlanes.band.opacity(0)]),
-                                       startPoint: CGPoint(x: 0, y: 1), endPoint: CGPoint(x: 0, y: 22)))
         for p in pickups {
             let rect = CGRect(x: p.p.x - 7, y: p.p.y - 7, width: 14, height: 14)
             switch p.kind {
@@ -487,7 +482,7 @@ final class SkyWorld: ArcadeWorld {
         if power > 0 {
             // Barra de lo que queda de triple disparo.
             // (Bajo el marcador, que ahora ocupa la esquina.)
-            ctx.fill(Path(roundedRect: CGRect(x: size.width - 46, y: 17, width: 38 * power / 10, height: 3.5), cornerRadius: 1.75), with: .color(Color(hex: 0xF2C14E)))
+            ctx.fill(Path(roundedRect: CGRect(x: ArcadeHUD.left, y: ArcadeHUD.y + 10, width: 38 * power / 10, height: 3.5), cornerRadius: 1.75), with: .color(Color(hex: 0xF2C14E)))
         }
         if zoneBanner > 0, bossWarn <= 0 {
             let a = Double(min(1, zoneBanner * 2))

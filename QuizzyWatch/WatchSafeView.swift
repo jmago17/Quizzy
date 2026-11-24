@@ -188,8 +188,8 @@ final class SafeWorld: ArcadeWorld {
             brushed.addLine(to: CGPoint(x: size.width - CGFloat((k * 31) % 40), y: y))
         }
         ctx.stroke(brushed, with: .color(.white.opacity(0.035)), lineWidth: 1)
-        let c = CGPoint(x: size.width / 2, y: size.height / 2 + 5)
-        let r = min(size.width * 0.37, (size.height - 74) / 2)
+        let c = CGPoint(x: size.width / 2, y: size.height / 2 + 9.5)   // bajo la fila del marcador y la hora
+        let r = min(size.width * 0.37, (size.height - 91) / 2)
         let shake = wrongFlash > 0 ? sin(wrongFlash * 60) * 2.5 * (wrongFlash / 0.4) : 0
         // Panel hundido alrededor del dial.
         let panel = CGRect(x: c.x - r - 16, y: c.y - r - 16, width: r * 2 + 32, height: r * 2 + 44)
@@ -254,10 +254,10 @@ final class SafeWorld: ArcadeWorld {
         }
         if openFlash > 0 {
             ctx.draw(Text(AppLanguage.text("¡Abierta!", "Open!")).font(.system(size: 17, weight: .black, design: .rounded))
-                .foregroundColor(WatchSafe.green.opacity(Double(min(1, openFlash * 2.5)))), at: CGPoint(x: c.x, y: c.y - r - 14 - (0.8 - openFlash) * 8))
+                .foregroundColor(WatchSafe.green.opacity(Double(min(1, openFlash * 2.5)))), at: CGPoint(x: c.x, y: c.y - r - 10 - (0.8 - openFlash) * 6))
         } else if wrongFlash > 0 {
             ctx.draw(Text("−\(Int(Self.wrongCost)) s").font(.system(size: 15, weight: .black, design: .rounded))
-                .foregroundColor(Color(hex: 0xF0766B).opacity(Double(min(1, wrongFlash * 4)))), at: CGPoint(x: c.x, y: c.y - r - 14))
+                .foregroundColor(Color(hex: 0xF0766B).opacity(Double(min(1, wrongFlash * 4)))), at: CGPoint(x: c.x, y: c.y - r - 10))
         }
     }
 

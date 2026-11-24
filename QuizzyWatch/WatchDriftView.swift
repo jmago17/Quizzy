@@ -150,10 +150,6 @@ final class DriftWorld: ArcadeWorld {
         ctx.stroke(mid, with: .color(.white.opacity(0.55)),
                    style: StrokeStyle(lineWidth: 1.6, dash: [9, 11], dashPhase: -d.truncatingRemainder(dividingBy: 20)))
 
-        // El lienzo no llega bajo la hora: la carretera se funde con la hierba en vez de cortarse.
-        ctx.fill(Path(CGRect(x: 0, y: -1, width: size.width, height: 19)),
-                 with: .linearGradient(Gradient(colors: [WatchDrift.grass, WatchDrift.grass.opacity(0)]),
-                                       startPoint: CGPoint(x: 0, y: 2), endPoint: CGPoint(x: 0, y: 18)))
         for r in rivals {
             let y = carY - (r.d - d)
             WatchDrift.drawCar(in: &ctx, at: CGPoint(x: center(r.d) + r.off, y: y), size: Self.carSize, angle: 0, body: r.color)

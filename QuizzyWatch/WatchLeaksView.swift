@@ -60,7 +60,7 @@ final class LeakWorld: ArcadeWorld {
     struct Drop { var col: Int; var y: CGFloat; var grow: CGFloat = 0 }
     struct Puddle { var x: CGFloat; var life: CGFloat }
     static let capacity = 3
-    private static let pipeY: CGFloat = 20
+    private static let pipeY: CGFloat = ArcadeHUD.top + 12
     private static let columns: [CGFloat] = [0.24, 0.41, 0.59, 0.76]
 
     private var size: CGSize = .zero

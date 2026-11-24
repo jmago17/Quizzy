@@ -146,7 +146,7 @@ final class AlienWorld: ArcadeWorld {
         default: break                                                 // de lado a lado
         }
         return CGPoint(x: size.width / 2 + (CGFloat(e.col) - CGFloat(Self.cols - 1) / 2) * sx + dx,
-                       y: 24 + CGFloat(e.row) * 16 + dy)
+                       y: ArcadeHUD.top + 14 + CGFloat(e.row) * 16 + dy)
     }
 
     func step(dt: CGFloat, input: CGFloat) -> ArcadeEvent {

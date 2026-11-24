@@ -90,11 +90,11 @@ struct Spark {
     }
 }
 
-/// Vidas: corazones pequeños arriba a la derecha, a la izquierda del marcador (que pinta
-/// `WatchArcadeStage` pegado al borde, bajo la hora). A la izquierda no: ahí está el botón de volver.
+/// Vidas: corazones pequeños arriba, a la derecha del marcador (que pinta `WatchArcadeStage` arriba a
+/// la izquierda). Jugando no hay botón de volver; la derecha es de la hora del sistema.
 func drawLives(_ lives: Int, in ctx: inout GraphicsContext, width: CGFloat) {
     for i in 0..<max(0, lives) {
-        let x = width - ArcadeHUD.scoreBand - 6 - CGFloat(i) * 11, y = ArcadeHUD.y
+        let x = ArcadeHUD.left + ArcadeHUD.scoreBand + 8 + CGFloat(i) * 11, y = ArcadeHUD.y
         var heart = Path()
         heart.move(to: CGPoint(x: x, y: y + 4))
         heart.addCurve(to: CGPoint(x: x, y: y - 2), control1: CGPoint(x: x - 7, y: y), control2: CGPoint(x: x - 3, y: y - 6))
@@ -104,11 +104,14 @@ func drawLives(_ lives: Int, in ctx: inout GraphicsContext, width: CGFloat) {
 }
 
 enum ArcadeHUD {
-    static let y: CGFloat = 7
-    /// Lo que sube el lienzo al jugar, cuando se quita el título.
-    static let titleBand: CGFloat = 20
-    /// Ancho reservado al marcador (hasta 5 cifras) desde el borde derecho.
-    static let scoreBand: CGFloat = 46
+    /// Pantalla completa (2026-11-24): el lienzo ocupa TODA la pantalla. La fila de arriba es del
+    /// marcador (izquierda) y de la hora del sistema (derecha, no se puede quitar): lo que va anclado
+    /// arriba en un juego empieza en `top`. `left` salva la esquina redonda.
+    static let y: CGFloat = 15
+    static let top: CGFloat = 24
+    static let left: CGFloat = 24
+    /// Ancho reservado al marcador (hasta 5 cifras) desde `left`.
+    static let scoreBand: CGFloat = 44
     /// Vueltas de Corona por pantalla, respecto a `.low` (que ya es el mínimo del sistema y seguía
     /// siendo demasiado sensible, 2026-11-21): la Corona recorre 0…crownSpan y el juego usa 0…1.
     static let crownSpan: Double = 2.5
@@ -175,10 +178,9 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
                     #endif
                     world.draw(&ctx, size: size)
                     if phase == .playing {
-                        // Jugando, el marcador va en el lienzo (junto a las vidas), no en el título:
-                        // así el juego ocupa también la franja del título. Ver `.padding(.top, …)`.
+                        // Jugando, el marcador va en el lienzo (junto a las vidas), a la altura de la hora.
                         ctx.draw(Text("\(world.score)").font(.system(size: 14, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white.opacity(0.9)), at: CGPoint(x: size.width - 8, y: ArcadeHUD.y), anchor: .trailing)
+                            .foregroundColor(.white.opacity(0.9)), at: CGPoint(x: ArcadeHUD.left, y: ArcadeHUD.y), anchor: .leading)
                     }
                 }
                 .onChange(of: timeline.date) { _, now in tick(now) }
@@ -220,11 +222,11 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
                 if phase == .playing { world.resize(new) } else { world.reset(size: new); redraw += 1 }
             }
         }
-        // Jugando se quita el título y el lienzo sube a ocupar su franja (quitar el título solo
-        // no libera el hueco: mismo truco que Decoder y Anygram). La hora sigue arriba a la derecha.
-        .padding(.top, phase == .playing ? -ArcadeHUD.titleBand : 0)
-        .ignoresSafeArea(edges: .bottom)
-        .navigationTitle(phase == .playing ? "" : (phase == .ready ? info.title : "\(score)"))
+        // Pantalla completa: el lienzo ocupa toda la pantalla (también bajo la hora) y, jugando, se
+        // quita la barra (título y botón de volver).
+        .ignoresSafeArea()
+        .toolbar(phase == .playing ? .hidden : .visible, for: .navigationBar)
+        .navigationTitle("")
         .focusable()
         .focused($crownFocus)
         .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: World.crownWraps, isHapticFeedbackEnabled: World.crownHaptics)

@@ -396,3 +396,22 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     piloto murió antes; solo se vio cada zona por separado), TODA la háptica de Caja fuerte (es el juego entero),
     cargar/soltar con el dedo real, el volante con la Corona real, y la dificultad de todo. El piloto de Pompas pierde
     en ~10 s: no sé si es el piloto o que al subir el suelo quedó más difícil.
+- 2026-11-24 — **Reloj: los nueve juegos de acción a pantalla completa, y juego nuevo Torreta.**
+  - Pantalla completa: `.ignoresSafeArea()` en `WatchArcadeStage` y Brinco (el lienzo mide la pantalla entera, 187×223 en
+    42 mm, y ya no cambia de tamaño al empezar); jugando se oculta la barra (`.toolbar(.hidden, for: .navigationBar)`):
+    sin título ni botón de volver, que reaparece en la pantalla de inicio y en la de fin. Desaparece el truco
+    `.padding(.top, -titleBand)`. **La hora del sistema NO se puede quitar** (medido en captura: sigue arriba a la derecha
+    con la barra oculta), así que la fila de arriba es marcador + vidas a la izquierda (`ArcadeHUD.left/y`) y hora a la
+    derecha; lo anclado arriba empieza en `ArcadeHUD.top` (24): formación de Marcianitos, tubería de Goteras, jefe de
+    Escuadrón, dial de Caja fuerte (algo más pequeño y más bajo). Fuera los fundidos superiores de Escuadrón y Derrape.
+    Sin título tampoco en inicio/fin (el nombre pisaba el dibujo).
+  - **Torreta** (`WatchTurretView.swift`, `.turret`; pedido como «tipo Dome Keeper pero más simple»; solo la idea de la
+    cúpula que se defiende, sin minería): cúpula con cañón en el centro del suelo, la Corona gira el cañón (±78°, 0,5 =
+    arriba) y dispara solo. Roca (1), roca grande (3, suelta dos pequeñas), esquirla rápida (nivel 3+); entran por arriba y,
+    desde el nivel 2, por los lados; todo va a por la cúpula (3 golpes). Cápsula «×2» = cañón doble 8 s. Nivel cada 25 s.
+    Gancho DEBUG `QW_GAME=turret`, `QW_LEVEL=n`.
+  - Verificado en Watch 42 mm temporal (borrado): capturas con máscara de los nueve jugando y de la pantalla de inicio,
+    ≥ 60 dibujados/s en todos, build iOS con el Watch embebido. **Sin verificar:** salir a mitad de partida sin botón de
+    volver (¿funciona el gesto de borde con la barra oculta? En Tintazo el arrastre es del juego; si no, solo queda
+    perder o pulsar la Corona), tamaños de reloj distintos de 42 mm, la dificultad de Torreta (el piloto apunta perfecto,
+    no dice nada) y si ±78° en 2,5 vueltas de Corona se maneja bien.

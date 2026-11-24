@@ -21,7 +21,7 @@ struct QuizzyWatchApp: App {
 
 /// Juegos que solo existen en el reloj (no son `PuzzleKind`: el iPhone no los conoce).
 enum WatchArcade: String, Hashable, CaseIterable {
-    case jump, aliens, planes, bubbles, leaks, ink, safe, drift
+    case jump, aliens, planes, bubbles, leaks, ink, safe, drift, turret
 
     var title: String {
         switch self {
@@ -33,6 +33,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .ink: return WatchInk.info.title
         case .safe: return WatchSafe.info.title
         case .drift: return WatchDrift.info.title
+        case .turret: return WatchTurret.info.title
         }
     }
     var color: Color {
@@ -45,6 +46,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .ink: return WatchInk.info.color
         case .safe: return WatchSafe.info.color
         case .drift: return WatchDrift.info.color
+        case .turret: return WatchTurret.info.color
         }
     }
     var bestKey: String {
@@ -57,6 +59,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .ink: return WatchInk.info.bestKey
         case .safe: return WatchSafe.info.bestKey
         case .drift: return WatchDrift.info.bestKey
+        case .turret: return WatchTurret.info.bestKey
         }
     }
     var blurb: String {
@@ -69,6 +72,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .ink: return AppLanguage.text("Apunta, carga y suelta", "Aim, charge and release")
         case .safe: return AppLanguage.text("Abre cajas a tacto", "Crack safes by feel")
         case .drift: return AppLanguage.text("Conduce con la Corona", "Steer with the Crown")
+        case .turret: return AppLanguage.text("Apunta el cañón con la Corona", "Aim the cannon with the Crown")
         }
     }
     /// Fondo de la pantalla del juego. En Escuadrón y Brinco es un color liso de mar, para que la
@@ -83,6 +87,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .ink: return AnyShapeStyle(WatchInk.shallow)
         case .safe: return AnyShapeStyle(WatchSafe.steelTop)
         case .bubbles: return AnyShapeStyle(WatchBubbles.skyTop)
+        case .turret: return AnyShapeStyle(WatchTurret.skyTop)
         case .aliens: return AnyShapeStyle(color.gradient.opacity(0.35))
         }
     }
@@ -98,6 +103,7 @@ enum WatchArcade: String, Hashable, CaseIterable {
         case .ink: WatchInk.drawBlob(in: &ctx, at: c, radius: size.height * 0.36)
         case .safe: WatchSafe.drawDial(in: &ctx, center: c, radius: size.height * 0.46, pos: 0, detail: false)
         case .drift: WatchDrift.drawCar(in: &ctx, at: c, size: size.height * 0.92, angle: 0.3, body: Color(hex: 0xF0766B))
+        case .turret: WatchTurret.drawTurret(in: &ctx, base: CGPoint(x: c.x, y: size.height - 3), scale: size.height / 34, angle: 0.5)
         }
     }
 }
@@ -236,6 +242,7 @@ struct WatchHomeView: View {
     @AppStorage(WatchInk.info.bestKey, store: PuzzleProgress.shared.defaults) private var inkBest = 0
     @AppStorage(WatchSafe.info.bestKey, store: PuzzleProgress.shared.defaults) private var safeBest = 0
     @AppStorage(WatchDrift.info.bestKey, store: PuzzleProgress.shared.defaults) private var driftBest = 0
+    @AppStorage(WatchTurret.info.bestKey, store: PuzzleProgress.shared.defaults) private var turretBest = 0
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -264,6 +271,7 @@ struct WatchHomeView: View {
                     case .ink: WatchInkView()
                     case .safe: WatchSafeView()
                     case .drift: WatchDriftView()
+                    case .turret: WatchTurretView()
                     }
                 }
                 .containerBackground(game.backdrop, for: .navigation)
@@ -272,7 +280,7 @@ struct WatchHomeView: View {
         .onAppear {
             hub.refreshIfNeeded()
             #if DEBUG
-            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes|bubbles|leaks|ink|safe|drift abre ese juego.
+            // Capturas en simulador sin tocar: QW_GAME=wordle|anygram|maze|decoder|jump|aliens|planes|bubbles|leaks|ink|safe|drift|turret abre ese juego.
             if path.isEmpty, let raw = ProcessInfo.processInfo.environment["QW_GAME"] {
                 if let game = WatchArcade(rawValue: raw) { path.append(game) }
                 else if let kind = PuzzleKind(rawValue: raw), hub.offered.contains(kind) { path.append(kind) }
@@ -313,6 +321,7 @@ struct WatchHomeView: View {
         case .ink: best = inkBest
         case .safe: best = safeBest
         case .drift: best = driftBest
+        case .turret: best = turretBest
         }
         return HStack(spacing: 8) {
             Canvas { ctx, size in game.drawIcon(in: &ctx, size: size) }

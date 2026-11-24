@@ -325,10 +325,9 @@ struct WatchJumpView: View {
                     #endif
                     draw(&ctx, size: size)
                     if phase == .playing {
-                        // Igual que en `WatchArcadeStage`: jugando, el marcador va en el lienzo (bajo la
-                        // hora) y el lienzo sube a ocupar la franja del título.
+                        // Igual que en `WatchArcadeStage`: marcador en el lienzo, a la altura de la hora.
                         ctx.draw(Text("\(world.score)").font(.system(size: 14, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white.opacity(0.9)), at: CGPoint(x: size.width - 8, y: ArcadeHUD.y), anchor: .trailing)
+                            .foregroundColor(.white.opacity(0.9)), at: CGPoint(x: ArcadeHUD.left, y: ArcadeHUD.y), anchor: .leading)
                     }
                 }
                 .onChange(of: timeline.date) { _, now in tick(now, width: geo.size.width) }
@@ -349,9 +348,9 @@ struct WatchJumpView: View {
                 if phase == .playing { world.resize(new) } else { world.reset(size: new); redraw += 1 }
             }
         }
-        .padding(.top, phase == .playing ? -ArcadeHUD.titleBand : 0)
-        .ignoresSafeArea(edges: .bottom)
-        .navigationTitle(phase == .playing ? "" : (phase == .ready ? WatchJump.title : "\(score)"))
+        .ignoresSafeArea()
+        .toolbar(phase == .playing ? .hidden : .visible, for: .navigationBar)
+        .navigationTitle("")
         .focusable()
         .focused($crownFocus)
         .digitalCrownRotation(ArcadeHUD.crown($crown), from: 0, through: ArcadeHUD.crownSpan, sensitivity: .low, isContinuous: true, isHapticFeedbackEnabled: true)
