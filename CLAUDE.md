@@ -474,3 +474,14 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     de partida; 61 dibujados/s. **Sin verificar:** tocar (simulador headless): el arrastre, el tonel con toque, pausa y
     salir; la tarjeta «Arcade» en la portada (queda bajo el pliegue, no se pudo capturar); apaisado e iPad (solo
     razonado); la dificultad (el piloto solo se mueve de lado); y que el reloj siga idéntico (solo compilado, no capturado).
+- 2026-11-25 (2) — **Build 55 en TestFlight público; en Escuadrón de iPhone el avión vuela por delante del dedo.**
+  - Build 55 (workflow externo, `815b3f0`): añadido a «Internal» y «Público» con `--submit`; quedó `IN_BETA_TESTING`
+    externo al momento, sin esperar revisión (misma versión que el 51 ya aprobado).
+  - Josu, jugando en el iPhone: el dedo tapaba el avión. Hipótesis descartada: «el arrastre relativo basta para que no
+    lo tape» — en la práctica se apoya el dedo encima del avión y ahí se queda. Ahora el control es ABSOLUTO con
+    adelanto: el avión va a 76 pt de pantalla por encima del dedo (`SquadronGame.lead`, `follow(_:dt:)`), persiguiendo
+    ese punto a 2000 pt/s como mucho (no se teletransporta al apoyar el dedo). El seguimiento solo empieza si el dedo
+    se ha movido ≥ 10 pt o lleva > 0,18 s apoyado, para que el toque corto del tonel no mueva el avión.
+  - Verificado: solo que compila en iOS. **Sin verificar:** todo lo táctil (simulador headless): que 76 pt sea el
+    adelanto cómodo, que el tonel no arrastre el avión, y el fondo de la franja (con el dedo en el borde inferior el
+    avión se queda unos 8 pt por encima de su límite bajo). El reloj no se toca (el cambio está solo en `SquadronGame`).

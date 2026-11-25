@@ -55,7 +55,9 @@ private struct SquadronField: Equatable {
 /// Estado del dedo, fuera de SwiftUI: cambia en cada evento y no debe reconstruir la vista.
 private final class SquadronControl {
     var x: CGFloat = 0.5, y: CGFloat = 1          // posición pedida, 0…1 en cada eje
-    var startX: CGFloat?, startY: CGFloat?
+    /// Dedo en pantalla (puntos de la vista) y si ya se ha movido: un toque corto no arrastra el avión.
+    var finger: CGPoint?
+    var moved = false
     var touchBegan: Date?
     var last: Date?
 }
@@ -257,18 +259,13 @@ struct SquadronGame: View {
         DragGesture(minimumDistance: 0)
             .onChanged { v in
                 guard phase == .playing, field.logical.width > 0 else { return }
-                if control.startX == nil { control.startX = control.x; control.startY = control.y; control.touchBegan = v.time }
-                // Recorrido útil de cada eje, en puntos de pantalla (lo mismo que recorre el avión).
-                let spanX = max(1, (field.logical.width - 34) * field.scale)
-                let hi = field.logical.height - world.bottomInset
-                let lo = min(hi, max(world.topInset + 110, field.logical.height * 0.42))
-                let spanY = max(1, (hi - lo) * field.scale)
-                control.x = min(1, max(0, (control.startX ?? 0.5) + v.translation.width / spanX))
-                control.y = min(1, max(0, (control.startY ?? 1) + v.translation.height / spanY))
+                if control.touchBegan == nil { control.touchBegan = v.time; control.moved = false }
+                if hypot(v.translation.width, v.translation.height) >= 10 { control.moved = true }
+                control.finger = v.location
             }
             .onEnded { v in
                 let began = control.touchBegan
-                control.startX = nil; control.startY = nil; control.touchBegan = nil
+                control.finger = nil; control.moved = false; control.touchBegan = nil
                 switch phase {
                 case .ready: begin()
                 case .playing:
@@ -281,11 +278,29 @@ struct SquadronGame: View {
             }
     }
 
+    /// Distancia, en puntos de pantalla, a la que el avión vuela por delante del dedo para que no lo tape.
+    private static let lead: CGFloat = 76
+
+    /// Lleva el avión hacia el punto que queda por delante del dedo, rápido pero sin teletransportarlo.
+    private func follow(_ now: Date, dt: CGFloat) {
+        guard let finger = control.finger, let began = control.touchBegan, field.logical.width > 0,
+              control.moved || now.timeIntervalSince(began) > 0.18 else { return }
+        let hi = field.logical.height - world.bottomInset
+        let lo = min(hi, max(world.topInset + 110, field.logical.height * 0.42))
+        let spanX = max(1, field.logical.width - 34), spanY = max(1, hi - lo)
+        let wantX = min(1, max(0, ((finger.x - field.originX) / field.scale - 17) / spanX))
+        let wantY = min(1, max(0, ((finger.y - Self.lead) / field.scale - lo) / spanY))
+        let reach = 2000 * dt / field.scale          // puntos lógicos que puede recorrer en este fotograma
+        control.x += max(-reach / spanX, min(reach / spanX, wantX - control.x))
+        control.y += max(-reach / spanY, min(reach / spanY, wantY - control.y))
+    }
+
     // MARK: Bucle
 
     private func begin() {
         score = 0; record = false
         control.x = 0.5; control.y = 1; control.last = nil
+        control.finger = nil; control.moved = false; control.touchBegan = nil
         phase = .playing
     }
 
@@ -303,6 +318,7 @@ struct SquadronGame: View {
             control.x = min(1, max(0, control.x + max(-1.8 * dt, min(1.8 * dt, want - control.x))))
         }
         #endif
+        follow(now, dt: dt)
         world.inputY = control.y
         switch world.step(dt: dt, input: control.x) {
         case .none, .detent, .notch, .success: break
