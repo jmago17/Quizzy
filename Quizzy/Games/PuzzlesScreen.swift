@@ -88,6 +88,9 @@ struct PuzzlesScreen: View {
     @State private var error: String?
     @State private var route: AnyPuzzle?
     @State private var completedResult: PZResult?
+    /// Arcade (Escuadrón): no es un puzzle diario, así que no pasa por `route`/`AnyPuzzle`.
+    @State private var arcadeOpen = false
+    @AppStorage(Squadron.bestKey, store: PuzzleProgress.shared.defaults) private var squadronBest = 0
 
     private var offered: [PuzzleKind] { PuzzleKind.offered(in: AppLanguage.current) }
     private var featured: PuzzleKind { progress.firstPending ?? offered.first ?? .wordsearch }
@@ -131,6 +134,18 @@ struct PuzzlesScreen: View {
                     }
                 }
 
+                Text("Arcade")
+                    .font(PZFont.section)
+                    .foregroundStyle(PZColor.ink)
+                    .padding(.top, PZSpace.lg)
+                LazyVGrid(columns: hubColumns, spacing: PZSpace.md) {
+                    Button { arcadeOpen = true } label: {
+                        PZArcadeCard(title: Squadron.title, symbol: "airplane", color: Squadron.color,
+                                     subtitle: squadronBest > 0 ? AppLanguage.text("Récord: \(squadronBest)", "Best: \(squadronBest)") : Squadron.blurb)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Text(AppLanguage.text("Cada partida se genera en este dispositivo. El puzzle diario se reproduce con la fecha, así que es el mismo en todos tus dispositivos.", "Each game is generated on this device. Daily puzzles use the date and language, so they match across your devices."))
                     .font(PZFont.caption)
                     .foregroundStyle(PZColor.inkSecondary)
@@ -151,6 +166,7 @@ struct PuzzlesScreen: View {
         }
         .background(LiquidCanvasBackground())
         .navigationDestination(item: $route) { destination($0) }
+        .navigationDestination(isPresented: $arcadeOpen) { SquadronGame() }
         .navigationTitle(AppLanguage.text("Juegos", "Games"))
         .navigationBarTitleDisplayMode(.inline)
         // Raíz de pestaña (iPhone Tabs): sin barra; el encabezado serif sube a la zona segura.
@@ -200,6 +216,7 @@ struct PuzzlesScreen: View {
                let item = puzzle(kind) {
                 route = item
             }
+            if ProcessInfo.processInfo.environment["NR_GAME"] == "planes" { arcadeOpen = true }
             #endif
         }
         .alert(AppLanguage.text("No se pudo generar", "Could not generate puzzle"), isPresented: .constant(error != nil)) {
@@ -773,6 +790,39 @@ extension PuzzleState {
 
 /// Fila de juego en tarjeta: icono redondo con la tinta del juego, título,
 /// detalle, insignia de estado y flecha.
+/// Tarjeta de un juego de acción (sin estado diario): mismo aspecto que `PZGameCard`.
+struct PZArcadeCard: View {
+    let title: String
+    let symbol: String
+    let color: Color
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: PZSpace.md) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 44, height: 44)
+                .background(PZColor.wash(color), in: Circle())
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: PZSpace.xxs) {
+                Text(title).font(PZFont.title).foregroundStyle(PZColor.ink)
+                Text(subtitle).font(PZFont.caption).foregroundStyle(PZColor.inkSecondary).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: PZSpace.sm)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(PZColor.inkTertiary)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, PZSpace.lg)
+        .padding(.vertical, PZSpace.md)
+        .frame(minHeight: 72)
+        .pzCard(PZRadius.card)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct PZGameCard: View {
     @AppStorage(AppLanguage.storageKey) private var languageSelection = "system"
     let kind: PuzzleKind

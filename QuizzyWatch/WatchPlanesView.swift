@@ -13,6 +13,8 @@
 //  suelo y otro decorado; el cartel «ZONA n» lo anuncia. Cañones en tierra (`Turret`): bajan con el
 //  suelo, apuntan al avión y disparan; caen con 2 impactos (30 puntos). No se choca con ellos.
 //  Dibujos propios (formas en Canvas), sin insignias. Bucle y pantallas: `WatchArcadeStage`.
+//  COMPARTIDO CON EL IPHONE (2026-11-25): este fichero y `WatchArcade.swift` entran también en el
+//  target de iOS (`project.yml`); allí lo envuelve `Quizzy/Games/SquadronGame.swift`.
 //
 
 import SwiftUI
@@ -73,7 +75,34 @@ final class SkyWorld: ArcadeWorld {
     /// Segundos de vuelo (sin contar los combates) entre un jefe y el siguiente.
     static let bossEvery: CGFloat = 60
     static let bossSize: CGFloat = 54
-    private static let bossY: CGFloat = ArcadeHUD.top + 52   // su barra de vida queda bajo el marcador
+    /// Alto reservado arriba al marcador (en el iPhone, además, la zona segura).
+    var topInset: CGFloat = ArcadeHUD.top
+    private var bossY: CGFloat { topInset + 52 }   // su barra de vida queda bajo el marcador
+
+    // iPhone (`SquadronGame`): el avión también sube y baja, el tonel se pide con un toque y el
+    // marcador lo pinta la vista. En el reloj no se toca nada de esto.
+    /// `true`: `inputY` (0 = arriba … 1 = abajo) mueve el avión en vertical dentro de su franja.
+    var free2D = false
+    var inputY: CGFloat = 1
+    /// Distancia del avión al borde inferior cuando está abajo del todo.
+    var bottomInset: CGFloat = 26
+    /// `false`: un movimiento brusco no dispara el tonel (con el dedo saldría sin querer).
+    var swingRolls = true
+    /// `false`: no pinta vidas ni la barra del triple disparo.
+    var drawsHUD = true
+    /// `false`: no pinta los carteles de zona y de jefe (pantalla de inicio del iPhone).
+    var showsBanners = true
+    /// Multiplica el tiempo entre enemigos: el campo del iPhone es más alto y quedaba vacío.
+    var spawnScale: CGFloat = 1
+    private var rollRequest = false
+    func requestRoll() { rollRequest = true }
+    /// 0…1: 1 = tonel disponible.
+    var rollCharge: CGFloat { 1 - min(1, rollWait / Self.rollCooldown) }
+    private var restY: CGFloat {
+        guard free2D else { return size.height - 26 }
+        let hi = size.height - bottomInset, lo = min(hi, max(topInset + 110, size.height * 0.42))
+        return lo + min(1, max(0, inputY)) * (hi - lo)
+    }
 
     /// Decorado del suelo; se dibuja según la zona en la que nació (isla, duna, arboleda, manzana).
     struct Island { var x: CGFloat; var y: CGFloat; var w: CGFloat; var h: CGFloat; var zone = 0; var seed = 0 }
@@ -101,10 +130,10 @@ final class SkyWorld: ArcadeWorld {
     private var zoneBanner: CGFloat = 0
     private var sparks: [Spark] = []
     private var px: CGFloat = 0, py: CGFloat = 0
-    private var lives = 3
+    private(set) var lives = 3
     private var time: CGFloat = 0, scroll: CGFloat = 0
     private var fireT: CGFloat = 0, spawnT: CGFloat = 1, islandT: CGFloat = 2
-    private var power: CGFloat = 0     // segundos de triple disparo
+    private(set) var power: CGFloat = 0     // segundos de triple disparo
     private var invuln: CGFloat = 0
     /// Tonel. Se dispara cuando el recorrido reciente de la Corona en un mismo sentido supera
     /// `rollSwing` (fracción del ancho). El recorrido «se olvida» con constante `rollMemory`, así
@@ -136,11 +165,11 @@ final class SkyWorld: ArcadeWorld {
         enemies = []; shots = []; bullets = []; pickups = []; sparks = []
         islands = [Island(x: size.width * 0.25, y: size.height * 0.3, w: 46, h: 30)]
         turrets = []; turretT = 9; zone = 0; zoneFade = 0; zoneBanner = 2
-        px = size.width / 2; py = size.height - 26
+        px = size.width / 2; py = restY
         lives = 3; time = 0; scroll = 0; score = 0
         fireT = 0.2; spawnT = 1; islandT = 3; power = 0; invuln = 0
         boss = nil; bossWarn = 0; bossCount = 0; bossT = Self.bossEvery
-        roll = 0; rollWait = 0; swing = 0; lastInput = nil
+        roll = 0; rollWait = 0; swing = 0; lastInput = nil; rollRequest = false
         #if DEBUG
         if ProcessInfo.processInfo.environment["QW_BOSS"] == "1" { bossT = 2 }   // capturas: jefe enseguida
         if let z = ProcessInfo.processInfo.environment["QW_ZONE"].flatMap({ Int($0) }) {   // capturas: empezar en la zona z
@@ -158,7 +187,7 @@ final class SkyWorld: ArcadeWorld {
         scroll += 42 * dt
         // A 26 pt del fondo y 17 de los lados: las esquinas de la pantalla son redondas.
         px = 17 + input * (size.width - 34)
-        py = size.height - 26
+        py = restY
         zoneFade = max(0, zoneFade - dt / 1.2)
         zoneBanner = max(0, zoneBanner - dt)
         invuln = max(0, invuln - dt)
@@ -170,7 +199,8 @@ final class SkyWorld: ArcadeWorld {
         lastInput = input
         roll = max(0, roll - dt)
         rollWait = max(0, rollWait - dt)
-        var wantRoll = abs(swing) > Self.rollSwing
+        var wantRoll = (swingRolls && abs(swing) > Self.rollSwing) || rollRequest
+        rollRequest = false
         #if DEBUG
         if alwaysRoll { wantRoll = true; rollWait = 0 }
         #endif
@@ -244,9 +274,9 @@ final class SkyWorld: ArcadeWorld {
         if var b = boss {
             b.t += dt
             b.flash = max(0, b.flash - dt)
-            if b.p.y < Self.bossY {
-                b.p.y = min(Self.bossY, b.p.y + 50 * dt)
-                if b.p.y >= Self.bossY { b.t = 0 }   // el vaivén arranca centrado, sin salto
+            if b.p.y < bossY {
+                b.p.y = min(bossY, b.p.y + 50 * dt)
+                if b.p.y >= bossY { b.t = 0 }   // el vaivén arranca centrado, sin salto
             } else {
                 b.p.x = size.width / 2 + sin(b.t * 0.9) * (size.width / 2 - Self.bossSize / 2 - 2)
                 b.fireT -= dt
@@ -274,7 +304,7 @@ final class SkyWorld: ArcadeWorld {
         // Enemigos nuevos.
         spawnT -= dt
         if spawnT <= 0, boss == nil, bossWarn <= 0 {
-            spawnT = max(0.55, 1.45 - level * 0.09) * CGFloat.random(in: 0.75...1.25)
+            spawnT = max(0.55, 1.45 - level * 0.09) * CGFloat.random(in: 0.75...1.25) * spawnScale
             let x = CGFloat.random(in: 16...(size.width - 16))
             let roll = CGFloat.random(in: 0..<1)
             if roll < 0.14 + min(0.1, level * 0.01) {
@@ -478,20 +508,20 @@ final class SkyWorld: ArcadeWorld {
             }
         }
         Spark.draw(sparks, in: &ctx)
-        drawLives(lives, in: &ctx, width: size.width)
-        if power > 0 {
+        if drawsHUD { drawLives(lives, in: &ctx, width: size.width) }
+        if drawsHUD, power > 0 {
             // Barra de lo que queda de triple disparo.
             // (Bajo el marcador, que ahora ocupa la esquina.)
             ctx.fill(Path(roundedRect: CGRect(x: ArcadeHUD.left, y: ArcadeHUD.y + 10, width: 38 * power / 10, height: 3.5), cornerRadius: 1.75), with: .color(Color(hex: 0xF2C14E)))
         }
-        if zoneBanner > 0, bossWarn <= 0 {
+        if showsBanners, zoneBanner > 0, bossWarn <= 0 {
             let a = Double(min(1, zoneBanner * 2))
             ctx.draw(Text(AppLanguage.text("ZONA \(zone + 1)", "ZONE \(zone + 1)")).font(.system(size: 11, weight: .heavy, design: .rounded))
                 .foregroundColor(.white.opacity(0.8 * a)), at: CGPoint(x: size.width / 2, y: size.height * 0.36))
             ctx.draw(Text(Self.zoneName(zone)).font(.system(size: 19, weight: .black, design: .rounded))
                 .foregroundColor(.white.opacity(a)), at: CGPoint(x: size.width / 2, y: size.height * 0.36 + 17))
         }
-        if bossWarn > 0, Int(time * 6) % 2 == 0 {
+        if showsBanners, bossWarn > 0, Int(time * 6) % 2 == 0 {
             ctx.draw(Text(AppLanguage.text("¡JEFE!", "BOSS!")).font(.system(size: 20, weight: .black, design: .rounded))
                 .foregroundColor(Color(hex: 0xF0766B)), at: CGPoint(x: size.width / 2, y: size.height * 0.4))
         }
@@ -507,7 +537,8 @@ final class SkyWorld: ArcadeWorld {
         }
         /// Motas fijas que bajan con el suelo: `draw` recibe la posición y el índice.
         func scatter(_ count: Int, _ draw: (CGPoint, Int) -> Void) {
-            for i in 0..<count {
+            let n = count * max(1, Int(size.width * size.height / (187 * 223) + 0.5))
+            for i in 0..<n {
                 let x = CGFloat((i * 67 + 13) % 100) / 100 * size.width
                 let y = (CGFloat((i * 139 + 29) % 100) / 100 * size.height + scroll).truncatingRemainder(dividingBy: size.height)
                 draw(CGPoint(x: x, y: y), i)
@@ -533,12 +564,14 @@ final class SkyWorld: ArcadeWorld {
             grad(0x3A404C, 0x4A515E)
             let road = CGRect(x: size.width * 0.5 - 13, y: -40, width: 26, height: size.height + 80)
             ctx.fill(Path(road), with: .color(Color(hex: 0x23272F)))
-            for k in 0..<8 {
-                let y = (CGFloat(k) * 30 + scroll).truncatingRemainder(dividingBy: 240) - 20
+            let dashes = max(8, Int(size.height / 30) + 2)
+            for k in 0..<dashes {
+                let y = (CGFloat(k) * 30 + scroll).truncatingRemainder(dividingBy: CGFloat(dashes) * 30) - 20
                 ctx.fill(Path(CGRect(x: road.midX - 1, y: y, width: 2, height: 12)), with: .color(.white.opacity(0.55)))
             }
-            for k in 0..<3 {
-                let y = (CGFloat(k) * 95 + scroll).truncatingRemainder(dividingBy: 285) - 20
+            let streets = max(3, Int(size.height / 95) + 1)
+            for k in 0..<streets {
+                let y = (CGFloat(k) * 95 + scroll).truncatingRemainder(dividingBy: CGFloat(streets) * 95) - 20
                 ctx.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 12)), with: .color(Color(hex: 0x23272F)))
             }
         default:  // Mar: crestas de ola.
@@ -621,6 +654,8 @@ final class SkyWorld: ArcadeWorld {
     }
 }
 
+#if os(watchOS)
 struct WatchPlanesView: View {
     var body: some View { WatchArcadeStage(info: WatchPlanes.info, world: SkyWorld()) }
 }
+#endif

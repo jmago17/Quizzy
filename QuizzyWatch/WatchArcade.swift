@@ -162,6 +162,7 @@ final class ArcadeProbe {
 }
 #endif
 
+#if os(watchOS)
 private final class FrameClock { var last: Date? }
 
 // MARK: - Escenario
@@ -328,3 +329,4 @@ struct WatchArcadeStage<World: ArcadeWorld>: View {
         if world.score != score { score = world.score }
     }
 }
+#endif

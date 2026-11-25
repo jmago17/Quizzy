@@ -23,6 +23,9 @@ targets:
     platform: iOS
     sources:
       - path: Quizzy
+      # Escuadrón: el motor del reloj, compartido con el iPhone (`SquadronGame.swift`). Desde 2026-11-25.
+      - path: QuizzyWatch/WatchArcade.swift
+      - path: QuizzyWatch/WatchPlanesView.swift
     dependencies:
       # App del reloj, dentro de la de iOS (mismo TestFlight). Desde 2026-11-20.
       - target: QuizzyWatch

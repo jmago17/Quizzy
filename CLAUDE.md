@@ -453,3 +453,24 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Builds siguientes para el público: lanzar "External TestFlight Build" (no el interno) y añadir el build al grupo
     «Público» (`asc builds add-groups --build-id … --group … --submit --confirm`); solo el primero de cada versión pasa
     revisión completa.
+- 2026-11-25 — **TestFlight público aprobado; límite de 100 testers; Escuadrón llega al iPhone.**
+  - Build 51 `APPROVED` por Apple y en pruebas externas. Enlace público limitado a 100 (`asc testflight groups edit
+    --public-link-limit-enabled --public-link-limit 100`). Ojo: un build del workflow externo NO llega solo a los testers
+    internos (quedó `READY_FOR_BETA_TESTING` aunque «Internal» tenga acceso a todos); hay que añadirlo también a
+    «Internal» (`d7f61299-8ca1-465a-b172-b4f1a36b0b12`) con `asc builds add-groups`.
+  - **Escuadrón en iPhone/iPad** (`Quizzy/Games/SquadronGame.swift`; pedido: «un juego de aviones para el iPhone»). NO es
+    una copia: `SkyWorld` es el mismo motor del reloj; `QuizzyWatch/WatchArcade.swift` y `WatchPlanesView.swift` entran
+    también en el target de iOS (`project.yml`), con `WatchArcadeStage` y `WatchPlanesView` bajo `#if os(watchOS)`.
+    `SkyWorld` gana opciones que en el reloj quedan en su valor de siempre: `free2D`/`inputY` (el avión sube y baja),
+    `topInset`/`bottomInset`, `swingRolls` + `requestRoll()`, `drawsHUD`, `showsBanners`, `spawnScale`. El suelo reparte
+    motas/rayas según el tamaño del campo (en el reloj da lo mismo que antes).
+  - iPhone: campo lógico de 200 pt de ancho escalado a la pantalla (≈2×; 200×433 en un iPhone 18 Pro), limitado a 320 de
+    ancho y centrado en apaisado/iPad. Arrastre RELATIVO en los dos ejes (el dedo no tapa el avión), toque corto = tonel
+    (misma recarga de 2,5 s), disparo automático. Pantalla completa sin barra; botones de cristal (salir, pausa);
+    pausa automática al salir de la app; enemigos 1,4× más seguidos que en el reloj (`spawnScale` 0,7: el campo es el
+    doble de alto y quedaba vacío). Récord en `arcade.planes.best`. No es `PuzzleKind`: sección «Arcade» al final de la
+    portada (`PZArcadeCard`, `arcadeOpen`). Ganchos DEBUG: `NR_GAME=planes`, `NR_DEMO=1` (piloto), y los `QW_*` del motor.
+  - Verificado en simulador (iPhone 18 Pro): builds de iOS y del reloj; capturas de inicio, partida, jefe, ciudad y fin
+    de partida; 61 dibujados/s. **Sin verificar:** tocar (simulador headless): el arrastre, el tonel con toque, pausa y
+    salir; la tarjeta «Arcade» en la portada (queda bajo el pliegue, no se pudo capturar); apaisado e iPad (solo
+    razonado); la dificultad (el piloto solo se mueve de lado); y que el reloj siga idéntico (solo compilado, no capturado).
