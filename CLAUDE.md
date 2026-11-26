@@ -505,3 +505,30 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     Watch temporal (creado y BORRADO al acabar) de Marcianitos con mejoras y del tanque. **Sin verificar:** nada
     jugado a mano: la dificultad de cada jefe y el equilibrio de las mejoras (con las cuatro a la vez un jefe cae en
     pocos segundos); el acorazado solo se vio en blanco (captura durante el destello de impacto), sus colores no.
+- 2026-11-26 (2) — **Escuadrón: zona de alta montaña con picos y desfiladero, lanchas y submarinos, trenes y jefe-tren.**
+  - **Zona 5, ALTA MONTAÑA** (`zoneCount` 5): suelo nevado; decorado que NO parece monte (lagos helados, abetos) para
+    que todo lo que parezca un pico sea obstáculo. `Peak`: pico nevado, chocar quita una vida. `Gorge`: desfiladero de
+    380–520 pt con dos paredes y un pasillo sinuoso de 72 pt (`gorgeHalf` 36) que se cierra y se abre poco a poco;
+    tocar la pared quita una vida. Cartel «DESFILADERO». El TONEL NO evita el terreno (sí balas y aviones). No salen
+    picos, cañones ni decorado en la boca del desfiladero, ni desfiladero si no le da tiempo a acabar antes del jefe.
+  - **Mar**: `Vessel` — lancha (cruza de lado a lado, dispara apuntando, 3 impactos, 40 puntos) y submarino (ciclo de
+    5 s: 2 sumergido, 3 emergido; solo emergido se le puede dar y dispara un abanico de 3; 60 puntos).
+  - **Desierto**: `Train` — locomotora (4 impactos, 50 puntos, puede soltar mejora) + 4 vagones (2 impactos, 20
+    puntos; dos llevan cañón) por una vía horizontal o en diagonal (0, ±24°, ±40°), entrando por cualquier lado.
+  - **Jefes por zona** (`BossKind.forZone`): mar acorazado, desierto TREN, bosque tanque, ciudad cuatrimotor, montaña
+    helicóptero. El tren va por una vía vertical delante del jugador (mismo sentido); cada vagón tiene su vida y
+    dispara el ÚLTIMO que queda (cisterna: cohetes rectos; cañón: apuntado; mercancías: mortero en abanico;
+    locomotora sola: se desata). El vagón roto se queda atrás como chatarra (`Wreck`). Helicóptero algo más lento y
+    con caja de impacto mayor (en el test tardaba 150 s en caer en el iPhone).
+  - **Test nuevo**: `python3 Tests/Squadron/run.py` (28 comprobaciones). Compila el motor para macOS con sustitutos
+    (`stubs.swift`) y juega partidas simuladas con el piloto automático, en tamaño de reloj y de iPhone: cada zona
+    saca su jefe y se le derriba, la montaña se pasa sin estrellarse (≤ 3 choques en 330 s), y una partida larga
+    recorre todas las zonas dibujando cada 20 fotogramas (`ImageRenderer`). Ganchos nuevos: `QW_GOD=1` (los golpes se
+    cuentan pero no quitan vida), `QW_GORGE=1` (desfiladero al empezar), `QW_TRACE=1` (traza de choques con picos).
+  - Iterado hasta verde: el piloto chocaba con los picos porque volvía encima del que aún no había acabado de pasar
+    (fallo del piloto, no del terreno) y se centraba tarde en el desfiladero; el fondo del desfiladero acababa en un
+    corte recto (ahora es un degradado).
+  - Verificado: test 28/28, builds de iOS y reloj, capturas en iPhone 18 Pro (picos, desfiladero, lancha, submarino,
+    tren en diagonal, jefe-tren con un vagón roto) y en un Apple Watch temporal (creado y borrado). **Sin verificar:**
+    nada jugado a mano. La dificultad real del desfiladero con el dedo y, sobre todo, con la Corona; si los picos se
+    distinguen bien de un vistazo; el equilibrio de lanchas/submarinos/trenes sumados al tráfico de antes.
