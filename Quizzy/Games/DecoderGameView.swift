@@ -1,16 +1,17 @@
 #if os(iOS)
 //
 //  DecoderGameView.swift — Kaffa
-//  Decoder (device edition): a handheld code-breaking gadget drawn in SwiftUI.
-//  Lime-green plastic body, black panel with a darker result rail, 7 rows of
-//  4 RECTANGULAR luminous keys (all rows share one frame), 2x2 aggregate pilots
-//  per row, a black band (wider than the body) with the Decoder/Kaffa mark, a
-//  red seven-segment counter and a ribbed orange knob, under a black handle
-//  with two tilted antenna lights. Composition measured from docs/decoder-
-//  reference-20261109.md. Original artwork: no third-party marks or assets.
+//  Decoder (edición «radio de espía», 2026-11-27): un receptor de campaña dibujado
+//  en SwiftUI. DISEÑO PROPIO: sustituye al aparato anterior, que estaba medido
+//  sobre la foto de un producto real y no se podía publicar. Caja de acero gris
+//  con tornillos, antena telescópica y dos lámparas de modo en la tapa (ámbar =
+//  Diario/Práctica, azul = Infinito); panel de baquelita con 7 filas de 4
+//  VÁLVULAS redondas y un medidor de señal de 4 barras por fila; dial de
+//  frecuencias color crema con los colores en juego; contador ámbar, pulsador
+//  de pista y un dial negro moleteado. Las reglas NO han cambiado.
 //
 //  Controls (2026-11-10, docs/decoder-knob-controls-20261110.md):
-//   - ANTENNAS are the mode buttons: red = Diario/Práctica, green = Infinito.
+//   - The two LID LAMPS are the mode buttons: amber = Diario/Práctica, blue = Infinito.
 //   - The KNOB does everything else. Turn = change the colour previewed IN the
 //     selected key of the current row; short tap = place it; hold (~0.5 s,
 //     without turning) = submit the row. In Infinito with no game in progress
@@ -313,7 +314,7 @@ private enum DecoderLED {
     }
     static let pilotGreen = rgb(0x3CE06A)
     static let pilotWhite = rgb(0xF4F6F8)
-    static let counterRed = rgb(0xFF3B2F)
+    static let counterRed = rgb(0xFFA733)   // ámbar de válvula (el nombre se queda por las llamadas)
 }
 
 private extension View {
@@ -326,20 +327,25 @@ private extension View {
 // MARK: - Materials
 
 private enum DM {
-    static let limeTop     = Color(light: "BDE232", dark: "93B823")
-    static let limeBottom  = Color(light: "93C11B", dark: "6F9414")
-    static let limeEdgeHi  = Color(light: "E4F59A", dark: "B5D44F")
-    static let limeEdgeLo  = Color(light: "5E7F0C", dark: "3E5A0A")
-    static let panel       = Color(light: "17181B", dark: "101113")
-    static let rail        = Color(light: "060607", dark: "000000")
-    static let handle      = Color(light: "141517", dark: "0C0D0E")
+    static let caseTop     = Color(light: "4A545E", dark: "3A434C")   // acero gris azulado
+    static let caseBottom  = Color(light: "2E353D", dark: "232930")
+    static let caseEdgeHi  = Color(light: "8A96A2", dark: "6B7783")
+    static let caseEdgeLo  = Color(light: "14181C", dark: "0E1114")
+    static let panel       = Color(light: "1B1714", dark: "14110F")   // baquelita
+    static let rail        = Color(light: "0C0A09", dark: "070605")
+    static let handle      = Color(light: "17191C", dark: "0E0F11")
+    static let chrome      = Color(light: "C9D0D6", dark: "AEB6BD")
+    static let cream       = Color(light: "E9DEC2", dark: "DCCFAE")   // dial de frecuencias
+    static let creamInk    = Color(light: "3A2E1E", dark: "33281A")
     static let amber       = Color(light: "FFB36B", dark: "FFB36B")
-    static let printed     = Color(light: "2F4208", dark: "E7F7B0")   // text printed on the lime case
+    static let printed     = Color(light: "E6DCC4", dark: "E6DCC4")   // serigrafía sobre la caja
     static let plate       = Color(white: 0.07)                        // dark status plate
     static let plateInk    = Color(white: 0.93)
+    static let lampDaily   = Color(red: 1.0, green: 0.66, blue: 0.16)
+    static let lampInfinite = Color(red: 0.20, green: 0.72, blue: 1.0)
 }
 
-// MARK: - Geometry (reference photo 719 x 1160; every number is in photo pixels x s)
+// MARK: - Geometry (unidades propias: el cuerpo mide 626 de ancho; todo va multiplicado por s)
 
 private struct DeviceMetrics {
     let s: CGFloat
@@ -350,15 +356,15 @@ private struct DeviceMetrics {
     /// narrower than that so the band can overhang both sides and still end
     /// exactly at the margins (no clipping, no horizontal scroll).
     init(width: CGFloat) {
-        let o = min(16, max(8, width * 0.035))
+        let o: CGFloat = 0        // el dial ya no sobresale de la caja
         overhang = o
         s = max(0.25, (width - 2 * o) / 626)
     }
 
     var bodyW: CGFloat { 626 * s }
-    var stripW: CGFloat { bodyW + 2 * overhang }
+    var stripW: CGFloat { panelW }
     var panelW: CGFloat { 545 * s }
-    var panelLeft: CGFloat { 38 * s }
+    var panelLeft: CGFloat { 40.5 * s }   // panel centrado en la caja
     /// One row pitch for ALL rows (active, solved, empty). Never below 44 pt.
     var pitch: CGFloat { max(82 * s, 44) }
     var keyW: CGFloat { 42 * s }
@@ -375,14 +381,14 @@ private struct DeviceMetrics {
     var knobD: CGFloat { max(112 * s, 88) }
     var knobBox: CGFloat { knobD + 30 }
     var bottomH: CGFloat { max(164 * s, knobBox + 6) }
-    var corner: CGFloat { 30 * s }
+    var corner: CGFloat { 16 * s }
 }
 
 // MARK: - Keys, pilots, counter
 
-/// One rectangular key: dark housing, small bottom lip, luminous centre. The
-/// frame is fixed by the caller; selection / flash draw INSIDE it, so a key
-/// never changes size between states.
+/// Una VÁLVULA: zócalo redondo, ampolla de vidrio que se enciende con el color y,
+/// debajo, un piloto pequeño (la pista de esa casilla). El marco lo fija quien
+/// la usa; selección y destello se dibujan DENTRO, así que nunca cambia de tamaño.
 private struct DeviceKey: View {
     let width: CGFloat
     let height: CGFloat
@@ -395,114 +401,100 @@ private struct DeviceKey: View {
     var preview = false
     /// The previewed colour already sits in another slot: it cannot be placed.
     var rejected = false
-    /// Played rows only: what the lip under the key says about this slot.
+    /// Played rows only: what the pilot under the valve says about this slot.
     var hint: DecoderSlotHint? = nil
     @Environment(\.decoderHDREnabled) private var hdr
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiate
 
+    private var d: CGFloat { min(width * 1.12, height * 0.76) }
+
     var body: some View {
         let c = color.flatMap { DecoderColor(rawValue: $0) }
-        let corner = max(2.5, width * 0.14)
         ZStack {
-            RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .fill(LinearGradient(colors: [Color(white: 0.24), Color(white: 0.13)], startPoint: .top, endPoint: .bottom))
-            RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
-            lip
-            centre(c)
+            // Zócalo: aro metálico y fondo oscuro.
+            Circle().fill(LinearGradient(colors: [Color(white: 0.42), Color(white: 0.16)], startPoint: .top, endPoint: .bottom))
+                .frame(width: d, height: d)
+            Circle().fill(Color(white: 0.05)).frame(width: d * 0.84, height: d * 0.84)
+            bulb(c)
+            if selected { Circle().strokeBorder(DM.amber, lineWidth: 2.5).frame(width: d + 5, height: d + 5) }
+            if flash { Circle().strokeBorder(Color.white, lineWidth: 2.5).frame(width: d + 5, height: d + 5) }
         }
-        .overlay {
-            if selected {
-                RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(DM.amber, lineWidth: 2.5)
-            }
-        }
-        .overlay {
-            if flash {
-                RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(Color.white, lineWidth: 2.5)
-            }
-        }
+        .offset(y: -height * 0.07)
+        .overlay(alignment: .bottom) { pilot }
         .frame(width: width, height: height)
         .accessibilityHidden(true)
     }
 
-    /// The lip (the small bar under the colour). On played rows it is the
-    /// per-key hint LED: green = right slot, white = other slot, off = absent.
-    /// Lit with the same HDR recipe as every other LED (exposureAdjust +
-    /// allowedDynamicRange(.high)); plain SDR colour when HDR is off. With
-    /// "Differentiate Without Colour" the white bar is split in two.
-    @ViewBuilder private var lip: some View {
-        let w = width * 0.62
-        let lit = max(3, height * 0.09)
+    /// Piloto bajo la válvula. En filas jugadas es la pista de esa casilla:
+    /// verde = en su sitio, blanco = en otra casilla, apagado = no está. Con
+    /// «Diferenciar sin color» el blanco lleva un punto negro en el centro.
+    @ViewBuilder private var pilot: some View {
+        let r = max(4, height * 0.10)
         Group {
             switch hint {
             case .some(.exact):
-                Capsule().fill(DecoderLED.color(DecoderLED.pilotGreen, stops: DecoderLED.hint, hdr: hdr))
-                    .frame(width: w, height: lit)
-                    .shadow(color: DecoderLED.pilotGreen.opacity(0.55), radius: lit)
+                Circle().fill(DecoderLED.color(DecoderLED.pilotGreen, stops: DecoderLED.hint, hdr: hdr))
+                    .frame(width: r, height: r)
+                    .shadow(color: DecoderLED.pilotGreen.opacity(0.55), radius: r * 0.7)
                     .ledRange(hdr)
             case .some(.present):
-                Capsule().fill(DecoderLED.color(DecoderLED.pilotWhite, stops: DecoderLED.hint, hdr: hdr))
-                    .frame(width: w, height: lit)
-                    .overlay { if differentiate { Rectangle().fill(Color(white: 0.13)).frame(width: w * 0.24) } }
-                    .shadow(color: Color.white.opacity(0.40), radius: lit)
+                Circle().fill(DecoderLED.color(DecoderLED.pilotWhite, stops: DecoderLED.hint, hdr: hdr))
+                    .frame(width: r, height: r)
+                    .overlay { if differentiate { Circle().fill(Color(white: 0.1)).frame(width: r * 0.4, height: r * 0.4) } }
+                    .shadow(color: Color.white.opacity(0.40), radius: r * 0.7)
                     .ledRange(hdr)
             default:
-                Capsule().fill(Color.white.opacity(0.14))
-                    .frame(width: width * 0.60, height: max(2, height * 0.06))
+                Circle().fill(Color.white.opacity(0.13)).frame(width: r * 0.7, height: r * 0.7)
             }
         }
-        .offset(y: height / 2 - max(4, height * 0.10))
+        .frame(width: r, height: r)
     }
 
-    @ViewBuilder private func centre(_ c: DecoderColor?) -> some View {
-        let w = width * 0.72
-        let h = height * 0.62
-        let r = max(2, width * 0.09)
+    @ViewBuilder private func bulb(_ c: DecoderColor?) -> some View {
+        let g = d * 0.70
         if let c {
-            RoundedRectangle(cornerRadius: r, style: .continuous)
+            Circle()
                 .fill(DecoderLED.color(c.ledColor, stops: stops, hdr: hdr))
-                .overlay(RoundedRectangle(cornerRadius: r, style: .continuous)
-                    .fill(LinearGradient(colors: [Color.white.opacity(0.26), Color.clear], startPoint: .top, endPoint: .center)))
-                .frame(width: w, height: h)
+                .overlay(Circle().fill(RadialGradient(colors: [Color.white.opacity(0.45), Color.clear],
+                                                      center: UnitPoint(x: 0.34, y: 0.28), startRadius: 0, endRadius: g * 0.42)))
+                .frame(width: g, height: g)
                 .opacity(dimmed ? 0.35 : 1)
-                .shadow(color: c.ledColor.opacity(dimmed ? 0.10 : 0.45), radius: width * 0.10)   // subtle SDR halo; HDR comes from exposureAdjust
+                .shadow(color: c.ledColor.opacity(dimmed ? 0.10 : 0.5), radius: d * 0.14)   // halo SDR; el HDR viene de exposureAdjust
                 .ledRange(hdr)
                 .overlay {
-                    // Not placed yet: a dashed outline marks it as a preview.
+                    // Aún sin colocar: un aro discontinuo lo marca como vista previa.
                     if preview {
-                        RoundedRectangle(cornerRadius: r, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.9), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+                        Circle().strokeBorder(Color.white.opacity(0.9), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
                     }
                 }
                 .overlay {
-                    // Refused (already used in another slot): struck through, so
-                    // the refusal does not depend on seeing the dimming.
+                    // Rechazado (ya está en otra casilla): tachado, para no depender del atenuado.
                     if rejected {
                         Capsule().fill(Color.white.opacity(0.9))
-                            .frame(width: 2, height: h * 1.05)
+                            .frame(width: 2, height: g * 1.05)
                             .rotationEffect(.degrees(45))
                     }
                 }
                 .overlay {
                     if differentiate {
                         Text("\(c.number)")
-                            .font(.system(size: width * 0.40, weight: .heavy, design: .rounded))
+                            .font(.system(size: g * 0.56, weight: .heavy, design: .rounded))
                             .foregroundStyle(c.ink)
                     }
                 }
-                .offset(y: -height * 0.05)
         } else {
-            RoundedRectangle(cornerRadius: r, style: .continuous)
-                .fill(Color(white: 0.06))
-                .overlay(RoundedRectangle(cornerRadius: r, style: .continuous).strokeBorder(Color.white.opacity(0.05), lineWidth: 1))
-                .frame(width: w, height: h)
-                .offset(y: -height * 0.05)
+            // Apagada: vidrio oscuro con el filamento.
+            Circle().fill(RadialGradient(colors: [Color(white: 0.16), Color(white: 0.07)], center: .center, startRadius: 0, endRadius: g * 0.5))
+                .overlay(Capsule().fill(Color.white.opacity(0.10)).frame(width: g * 0.34, height: 1.5))
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.06), lineWidth: 1))
+                .frame(width: g, height: g)
         }
     }
 }
 
-/// 2x2 aggregate pilots: green = right colour in its slot, white = right colour
-/// elsewhere, black = nothing. Order carries NO slot meaning.
+/// Medidor de señal: 4 barras de altura creciente. Verde = color en su casilla,
+/// blanco = color en otra casilla, apagada = nada. El orden NO indica casilla
+/// (primero las verdes, luego las blancas).
 private struct DevicePilots: View {
     let diameter: CGFloat
     let feedback: DecoderFeedback?
@@ -511,12 +503,8 @@ private struct DevicePilots: View {
 
     var body: some View {
         let kinds = Self.kinds(feedback)
-        VStack(spacing: diameter * 0.40) {
-            ForEach(0..<2, id: \.self) { row in
-                HStack(spacing: diameter * 0.40) {
-                    ForEach(0..<2, id: \.self) { col in pilot(kinds[row * 2 + col]) }
-                }
-            }
+        HStack(alignment: .bottom, spacing: diameter * 0.30) {
+            ForEach(0..<4, id: \.self) { i in pilot(kinds[i], height: diameter * (0.9 + 0.42 * CGFloat(i))) }
         }
         .accessibilityHidden(true)
     }
@@ -530,23 +518,25 @@ private struct DevicePilots: View {
             + Array(repeating: 0, count: DecoderRules.slots - exact - misplaced)
     }
 
-    @ViewBuilder private func pilot(_ kind: Int) -> some View {
+    @ViewBuilder private func pilot(_ kind: Int, height: CGFloat) -> some View {
+        let w = diameter * 0.52
+        let bar = RoundedRectangle(cornerRadius: w * 0.3, style: .continuous)
         switch kind {
         case 2:
-            Circle().fill(DecoderLED.color(DecoderLED.pilotGreen, stops: DecoderLED.pilot, hdr: hdr))
-                .frame(width: diameter, height: diameter)
+            bar.fill(DecoderLED.color(DecoderLED.pilotGreen, stops: DecoderLED.pilot, hdr: hdr))
+                .frame(width: w, height: height)
                 .shadow(color: DecoderLED.pilotGreen.opacity(0.5), radius: diameter * 0.25)
                 .ledRange(hdr)
         case 1:
-            Circle().fill(DecoderLED.color(DecoderLED.pilotWhite, stops: DecoderLED.pilot, hdr: hdr))
-                .overlay { if differentiate { Circle().strokeBorder(Color.black.opacity(0.8), lineWidth: max(1.5, diameter * 0.16)).padding(diameter * 0.22) } }
-                .frame(width: diameter, height: diameter)
+            bar.fill(DecoderLED.color(DecoderLED.pilotWhite, stops: DecoderLED.pilot, hdr: hdr))
+                .overlay { if differentiate { Rectangle().fill(Color.black.opacity(0.8)).frame(height: max(1.5, height * 0.14)) } }
+                .frame(width: w, height: height)
                 .shadow(color: Color.white.opacity(0.35), radius: diameter * 0.2)
                 .ledRange(hdr)
         default:
-            Circle().fill(Color(white: 0.02))
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
-                .frame(width: diameter, height: diameter)
+            bar.fill(Color(white: 0.03))
+                .overlay(bar.strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+                .frame(width: w, height: height)
         }
     }
 }
@@ -619,7 +609,7 @@ private struct SevenSegmentDigit: View {
     }
 }
 
-/// Red 3-digit counter in its own dark window, with a printed caption.
+/// Contador ámbar de 3 cifras en su ventanilla redondeada, con su rótulo serigrafiado.
 private struct DeviceCounter: View {
     let m: DeviceMetrics
     let value: Int
@@ -641,9 +631,9 @@ private struct DeviceCounter: View {
                                       off: DecoderLED.counterRed.opacity(0.10))
                 }
             }
-            .padding(.horizontal, 12 * m.s).padding(.vertical, 10 * m.s)
-            .background(RoundedRectangle(cornerRadius: 8 * m.s + 2, style: .continuous).fill(Color(white: 0.03)))
-            .overlay(RoundedRectangle(cornerRadius: 8 * m.s + 2, style: .continuous).strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+            .padding(.horizontal, 22 * m.s).padding(.vertical, 10 * m.s)
+            .background(Capsule(style: .continuous).fill(Color(red: 0.07, green: 0.045, blue: 0.02)))
+            .overlay(Capsule(style: .continuous).strokeBorder(LinearGradient(colors: [DM.chrome, DM.chrome.opacity(0.35)], startPoint: .top, endPoint: .bottom), lineWidth: 2))
             .ledRange(hdr)
             Text(caption)
                 .font(.caption2.weight(.heavy)).tracking(1.5)
@@ -659,7 +649,7 @@ private struct DeviceCounter: View {
 
 // MARK: - Knob
 
-/// Ribbed orange knob: the ONLY game control besides the keys and the antennas.
+/// Dial negro moleteado con faldón crema: el ÚNICO control además de las válvulas y las lámparas de modo.
 /// ONE DragGesture owns its three inputs, so they cannot fight each other:
 ///  - TURN (a drag around the hub): `position` moves one detent at a time.
 ///  - SHORT TAP (a touch that neither turns nor is held): `onPress`.
@@ -791,24 +781,34 @@ private struct DecoderKnobView: View {
 
     private var knobBody: some View {
         ZStack {
-            Circle().fill(LinearGradient(colors: [Color(red: 1.0, green: 0.60, blue: 0.16), Color(red: 0.78, green: 0.36, blue: 0.0)],
-                                         startPoint: .top, endPoint: .bottom))
+            // Faldón crema con escala, como el dial de sintonía de un receptor.
+            Circle().fill(LinearGradient(colors: [DM.cream, DM.cream.opacity(0.78)], startPoint: .top, endPoint: .bottom))
                 .frame(width: diameter, height: diameter)
-                .shadow(color: .black.opacity(0.40), radius: 5, y: 3)
-            ForEach(0..<36, id: \.self) { i in
-                Capsule().fill(Color.black.opacity(0.30))
-                    .frame(width: max(1.5, diameter * 0.022), height: diameter * 0.11)
-                    .offset(y: -diameter * 0.43)
-                    .rotationEffect(.degrees(Double(i) * 10))
+                .shadow(color: .black.opacity(0.45), radius: 5, y: 3)
+            ForEach(0..<24, id: \.self) { i in
+                Capsule().fill(DM.creamInk.opacity(i % 3 == 0 ? 0.75 : 0.4))
+                    .frame(width: max(1, diameter * 0.014), height: diameter * (i % 3 == 0 ? 0.075 : 0.045))
+                    .offset(y: -diameter * 0.445)
+                    .rotationEffect(.degrees(Double(i) * 15))
             }
-            Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1).frame(width: diameter, height: diameter)
-            Circle().fill(LinearGradient(colors: [Color(red: 1.0, green: 0.68, blue: 0.30), Color(red: 0.85, green: 0.42, blue: 0.02)],
-                                         startPoint: .top, endPoint: .bottom))
-                .frame(width: diameter * 0.64, height: diameter * 0.64)
-                .overlay(Circle().strokeBorder(Color.black.opacity(0.25), lineWidth: 1))
-            Capsule().fill(Color(white: 0.97))
-                .frame(width: max(3, diameter * 0.04), height: diameter * 0.12)
-                .offset(y: -diameter * 0.26)
+            // Cuerpo de baquelita, moleteado fino.
+            Circle().fill(LinearGradient(colors: [Color(white: 0.20), Color(white: 0.05)], startPoint: .top, endPoint: .bottom))
+                .frame(width: diameter * 0.78, height: diameter * 0.78)
+            ForEach(0..<48, id: \.self) { i in
+                Capsule().fill(Color.white.opacity(0.13))
+                    .frame(width: max(1, diameter * 0.012), height: diameter * 0.07)
+                    .offset(y: -diameter * 0.345)
+                    .rotationEffect(.degrees(Double(i) * 7.5))
+            }
+            Circle().fill(LinearGradient(colors: [Color(white: 0.16), Color(white: 0.09)], startPoint: .top, endPoint: .bottom))
+                .frame(width: diameter * 0.60, height: diameter * 0.60)
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+            // Tapa cromada y aguja crema.
+            Circle().fill(LinearGradient(colors: [DM.chrome, DM.chrome.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: diameter * 0.20, height: diameter * 0.20)
+            Capsule().fill(DM.cream)
+                .frame(width: max(3, diameter * 0.045), height: diameter * 0.17)
+                .offset(y: -diameter * 0.275)
         }
         .frame(width: diameter, height: diameter)
     }
@@ -898,24 +898,35 @@ private struct DecoderKnobView: View {
     }
 }
 
-/// Flat-topped black arch; the second contour cuts out the centre.
-private struct DeviceHandleArch: Shape {
-    func path(in rect: CGRect) -> Path {
-        let w = rect.width, h = rect.height
-        var p = Path()
-        p.addLines([CGPoint(x: 0, y: h), CGPoint(x: 0.1 * w, y: 0.48 * h),
-                    CGPoint(x: 0.36 * w, y: 0), CGPoint(x: 0.64 * w, y: 0),
-                    CGPoint(x: 0.9 * w, y: 0.48 * h), CGPoint(x: w, y: h)])
-        p.closeSubpath()
-        p.addLines([CGPoint(x: 0.18 * w, y: h), CGPoint(x: 0.24 * w, y: 0.65 * h),
-                    CGPoint(x: 0.4 * w, y: 0.26 * h), CGPoint(x: 0.6 * w, y: 0.26 * h),
-                    CGPoint(x: 0.76 * w, y: 0.65 * h), CGPoint(x: 0.82 * w, y: h)])
-        p.closeSubpath()
-        return p
+/// Antena telescópica: tres tramos cromados cada vez más finos y una bolita en la punta.
+private struct DeviceAerial: View {
+    let length: CGFloat
+    var body: some View {
+        VStack(spacing: 0) {
+            Circle().fill(DM.chrome).frame(width: 6, height: 6)
+            Capsule().fill(DM.chrome.opacity(0.85)).frame(width: 2, height: length * 0.36)
+            Capsule().fill(DM.chrome.opacity(0.9)).frame(width: 3.2, height: length * 0.32)
+            Capsule().fill(DM.chrome).frame(width: 4.6, height: length * 0.28)
+        }
+        .accessibilityHidden(true)
     }
 }
 
-// MARK: - Antenna mode lights
+/// Tornillo de cabeza ranurada (decoración de la caja).
+private struct DeviceScrew: View {
+    let size: CGFloat
+    let turn: Double
+    var body: some View {
+        ZStack {
+            Circle().fill(LinearGradient(colors: [DM.chrome, DM.chrome.opacity(0.4)], startPoint: .top, endPoint: .bottom))
+            Capsule().fill(Color.black.opacity(0.55)).frame(width: size * 0.74, height: max(1, size * 0.14)).rotationEffect(.degrees(turn))
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Mode lamps
 
 /// The drawing of one antenna light. Its light state is ONLY the mode: it never
 /// depends on the current row, on a guess being complete or on the result. The
@@ -929,32 +940,28 @@ private struct DeviceModeLamp: View {
     @Environment(\.decoderHDREnabled) private var hdr
 
     var body: some View {
+        // Lámpara de joya: aro cromado, vidrio abombado. `tilt` ya no se usa.
         ZStack {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(Color(white: 0.075))
+            Circle().fill(LinearGradient(colors: [DM.chrome, DM.chrome.opacity(0.35)], startPoint: .top, endPoint: .bottom))
                 .shadow(color: .black.opacity(0.45), radius: 2, y: 2)
+            Circle().fill(Color(white: 0.06)).padding(size * 0.11)
             if isLit {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(DecoderLED.color(base, stops: DecoderLED.antenna, hdr: hdr))
-                    .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(LinearGradient(colors: [.white.opacity(0.30), .clear], startPoint: .top, endPoint: .bottom)))
-                    .shadow(color: base.opacity(0.45), radius: 5)
+                Circle().fill(DecoderLED.color(base, stops: DecoderLED.antenna, hdr: hdr))
+                    .overlay(Circle().fill(RadialGradient(colors: [.white.opacity(0.55), .clear], center: UnitPoint(x: 0.35, y: 0.3),
+                                                          startRadius: 0, endRadius: size * 0.3)))
+                    .padding(size * 0.16)
+                    .shadow(color: base.opacity(0.55), radius: 6)
                     .ledRange(hdr)
             } else {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(base.opacity(0.10))
+                Circle().fill(base.opacity(0.14)).padding(size * 0.16)
             }
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .strokeBorder(isLit ? .white.opacity(0.5) : .white.opacity(0.10), lineWidth: 1)
         }
         .frame(width: size, height: size)
-        .rotationEffect(.degrees(tilt))
         .accessibilityHidden(true)
     }
 }
 
-/// HINT push-button printed on the lime case (2026-11-10): a dark square key
-/// with a small lamp. The lamp glows amber while there is a hidden row it can
+/// Pulsador de PISTA: redondo, con aro cromado y una bombilla. The lamp glows amber while there is a hidden row it can
 /// reveal; once pressed (or with nothing to reveal) it is dark. The touch
 /// target is never smaller than 44 pt.
 private struct DeviceHintButton: View {
@@ -966,11 +973,10 @@ private struct DeviceHintButton: View {
     var body: some View {
         VStack(spacing: 4) {
             ZStack {
-                RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                    .fill(LinearGradient(colors: [Color(white: 0.24), Color(white: 0.11)], startPoint: .top, endPoint: .bottom))
+                Circle().fill(LinearGradient(colors: [DM.chrome, DM.chrome.opacity(0.35)], startPoint: .top, endPoint: .bottom))
                     .shadow(color: .black.opacity(0.40), radius: 2, y: 2)
-                RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                Circle().fill(LinearGradient(colors: [Color(white: 0.20), Color(white: 0.08)], startPoint: .top, endPoint: .bottom))
+                    .padding(size * 0.10)
                 Image(systemName: ready ? "lightbulb.fill" : "lightbulb")
                     .font(.system(size: size * 0.42, weight: .semibold))
                     .foregroundStyle(ready ? DecoderLED.color(DM.amber, stops: DecoderLED.hint, hdr: hdr) : Color.white.opacity(0.30))
@@ -997,9 +1003,10 @@ private struct StripLight: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiate
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 3, style: .continuous)
+        Circle()
             .fill(DecoderLED.color(color.ledColor, stops: DecoderLED.history, hdr: hdr))
-            .frame(width: max(width, 6), height: height)
+            .overlay(Circle().strokeBorder(DM.creamInk.opacity(0.65), lineWidth: 1.5))
+            .frame(width: min(max(width, 10), height), height: min(max(width, 10), height))
             .ledRange(hdr)
             .overlay {
                 if differentiate {
@@ -1162,8 +1169,8 @@ struct DecoderGameView: View {
             return AppLanguage.text("Mando: girar = nivel · tocar = empezar con código nuevo",
                                     "Knob: turn = level · tap = start with a new code")
         case .idle:
-            return AppLanguage.text("Partida terminada · la antena verde abre Infinito",
-                                    "Game over · the green antenna opens Infinite")
+            return AppLanguage.text("Partida terminada · la lámpara azul abre Infinito",
+                                    "Game over · the blue lamp opens Infinite")
         }
     }
 
@@ -1265,8 +1272,8 @@ struct DecoderGameView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(target == .entry
-            ? AppLanguage.text("Antena roja: modo \(title)", "Red antenna: \(title) mode")
-            : AppLanguage.text("Antena verde: modo \(title)", "Green antenna: \(title) mode"))
+            ? AppLanguage.text("Lámpara ámbar: modo \(title)", "Amber lamp: \(title) mode")
+            : AppLanguage.text("Lámpara azul: modo \(title)", "Blue lamp: \(title) mode"))
         .accessibilityValue(lit ? AppLanguage.text("encendido", "on") + ". " + modeSpeech : AppLanguage.text("apagado", "off"))
         .accessibilityHint(lit
             ? AppLanguage.text("Es el modo actual", "This is the current mode")
@@ -1278,39 +1285,45 @@ struct DecoderGameView: View {
     // MARK: Device
 
     private func device(_ m: DeviceMetrics) -> some View {
-        VStack(spacing: -16) {
+        VStack(spacing: -8) {
             handle(m)
             bodyShell(m)
         }
         .frame(width: m.bodyW)
     }
 
-    /// Narrow bridge with the red/green antennas. Exactly one is lit, even
-    /// after a game ends; the row/draft cannot change which. Tapping one
-    /// selects its mode.
+    /// Tapa del receptor: asa de cuero, las dos lámparas de modo (siempre hay
+    /// exactamente una encendida, también con la partida acabada) y la antena.
     private func handle(_ m: DeviceMetrics) -> some View {
-        let cap = min(72, max(44, m.bodyW * 0.12))
-        let height = max(96, m.bodyW * 0.24)
-        let capY = height - 16 - m.bodyW * 0.13
-        let archH = m.bodyW * 0.16
+        let lamp = min(58, max(44, m.bodyW * 0.11))
+        let height = max(92, m.bodyW * 0.22)
+        let lidH: CGFloat = 26
         return ZStack {
-            DeviceHandleArch()
-                .fill(DM.handle, style: FillStyle(eoFill: true))
-                .frame(width: m.bodyW * 0.43, height: archH)
-                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-                .position(x: m.bodyW / 2, y: height - archH / 2)
-            ForEach([false, true], id: \.self) { right in
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(DM.handle)
-                    .frame(width: cap * 0.45, height: cap * 0.9)
-                    .rotationEffect(.degrees(right ? 45 : -45))
-                    .position(x: m.bodyW * (right ? 0.685 : 0.315), y: capY + cap * 0.45)
+            // Antena, a la derecha, inclinada hacia fuera.
+            DeviceAerial(length: height - 8)
+                .rotationEffect(.degrees(9), anchor: .bottom)
+                .position(x: m.bodyW * 0.90, y: (height - 8) / 2 + 2)
+            // Asa: correa con dos anclajes.
+            Capsule(style: .continuous)
+                .strokeBorder(Color(red: 0.36, green: 0.22, blue: 0.12), lineWidth: 7)
+                .frame(width: m.bodyW * 0.30, height: lidH * 2.1)
+                .position(x: m.bodyW / 2, y: height - lidH - 2)
+            // Tapa.
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(LinearGradient(colors: [DM.caseEdgeHi.opacity(0.9), DM.caseTop], startPoint: .top, endPoint: .bottom))
+                .frame(width: m.bodyW * 0.94, height: lidH)
+                .position(x: m.bodyW / 2, y: height - lidH / 2)
+                .accessibilityHidden(true)
+            ForEach([0.38, 0.62], id: \.self) { x in
+                RoundedRectangle(cornerRadius: 2).fill(DM.chrome.opacity(0.8))
+                    .frame(width: 12, height: 9)
+                    .position(x: m.bodyW * x, y: height - lidH + 1)
                     .accessibilityHidden(true)
             }
-            modeButton(.entry, base: Color(red: 1.0, green: 0.10, blue: 0.08), tilt: -45, size: cap)
-                .position(x: m.bodyW * 0.28, y: capY)
-            modeButton(.infinite, base: Color(red: 0.10, green: 1.0, blue: 0.20), tilt: 45, size: cap)
-                .position(x: m.bodyW * 0.72, y: capY)
+            modeButton(.entry, base: DM.lampDaily, tilt: 0, size: lamp)
+                .position(x: m.bodyW * 0.16, y: height - lidH - lamp * 0.30)
+            modeButton(.infinite, base: DM.lampInfinite, tilt: 0, size: lamp)
+                .position(x: m.bodyW * 0.72, y: height - lidH - lamp * 0.30)
         }
         .frame(width: m.bodyW, height: height)
     }
@@ -1322,16 +1335,23 @@ struct DecoderGameView: View {
             // The band is WIDER than the body. Laid out in a body-wide frame, it
             // is centred and overflows `overhang` on each side, ending exactly at
             // the screen margins (see DeviceMetrics): nothing clips or scrolls.
-            strip(m).frame(width: m.bodyW)
+            strip(m).padding(.leading, m.panelLeft).padding(.top, 9 * m.s)
             bottomZone(m)
         }
         .frame(width: m.bodyW, alignment: .leading)
         .background {
-            let shape = UnevenRoundedRectangle(topLeadingRadius: m.corner, bottomLeadingRadius: m.corner * 1.5,
-                                               bottomTrailingRadius: m.corner * 1.5, topTrailingRadius: m.corner, style: .continuous)
+            let shape = RoundedRectangle(cornerRadius: m.corner, style: .continuous)
+            let screw = max(7, 15 * m.s), inset = max(8, 17 * m.s)
             ZStack {
-                shape.fill(LinearGradient(colors: [DM.limeTop, DM.limeBottom], startPoint: .top, endPoint: .bottom))
-                shape.strokeBorder(LinearGradient(colors: [DM.limeEdgeHi, DM.limeEdgeLo], startPoint: .top, endPoint: .bottom), lineWidth: 2)
+                shape.fill(LinearGradient(colors: [DM.caseTop, DM.caseBottom], startPoint: .top, endPoint: .bottom))
+                shape.strokeBorder(LinearGradient(colors: [DM.caseEdgeHi, DM.caseEdgeLo], startPoint: .top, endPoint: .bottom), lineWidth: 2)
+                // Un tornillo en cada esquina.
+                VStack {
+                    HStack { DeviceScrew(size: screw, turn: 25); Spacer(); DeviceScrew(size: screw, turn: -40) }
+                    Spacer()
+                    HStack { DeviceScrew(size: screw, turn: 70); Spacer(); DeviceScrew(size: screw, turn: 10) }
+                }
+                .padding(inset)
             }
             .shadow(color: .black.opacity(0.30), radius: 12, x: 0, y: 8)
         }
@@ -1470,7 +1490,7 @@ struct DecoderGameView: View {
                 // A warning takes the whole band for a few seconds (as on the Watch).
                 Text(notice)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundStyle(DM.amber)
+                    .foregroundStyle(Color(red: 0.62, green: 0.13, blue: 0.08))
                     .multilineTextAlignment(.center)
                     .lineLimit(2).minimumScaleFactor(0.7)
                     .frame(maxWidth: .infinity)
@@ -1479,7 +1499,7 @@ struct DecoderGameView: View {
                 if lost {
                     Image(systemName: "key.fill")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Color(white: 0.78))
+                        .foregroundStyle(DM.creamInk)
                         .frame(width: 18)
                 }
                 ForEach(Array(shown.enumerated()), id: \.offset) { _, c in
@@ -1488,19 +1508,33 @@ struct DecoderGameView: View {
                 }
                 Spacer(minLength: 4)
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text("DECODER").font(.system(size: 11, weight: .heavy, design: .rounded)).tracking(1.6)
-                        .foregroundStyle(Color(white: 0.92))
-                    Text("Kaffa").font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color(red: 0.74, green: 0.90, blue: 0.20))
+                    Text("DECODER").font(.system(size: 11, weight: .heavy, design: .monospaced)).tracking(1.6)
+                        .foregroundStyle(DM.creamInk)
+                    Text("Kuizzy · MHz").font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(DM.creamInk.opacity(0.65))
                 }
                 .lineLimit(1).minimumScaleFactor(0.6)
             }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: notice)
-        .padding(.horizontal, m.overhang + 4)
+        .padding(.horizontal, 10)
         .frame(width: m.stripW, height: m.stripH)
-        .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Color(white: 0.02)))
-        .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.10)).frame(height: 1).padding(.horizontal, 4) }
+        .background {
+            // Cristal del dial: crema retroiluminado con la escala de frecuencias arriba.
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(LinearGradient(colors: [DM.cream, DM.cream.opacity(0.82)], startPoint: .top, endPoint: .bottom))
+                .overlay(alignment: .top) {
+                    HStack(spacing: 0) {
+                        ForEach(0..<41, id: \.self) { i in
+                            Rectangle().fill(DM.creamInk.opacity(i % 5 == 0 ? 0.6 : 0.3))
+                                .frame(width: 1, height: i % 5 == 0 ? 7 : 4)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
+                    .padding(.horizontal, 6)
+                }
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Color.black.opacity(0.55), lineWidth: 2))
+        }
         .shadow(color: .black.opacity(0.35), radius: 3, y: 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(notice.map { $0 + ". " + bandSpeech } ?? bandSpeech)
@@ -1534,7 +1568,7 @@ struct DecoderGameView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(AppLanguage.text("Pista", "Hint"))
         .accessibilityValue(ready ? "" : AppLanguage.text("No disponible", "Not available"))
-        .accessibilityHint(AppLanguage.text("Enciende las barritas del último intento enviado", "Lights the bars of the last submitted attempt"))
+        .accessibilityHint(AppLanguage.text("Enciende los pilotos del último intento enviado", "Lights the pilots of the last submitted attempt"))
         .accessibilityIdentifier("decoder.hint")
     }
 

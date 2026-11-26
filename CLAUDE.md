@@ -532,3 +532,19 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
     tren en diagonal, jefe-tren con un vagón roto) y en un Apple Watch temporal (creado y borrado). **Sin verificar:**
     nada jugado a mano. La dificultad real del desfiladero con el dedo y, sobre todo, con la Corona; si los picos se
     distinguen bien de un vistazo; el equilibrio de lanchas/submarinos/trenes sumados al tráfico de antes.
+- 2026-11-27 — **Decoder (iPhone): aparato nuevo de diseño propio, «radio de espía».**
+  - Josu: «es molón pero así no lo puedo sacar, es una copiada literal». Causa: el aparato estaba MEDIDO sobre la foto
+    de un producto real (cuerpo verde lima, asa negra con dos antenas inclinadas, mando naranja estriado, contador
+    rojo, banda negra más ancha que el cuerpo). Decisión de Josu: cambiar SOLO el aspecto, las reglas se quedan.
+  - Ahora (`DecoderGameView.swift`, solo dibujo; lógica, gestos, hápticos, HDR, accesibilidad e identificadores
+    intactos): caja de acero gris con tornillos; tapa con asa de cuero, antena telescópica y dos lámparas redondas de
+    modo (ámbar = Diario/Práctica, azul = Infinito); teclas → VÁLVULAS redondas con un piloto debajo (la pista);
+    pilotos 2×2 → medidor de señal de 4 barras; banda → dial de frecuencias crema DENTRO de la caja («DECODER ·
+    Kuizzy»); contador ámbar en ventanilla ovalada; pulsador de pista redondo; mando → dial negro moleteado con faldón
+    crema. Textos de reglas y de VoiceOver actualizados (lámparas, válvulas, medidor, dial).
+  - NO tocado: las reglas (siguen siendo las del clásico de código de colores; Josu eligió no cambiarlas, aunque
+    marcó «pista por posición rotatoria» como giro preferido si algún día se cambian) y el Decoder del reloj
+    (`WatchDecoderView.swift`, que ya tenía dibujo propio de barras).
+  - Verificado: build iOS y reloj, `Tests/Decoder/run.py`, captura en iPhone 18 Pro a media partida (modo oscuro).
+    **Sin verificar:** modo claro, la solución en el dial al perder (el fixture `lose` no se aplicó sobre la partida
+    guardada), el selector de nivel de Infinito, «Diferenciar sin color» y cualquier cosa tocando.
