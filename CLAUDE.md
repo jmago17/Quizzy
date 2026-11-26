@@ -485,3 +485,23 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado: solo que compila en iOS. **Sin verificar:** todo lo táctil (simulador headless): que 76 pt sea el
     adelanto cómodo, que el tonel no arrastre el avión, y el fondo de la franja (con el dedo en el borde inferior el
     avión se queda unos 8 pt por encima de su límite bajo). El reloj no se toca (el cambio está solo en `SquadronGame`).
+- 2026-11-26 — **Escuadrón: cuatro jefes distintos y mejoras temporales; Marcianitos: menos cadencia y las mismas mejoras.**
+  - **Jefes** (`SkyWorld.BossKind`, uno por zona): acorazado (mar; lento, dos torres que apuntan + abanico de 5),
+    tanque (desierto; a tirones, obús rápido apuntado + metralla en semicírculo cada 3), helicóptero (bosque; rápido,
+    sube y baja, ráfagas de 3 + dos cohetes rectos) y el cuatrimotor de siempre (ciudad). Cada uno con su silueta
+    (`drawBoss`), su caja de impacto (`BossKind.hit`) y su media anchura para el vaivén. Josu: «el avión que vaya en la
+    misma dirección que tú, ahora vuela para atrás» → los jefes que vuelan (avión y helicóptero) se dibujan MORRO
+    ARRIBA. En el mar no salen islas nuevas con el acorazado en pantalla.
+  - **Mejoras temporales** (`ArcadeBoost` + `ArcadeBoosts` en `WatchArcade.swift`, compartidas por los dos juegos):
+    R cadencia, 2 disparo doble, V dos disparos más en uve, E (W en inglés) dos escoltas a los lados que disparan.
+    10 s cada una, acumulables; una barrita por mejora bajo el marcador. La ficha que cae prefiere una mejora que no
+    esté activa. Sustituyen a la «P» de Escuadrón (`power` ya no existe).
+  - **Escuadrón**: el disparo base pasa de doble a UNO (0,2 s) para que «doble» sea mejora; por eso la vida del jefe
+    baja de 60+30n a 50+25n. Los bombarderos sueltan ficha el 55 % de las veces (antes 40 %).
+  - **Marcianitos** (solo reloj): cadencia base de 0,3 s a 0,5 s (pedido: «reduce la cadencia de tiro»), sin tope de
+    disparos en pantalla; los marcianos sueltan ficha (5 % en formación, 25 % cazados en picado, máx. 2 a la vez).
+  - Gancho de capturas nuevo: `QW_BOOST=1` (todas las mejoras al empezar). El jefe se elige con `QW_ZONE=n`.
+  - Verificado: builds de iOS y reloj; capturas en iPhone 18 Pro de los cuatro jefes y de las mejoras, y en un Apple
+    Watch temporal (creado y BORRADO al acabar) de Marcianitos con mejoras y del tanque. **Sin verificar:** nada
+    jugado a mano: la dificultad de cada jefe y el equilibrio de las mejoras (con las cuatro a la vez un jefe cae en
+    pocos segundos); el acorazado solo se vio en blanco (captura durante el destello de impacto), sus colores no.

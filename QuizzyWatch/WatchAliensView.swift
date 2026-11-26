@@ -3,6 +3,8 @@
 //  Marcianitos: una formación de marcianos se mece arriba y, de vez en cuando, alguno se lanza
 //  en picado hacia la nave soltando una bomba. La nave dispara sola; el jugador solo la mueve
 //  con la Corona. 3 vidas; cada oleada despejada trae otra más agresiva.
+//  Disparo base lento (uno cada 0,5 s). Los marcianos sueltan a veces una MEJORA temporal
+//  (`ArcadeBoost`, 10 s, acumulables): R cadencia, 2 doble, V uve, E escoltas.
 //  Puntos: 10 por marciano en formación, 25 si se le caza en picado, 50 por oleada.
 //  Cada oleada trae otra FORMACIÓN (`shapes`: bloque, rombo, uve, anillo, columnas, damero, flecha)
 //  y otro vaivén (de lado a lado, respirando o en onda). Desde la 2.ª hay blindados que piden
@@ -102,7 +104,12 @@ final class AlienWorld: ArcadeWorld {
 
     private var size: CGSize = .zero
     private var enemies: [Enemy] = []
-    private var shots: [CGPoint] = []
+    struct Shot { var p: CGPoint; var vx: CGFloat = 0 }
+    struct Pickup { var p: CGPoint; var kind: ArcadeBoost }
+    private var shots: [Shot] = []
+    private var pickups: [Pickup] = []
+    private var boosts = ArcadeBoosts()
+    static let wingGap: CGFloat = 15
     private var bombs: [CGPoint] = []
     private var sparks: [Spark] = []
     private var px: CGFloat = 0
@@ -117,10 +124,11 @@ final class AlienWorld: ArcadeWorld {
 
     func reset(size: CGSize) {
         self.size = size
-        shots = []; bombs = []; sparks = []
+        shots = []; bombs = []; sparks = []; pickups = []; boosts.clear()
         px = size.width / 2; py = size.height - 24
         lives = 3; wave = 1; time = 0; score = 0
         fireT = 0.3; diveT = 1.5; bombT = 2.5; invuln = 0; cleared = false; waveDelay = 0
+        if ProcessInfo.processInfo.environment["QW_BOOST"] == "1" { ArcadeBoost.allCases.forEach { boosts.take($0) } }   // capturas: todas las mejoras
         spawn()
     }
 
@@ -166,11 +174,27 @@ final class AlienWorld: ArcadeWorld {
             if waveDelay <= 0 { wave += 1; cleared = false; spawn(); diveT = 1.2 }
         }
 
-        // Disparo automático (máx. 3 en pantalla).
+        // Disparo automático: lento y de uno en uno; las mejoras lo aceleran, lo doblan, lo abren
+        // en uve o le ponen dos escoltas.
+        boosts.step(dt: dt)
         fireT -= dt
-        if fireT <= 0, shots.count < 3 { shots.append(CGPoint(x: px, y: py - 9)); fireT = 0.3 }
-        for i in shots.indices { shots[i].y -= 280 * dt }
-        shots.removeAll { $0.y < -6 }
+        if fireT <= 0 {
+            fireT = boosts.on(.rapid) ? 0.24 : 0.5
+            func shot(_ dx: CGFloat, _ dy: CGFloat, _ vx: CGFloat = 0) { shots.append(Shot(p: CGPoint(x: px + dx, y: py + dy), vx: vx)) }
+            if boosts.on(.double) { shot(-4, -8); shot(4, -8) } else { shot(0, -9) }
+            if boosts.on(.spread) { shot(-6, -6, -62); shot(6, -6, 62) }
+            if boosts.on(.wing) { shot(-Self.wingGap, -2); shot(Self.wingGap, -2) }
+        }
+        for i in shots.indices { shots[i].p.y -= 280 * dt; shots[i].p.x += shots[i].vx * dt }
+        shots.removeAll { $0.p.y < -6 || $0.p.x < -6 || $0.p.x > size.width + 6 }
+
+        // Mejoras que caen: se recogen con la nave.
+        for i in pickups.indices { pickups[i].p.y += 44 * dt }
+        pickups.removeAll { $0.p.y > size.height + 10 }
+        if let k = pickups.firstIndex(where: { abs($0.p.x - px) < 12 && abs($0.p.y - py) < 12 }) {
+            boosts.take(pickups.remove(at: k).kind)
+            event = .bonus
+        }
 
         // Picados: más frecuentes y más a la vez según la oleada.
         diveT -= dt
@@ -222,7 +246,7 @@ final class AlienWorld: ArcadeWorld {
 
         // Disparos contra marcianos.
         for i in shots.indices.reversed() {
-            let s = shots[i]
+            let s = shots[i].p
             guard let j = enemies.firstIndex(where: { abs($0.pos.x - s.x) < 9 && abs($0.pos.y - s.y) < 8 }) else { continue }
             shots.remove(at: i)
             enemies[j].hp -= 1
@@ -234,6 +258,10 @@ final class AlienWorld: ArcadeWorld {
                 continue
             }
             score += enemies[j].mode == .slot ? 10 : 25
+            // Los cazados en picado sueltan mejora más a menudo; como mucho dos fichas a la vez.
+            if pickups.count < 2, CGFloat.random(in: 0..<1) < (enemies[j].mode == .slot ? 0.05 : 0.25) {
+                pickups.append(Pickup(p: enemies[j].pos, kind: boosts.drop()))
+            }
             Spark.burst(&sparks, at: enemies[j].pos, color: Color(hex: WatchAliens.palette[enemies[j].row % 4]))
             enemies.remove(at: j)
         }
@@ -284,11 +312,18 @@ final class AlienWorld: ArcadeWorld {
                                   armor: e.hp - 1, flash: e.flash > 0)
         }
         for s in shots {
-            ctx.fill(Path(roundedRect: CGRect(x: s.x - 1.2, y: s.y - 4, width: 2.4, height: 8), cornerRadius: 1.2), with: .color(Color(hex: 0xFFF2B0)))
+            ctx.fill(Path(roundedRect: CGRect(x: s.p.x - 1.2, y: s.p.y - 4, width: 2.4, height: 8), cornerRadius: 1.2), with: .color(Color(hex: 0xFFF2B0)))
         }
         for b in bombs {
             ctx.fill(Path(ellipseIn: CGRect(x: b.x - 2.4, y: b.y - 2.4, width: 4.8, height: 4.8)), with: .color(Color(hex: 0xF0766B)))
         }
+        for p in pickups { p.kind.draw(at: p.p, in: &ctx) }
+        if lives > 0, boosts.on(.wing) {
+            for side in [-1, 1] as [CGFloat] {
+                WatchAliens.drawShip(in: &ctx, at: CGPoint(x: px + side * Self.wingGap, y: py + 3), size: 10, flame: sin(time * 30 + side))
+            }
+        }
+        boosts.drawBars(in: &ctx, origin: CGPoint(x: ArcadeHUD.left, y: ArcadeHUD.y + 10), width: 34, height: 3)
         // Parpadea mientras es invulnerable tras un golpe.
         if lives > 0, invuln <= 0 || Int(time * 12) % 2 == 0 {
             WatchAliens.drawShip(in: &ctx, at: CGPoint(x: px, y: py), size: 18, flame: sin(time * 30))
@@ -309,6 +344,7 @@ final class AlienWorld: ArcadeWorld {
             let side: CGFloat = px < 30 ? 1 : (px > size.width - 30 ? -1 : (b.x >= px ? -1 : 1))
             return (px + side * 34 - 16) / max(1, size.width - 32)
         }
+        if let p = pickups.first { return (p.p.x - 16) / max(1, size.width - 32) }
         guard let target = enemies.max(by: { $0.pos.y < $1.pos.y }) else { return 0.5 }
         return (target.pos.x - 16) / max(1, size.width - 32)
     }

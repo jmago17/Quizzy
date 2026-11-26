@@ -158,14 +158,11 @@ struct SquadronGame: View {
         world.draw(&g, size: field.logical)
 
         guard phase == .playing || phase == .paused else { return }
-        // Marcador (junto al botón de salir), vidas (junto al de pausa) y barra de la «P».
+        // Marcador (junto al botón de salir), vidas (junto al de pausa) y barras de las mejoras.
         let y = field.hudY, left = field.safe.leading + 68, right = size.width - field.safe.trailing - 68
         ctx.draw(Text("\(world.score)").font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundColor(.white),
                  at: CGPoint(x: left, y: y), anchor: .leading)
-        if world.power > 0 {
-            ctx.fill(Path(roundedRect: CGRect(x: left, y: y + 17, width: 70, height: 5), cornerRadius: 2.5), with: .color(.black.opacity(0.3)))
-            ctx.fill(Path(roundedRect: CGRect(x: left, y: y + 17, width: 70 * world.power / 10, height: 5), cornerRadius: 2.5), with: .color(Squadron.color))
-        }
+        world.boosts.drawBars(in: &ctx, origin: CGPoint(x: left, y: y + 17), width: 70, height: 5)
         for i in 0..<max(0, world.lives) {
             let x = right - CGFloat(i) * 24 - 10, s: CGFloat = 2.1
             var heart = Path()

@@ -56,6 +56,64 @@ struct ArcadeInfo {
     var bestKey: String { "watch.\(id).best" }
 }
 
+// MARK: - Mejoras temporales (Escuadrón y Marcianitos)
+
+/// Mejoras de disparo que se recogen y duran `duration` segundos. Se acumulan entre sí.
+enum ArcadeBoost: Int, CaseIterable {
+    case rapid      // más cadencia
+    case double     // dos disparos en paralelo
+    case spread     // dos disparos más, en uve
+    case wing       // dos escoltas a los lados que disparan con la nave
+    static let duration: CGFloat = 10
+
+    var color: Color {
+        switch self {
+        case .rapid: return Color(hex: 0xF2C14E)
+        case .double: return Color(hex: 0x7FD6F2)
+        case .spread: return Color(hex: 0xC59BFF)
+        case .wing: return Color(hex: 0x7BE08A)
+        }
+    }
+    var letter: String {
+        switch self {
+        case .rapid: return "R"
+        case .double: return "2"
+        case .spread: return "V"
+        case .wing: return AppLanguage.text("E", "W")
+        }
+    }
+    /// Ficha que cae: disco del color de la mejora con su letra.
+    func draw(at p: CGPoint, in ctx: inout GraphicsContext) {
+        ctx.fill(Path(ellipseIn: CGRect(x: p.x - 8, y: p.y - 8, width: 16, height: 16)), with: .color(.white.opacity(0.9)))
+        ctx.fill(Path(ellipseIn: CGRect(x: p.x - 7, y: p.y - 7, width: 14, height: 14)), with: .color(color))
+        ctx.draw(Text(letter).font(.system(size: 10, weight: .black, design: .rounded)).foregroundColor(Color(hex: 0x10141D)), at: p)
+    }
+}
+
+/// Segundos que le quedan a cada mejora.
+struct ArcadeBoosts {
+    private var left = [CGFloat](repeating: 0, count: ArcadeBoost.allCases.count)
+
+    func on(_ kind: ArcadeBoost) -> Bool { left[kind.rawValue] > 0 }
+    mutating func take(_ kind: ArcadeBoost) { left[kind.rawValue] = ArcadeBoost.duration }
+    mutating func step(dt: CGFloat) { for i in left.indices { left[i] = max(0, left[i] - dt) } }
+    mutating func clear() { left = left.map { _ in 0 } }
+    /// La siguiente ficha: al azar, pero antes una que no esté ya activa.
+    func drop() -> ArcadeBoost {
+        ArcadeBoost.allCases.filter { !on($0) }.randomElement() ?? ArcadeBoost.allCases.randomElement()!
+    }
+    /// Una barrita por mejora activa, apiladas hacia abajo desde `origin`.
+    func drawBars(in ctx: inout GraphicsContext, origin: CGPoint, width: CGFloat, height: CGFloat) {
+        var y = origin.y
+        for kind in ArcadeBoost.allCases where on(kind) {
+            ctx.fill(Path(roundedRect: CGRect(x: origin.x, y: y, width: width, height: height), cornerRadius: height / 2), with: .color(.black.opacity(0.3)))
+            ctx.fill(Path(roundedRect: CGRect(x: origin.x, y: y, width: width * left[kind.rawValue] / ArcadeBoost.duration, height: height),
+                          cornerRadius: height / 2), with: .color(kind.color))
+            y += height + 2
+        }
+    }
+}
+
 // MARK: - Chispas (explosiones)
 
 struct Spark {
