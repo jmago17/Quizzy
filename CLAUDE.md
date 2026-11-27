@@ -32,6 +32,8 @@ Regenerar solo al añadir/quitar ficheros o cambiar `project.yml`.
   `buildDistributionAudience: APP_STORE_ELIGIBLE`, solo manual, creada por API el 2026-11-24). Xcode Cloud pone su propio número de build;
   subir solo desde ahí (si se sube a mano un número mayor, ajustar el "next build number" del producto).
 - TestFlight: grupo interno "Internal" con dos testers (correos fuera del repo).
+- **Regla desde 2026-11-27 (Josu):** tras cada cambio con build y tests en verde, ya en `main`, lanzar "Internal TestFlight Build"
+  sin preguntar. Si algo falla, no se lanza y se dice qué falló. El externo («Público») sigue siendo solo cuando lo pida.
 - La 1.ª archive de Xcode Cloud (run 2) falló en "Preparing build for App Store Connect" porque el proyecto aún tenía
   el bundle ID de QuotaMini (visto en el log de exportación). Con `com.maromeapps.quizzies` la run 4 (2026-11-16,
   lanzada por API: POST `/v1/ciBuildRuns`) subió el build 4 → VALID en TestFlight. En la app también hay un build 22.
