@@ -550,3 +550,23 @@ Archivar con `-configuration Release -destination 'generic/platform=iOS'` y expo
   - Verificado: build iOS y reloj, `Tests/Decoder/run.py`, captura en iPhone 18 Pro a media partida (modo oscuro).
     **Sin verificar:** modo claro, la solución en el dial al perder (el fixture `lose` no se aplicó sobre la partida
     guardada), el selector de nivel de Infinito, «Diferenciar sin color» y cualquier cosa tocando.
+
+- 2026-11-28 — **Reloj: Derrape rehecho** (Josu: «el juego de carreras es un poco meh… dale una vuelta»). Diagnóstico mío: solo
+  había que no chocar; nada que buscar. La física del volante NO se ha tocado (ajustada con Josu el 2026-11-23).
+  - Nuevo (`WatchDriftView.swift`): **etapas** de 4000 pt con meta de cuadros, +15·n puntos y una vida de vuelta; cada una
+    cambia el paisaje (campo, desierto, nieve, noche con faros y farolas). **Monedas** en hileras de 6: la hilera entera sube
+    el multiplicador (×1…×5), que se pierde al chocar o al pisar una **mancha** (aceite/hielo; no mata). **Adelantar rozando**
+    (< 17,5 pt) da 4·mult en vez de 1·mult. **Turbo** (ficha con rayo, 3,5 s, ×1,45): se lleva coches y conos; el arcén sigue
+    matando. Tráfico: coche, **camión** (desde la etapa 2) y **furgoneta que cambia de carril** con intermitente (desde la 3).
+    **Obras**: tres conos en diagonal que cierran un lado.
+  - Reglas de justicia: lo que mata se reparte por «punto de encuentro» con el jugador (`meetOK`, ≥ 170 pt de avance entre
+    dos); los rivales nunca salen en el centro; los rivales siguen la curva (dibujo girado y choque con `lateral(_:)`).
+  - **Hipótesis descartadas con el test:** con 108 pt de separación el piloto chocaba cada 13 s (rivales alternos = zigzag
+    imposible); los camiones «chocaban a 19 pt de distancia» porque se medían con el centro de la carretera de SU distancia y
+    no la del jugador (en curva hay hasta 11 pt de diferencia).
+  - `Tests/Drift/run.py` (18 comprobaciones; con una carpeta como argumento guarda capturas): 24 min de piloto por tamaño con
+    0–1 choques. Hooks DEBUG: `QW_STAGE=n` (empieza en esa etapa), `QW_GOD=1`.
+  - Verificado: tests, build del reloj, capturas en Watch 46 mm temporal (borrado) de campo, nieve y noche con piloto.
+    **Sin verificar:** nada en reloj real ni con la Corona — sobre todo la dificultad para una persona (el piloto no muere
+    nunca; la velocidad tope llega a los 43 s y a partir de ahí no aprieta más), si la noche se ve bien en la pantalla real,
+    y el desierto en simulador (solo en el render del test).
